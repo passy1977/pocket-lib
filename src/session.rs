@@ -6,38 +6,52 @@ use crate::pods::device::Device;
 #[allow(unused)] 
 #[derive(Debug)]
 pub struct Session {
-    pub config: Config,
+    pub config: Option<Config>,
     pub init: bool
 }
 
 #[allow(unused)] 
 impl Session {
-    pub fn new(config_path: Option<String>) -> Option<Session> {
-        match config_path {
-            Option::None => Option::None,
-            Option::Some(value) => {
+    pub fn new(config_json: Option<String>, config_path: Option<String>) -> Option<Session> {
+        
+        match (config_json, config_path) {
+            (json @ None, _) => None,
+            (json, path) if !json.clone().unwrap().is_empty() => {
                 let mut session = Session { 
-                    config: Config::new(Option::Some(value)),
+                    config: Config::new(json.unwrap(), path),
                     init: false
                 };
 
 
-                session.init = true;
-                Option::Some(session)   
-            }
+                Some(session) 
+            },
+            
+            
+            
+            // Option::None => Option::None,
+            // Option::Some(value) => {
+            //     let mut session = Session { 
+            //         config: Config::new(Option::Some(value)),
+            //         init: false
+            //     };
+
+
+            //     session.init = true;
+            //     Option::Some(session)   
+            // }
+            (_, _) => None,
         }
     }
 
     
     pub fn register_device(_email: &String, _passwd: &String, _registration_json: &String) -> Option<Device> {
-        Option::None
+        None
     }
 }
 
 
 #[cfg(test)]
 mod tests {
-    use super::pocket::init;
 
     const REGISTRATION : &str = r#"
     {
@@ -51,5 +65,6 @@ mod tests {
     #[test]
     fn it_works() {
         //init(REGISTRATION.to_string());
+        
     }
 }
