@@ -1,8 +1,13 @@
 [package]
-name = "pocket-lib"
+name = "pocket"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 curl = "0.4.47"
+json = "0.12.4"
 sqlite3 = "0.24.0"
+
+[lib]
+name = "pocket"
+crate-type = ["staticlib", "cdylib"]
