@@ -7,39 +7,39 @@ use crate::pods::device::Device;
 #[derive(Debug)]
 pub struct Session {
     pub config: Option<Config>,
+    pub device: Option<Device>,
     pub init: bool
 }
 
 #[allow(unused)] 
 impl Session {
-    pub fn new(config_json: Option<String>, config_path: Option<String>) -> Option<Session> {
+    pub fn new(config_json: Option<String>, config_path: Option<String>) -> Result<Session, &'static str> {
         
         match (config_json, config_path) {
-            (json @ None, _) => None,
+            (json @ None, _) => Err("Config json not defined"),
             (json, path) if !json.clone().unwrap().is_empty() => {
+
                 let mut session = Session { 
-                    config: Config::new(json.unwrap(), path),
+                    config: None,
+                    device: None,
                     init: false
                 };
+                
+                
+                
+                if let Ok(conf) = Config::new(&mut session, json.unwrap(), path) {
+                    session.config = Some(conf);
+                    session.init = true;
+                    Ok(session) 
+                } else {
+                    Err("Config error")
+                }
 
 
-                Some(session) 
+
             },
             
-            
-            
-            // Option::None => Option::None,
-            // Option::Some(value) => {
-            //     let mut session = Session { 
-            //         config: Config::new(Option::Some(value)),
-            //         init: false
-            //     };
-
-
-            //     session.init = true;
-            //     Option::Some(session)   
-            // }
-            (_, _) => None,
+            (_, _) => Err("Un handled error"),
         }
     }
 
@@ -52,6 +52,8 @@ impl Session {
 
 #[cfg(test)]
 mod tests {
+    use super::Session;
+
 
     const REGISTRATION : &str = r#"
     {
@@ -65,6 +67,10 @@ mod tests {
     #[test]
     fn it_works() {
         //init(REGISTRATION.to_string());
+        let _session = Session::new(
+            Option::Some(REGISTRATION.to_string()), 
+            Option::None
+        );
         
     }
 }
