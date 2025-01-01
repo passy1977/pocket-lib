@@ -42,7 +42,7 @@ impl Session {
                         session.init = true;
 
 
-                        if let Some(dev) = &session.device {
+                        if let Some(ref dev) = session.device {
                             info!(target: APP_TAG, "Session uuid:{}", dev.uuid);
                         }
                         

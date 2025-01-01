@@ -44,7 +44,7 @@ impl Config {
     fn get_config_path(&self) -> &String {
         static ERR_RETURN : String = String::new();
 
-        if let Some(ret) = &self.config_path {
+        if let Some(ref ret) = self.config_path {
             ret
         } else {
             &ERR_RETURN
