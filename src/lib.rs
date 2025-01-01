@@ -4,7 +4,7 @@ mod session;
 mod config;
 
 mod global {
-    pub const DATA_FOLDER : &str = "pocket";
+    pub const DATA_FOLDER : &str = ".pocket";
 }
 
 

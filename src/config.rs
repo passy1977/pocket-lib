@@ -1,5 +1,4 @@
 use crate::pods::device::Device;
-use crate::session::Session;
 use crate::global::DATA_FOLDER;
 use std::fs::DirBuilder;
 use std::{env, fs};
@@ -9,13 +8,12 @@ use std::path::MAIN_SEPARATOR_STR;
 
 #[derive(Debug)]
 pub struct Config {
-    config_path: Option<String>,
-    pub init: bool
+    config_path: Option<String>
 }
 
 impl Config {
 
-    pub fn new(session: &mut Session, config_json: String, config_path: Option<String>) -> Result<Config, &'static str> {
+    pub fn new(config_path: Option<String>) -> Result<Config, &'static str> {
 
         #[allow(unused)]
         let mut absolute_path = String::new();
@@ -30,17 +28,33 @@ impl Config {
         }
         absolute_path += DATA_FOLDER;
 
-        if !fs::metadata(absolute_path.clone()).is_ok() {
-            DirBuilder::new().recursive(true).create(absolute_path.clone());
+        if !fs::metadata(&absolute_path).is_ok() {
+            if !DirBuilder::new().recursive(true).create(&absolute_path).is_ok() {
+                return Err("Impossible create folder")
+            }
         }
+
+        Ok(Config{
+            config_path: Some(absolute_path),
+        })
+    }
+
+
+    #[allow(unused)] 
+    fn get_config_path(&self) -> &String {
+        static ERR_RETURN : String = String::new();
+
+        if let Some(ret) = &self.config_path {
+            ret
+        } else {
+            &ERR_RETURN
+        }
+    }
+
+    pub fn parse(&self, config_json: &String) -> Result<Device, &'static str> {
 
         let ret = json::parse(config_json.as_str());
         if let Ok(parsed) = ret {
-            let mut config = Config{
-                config_path: Option::None,
-                init: false
-            };
-
             let mut device = Device::new();
 
             if let Some(uuid) = parsed["uuid"].as_str() {
@@ -67,16 +81,11 @@ impl Config {
             } else {
                 return Err("Json host_pub_key not find")
             }
-
-            session.device = Some(device);
-            config.config_path = Some(absolute_path);
-            config.init = true;
-            
-            Ok(config)
+        
+            Ok(device)
         } else {
             return Err("Json parsing error")
         }
-    }
 
-
+    } 
 }

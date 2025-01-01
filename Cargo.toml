@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 curl = "0.4.47"
 json = "0.12.4"
+log = "0.4.22"
 sqlite3 = "0.24.0"
 
 [lib]
