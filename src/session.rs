@@ -1,5 +1,5 @@
 
-use crate::config::Config;
+use crate::config::{self, Config};
 use crate::pods::device::Device;
 use crate::utils::{Error::Message, Result};
 use log::info;
@@ -42,7 +42,6 @@ impl Session {
 
                         session.init = true;
 
-
                         if let Some(ref dev) = session.device {
                             info!(target: APP_TAG, "Session uuid:{}", dev.uuid);
                         }
@@ -58,7 +57,29 @@ impl Session {
         }
     }
 
-    
+    pub fn init(&mut self) -> Result<()> {
+        
+
+        match (&self.config, &self.device) {
+            (Some(config), Some(deivce)) => {
+
+                
+
+                Ok(())
+            },
+            (_, _) => Err(Message("")) 
+        }
+        // if let Some(ref config) = self.config 
+        // let Some(ref device) = self.device
+        // {
+
+
+
+        // }
+
+    }
+
+
     pub fn register_device(&mut self, _email: &String, _passwd: &String, config_json: &String) -> Result<()> {
         Ok(())
     }
@@ -70,6 +91,8 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use log::info;
+
+    use crate::session;
 
     use super::*;
 
@@ -87,15 +110,20 @@ mod tests {
     #[test]
     fn it_works() {
         info!(target: APP_TAG, "Start test");
-        let session = Session::new(
+        let s = Session::new(
             Option::Some(REGISTRATION.to_string()), 
             Option::None
         );
 
-        assert!(session.is_ok());
 
-        //session?.register_device("test@salsi.it", "12345678", config_json)
+        assert!(s.is_ok());
 
-        //session.unwrap().test_pippo(2);
+        if let Ok(mut session) = s {
+            
+            session.init();
+
+        }
+
+        
     }
 }
