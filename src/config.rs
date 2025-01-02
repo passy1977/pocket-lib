@@ -1,5 +1,6 @@
 use crate::pods::device::Device;
 use crate::global::DATA_FOLDER;
+use crate::utils::{Error::Message, Result};
 use std::fs::DirBuilder;
 use std::{env, fs};
 use std::path::MAIN_SEPARATOR_STR;
@@ -13,7 +14,7 @@ pub struct Config {
 
 impl Config {
 
-    pub fn new(config_path: Option<String>) -> Result<Config, &'static str> {
+    pub fn new(config_path: Option<String>) -> Result<Config> {
 
         #[allow(unused)]
         let mut absolute_path = String::new();
@@ -30,7 +31,7 @@ impl Config {
 
         if !fs::metadata(&absolute_path).is_ok() {
             if !DirBuilder::new().recursive(true).create(&absolute_path).is_ok() {
-                return Err("Impossible create folder")
+                return Err(Message("Impossible create folder"))
             }
         }
 
@@ -51,7 +52,7 @@ impl Config {
         }
     }
 
-    pub fn parse(&self, config_json: &String) -> Result<Device, &'static str> {
+    pub fn parse(&self, config_json: &String) -> Result<Device> {
 
         let ret = json::parse(config_json.as_str());
         if let Ok(parsed) = ret {
@@ -60,31 +61,31 @@ impl Config {
             if let Some(uuid) = parsed["uuid"].as_str() {
                 device.uuid = uuid.to_string();
             } else {
-                return Err("Json uuid not find")
+                return Err(Message("Json uuid not find"))
             }
             
 
             if let Some(user_uuid) = parsed["user_uuid"].as_str() {
                 device.user_uuid = user_uuid.to_string();
             } else {
-                return Err("Json user_uuid not find")
+                return Err(Message("Json user_uuid not find"))
             }
 
             if let Some(host) = parsed["host"].as_str() {
                 device.host = host.to_string();
             } else {
-                return Err("Json host not find")
+                return Err(Message("Json host not find"))
             }
 
             if let Some(host_pub_key) = parsed["host_pub_key"].as_str() {
                 device.host_pub_key = host_pub_key.to_string();
             } else {
-                return Err("Json host_pub_key not find")
+                return Err(Message("Json host_pub_key not find"))
             }
         
             Ok(device)
         } else {
-            return Err("Json parsing error")
+            return Err(Message("Json parsing error"))
         }
 
     } 

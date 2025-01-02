@@ -1,6 +1,7 @@
 
 use crate::config::Config;
 use crate::pods::device::Device;
+use crate::utils::{Error::Message, Result};
 use log::info;
 
 const APP_TAG: &str = "Session"; 
@@ -15,12 +16,12 @@ pub struct Session {
 
 #[allow(unused)] 
 impl Session {
-    pub fn new(config_json: Option<String>, config_path: Option<String>) -> Result<Session, &'static str> {
+    pub fn new(config_json: Option<String>, config_path: Option<String>) -> Result<Session> {
         
         info!(target: APP_TAG, "Starting new session");
 
         match (config_json, config_path) {
-            (json @ None, _) => Err("Config json not defined"),
+            (json @ None, _) => Err(Message("Config json not defined")),
             (json, path) if !json.clone().unwrap().is_empty() => {
 
                 let mut session = Session { 
@@ -53,12 +54,12 @@ impl Session {
 
             },
             
-            (_, _) => Err("Un handled error"),
+            (_, _) => Err(Message("Un handled error"))
         }
     }
 
     
-    pub fn register_device(&mut self, _email: &String, _passwd: &String, config_json: &String) -> Result<(), &'static str> {
+    pub fn register_device(&mut self, _email: &String, _passwd: &String, config_json: &String) -> Result<()> {
         Ok(())
     }
 
