@@ -42,7 +42,7 @@ impl Config {
 
 
     #[allow(unused)] 
-    fn get_config_path(&self) -> &String {
+    pub fn config_path(&self) -> &String {
         static ERR_RETURN : String = String::new();
 
         if let Some(ref ret) = self.config_path {

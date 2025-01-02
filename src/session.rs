@@ -1,5 +1,8 @@
 
-use crate::config::{self, Config};
+use std::path::MAIN_SEPARATOR_STR;
+
+use crate::config::Config;
+use crate::database::Database;
 use crate::pods::device::Device;
 use crate::utils::{Error::Message, Result};
 use log::info;
@@ -9,6 +12,7 @@ const APP_TAG: &str = "Session";
 #[allow(unused)] 
 #[derive(Debug)]
 pub struct Session {
+    database: Database,
     pub config: Option<Config>,
     pub device: Option<Device>,
     pub init: bool
@@ -25,6 +29,7 @@ impl Session {
             (json, path) if !json.clone().unwrap().is_empty() => {
 
                 let mut session = Session { 
+                    database: Database::new(),
                     config: None,
                     device: None,
                     init: false
@@ -61,21 +66,24 @@ impl Session {
         
 
         match (&self.config, &self.device) {
-            (Some(config), Some(deivce)) => {
+            (Some(config), Some(device)) => {
 
-                
+                let mut file_db_path = config.config_path().clone();
+
+                if !file_db_path.ends_with(MAIN_SEPARATOR_STR) {
+                    file_db_path += "";
+                }
+
+                file_db_path += &device.uuid;
+                file_db_path += ".db";
+
+
+                self.database.init(file_db_path);
 
                 Ok(())
             },
             (_, _) => Err(Message("")) 
         }
-        // if let Some(ref config) = self.config 
-        // let Some(ref device) = self.device
-        // {
-
-
-
-        // }
 
     }
 

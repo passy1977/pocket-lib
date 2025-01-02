@@ -1,8 +1,9 @@
 mod pods;
 mod traits;
-mod session;
+pub mod session;
 mod config;
 mod utils;
+mod database;
 
 mod global {
     pub const DATA_FOLDER : &str = ".pocket";
