@@ -71,7 +71,7 @@ impl Session {
                 let mut file_db_path = config.config_path().clone();
 
                 if !file_db_path.ends_with(MAIN_SEPARATOR_STR) {
-                    file_db_path += "";
+                    file_db_path += MAIN_SEPARATOR_STR;
                 }
 
                 file_db_path += &device.uuid;
@@ -100,8 +100,6 @@ impl Session {
 mod tests {
     use log::info;
 
-    use crate::session;
-
     use super::*;
 
     const APP_TAG: &str = "Session test"; 
@@ -128,7 +126,7 @@ mod tests {
 
         if let Ok(mut session) = s {
             
-            session.init();
+            let _ = session.init();
 
         }
 

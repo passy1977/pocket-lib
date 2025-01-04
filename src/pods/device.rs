@@ -1,3 +1,5 @@
+use crate::traits::pod::Pod;
+
 
 #[repr(C)]
 #[allow(unused)] 
@@ -23,6 +25,8 @@ pub struct Device {
     pub timestamp_creation: u64,
     pub status: Status
 }
+
+impl Pod for Device {}
 
 #[allow(unused)] 
 impl Device {
