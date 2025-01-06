@@ -2,10 +2,12 @@
 use std::path::MAIN_SEPARATOR_STR;
 
 use crate::config::Config;
-use crate::database::Database;
+use crate::database::{Database, Status};
 use crate::pods::device::Device;
+use crate::pods::user::User;
 use crate::utils::{Error::Message, Result};
-use log::info;
+use crate::traits::database_read::DatabaseRead;
+use log::{ info, debug};
 
 const APP_TAG: &str = "Session"; 
 
@@ -13,9 +15,10 @@ const APP_TAG: &str = "Session";
 #[derive(Debug)]
 pub struct Session {
     database: Database,
-    pub config: Option<Config>,
-    pub device: Option<Device>,
-    pub init: bool
+    config: Option<Config>,
+    device: Option<Device>,
+    user: Option<User>,
+    init: bool
 }
 
 #[allow(unused)] 
@@ -32,6 +35,7 @@ impl Session {
                     database: Database::new(),
                     config: None,
                     device: None,
+                    user: None,
                     init: false
                 };
 
@@ -64,6 +68,7 @@ impl Session {
 
     pub fn init(&mut self) -> Result<()> {
         
+        info!(target: APP_TAG, "Init session");
 
         match (&self.config, &self.device) {
             (Some(config), Some(device)) => {
@@ -77,12 +82,25 @@ impl Session {
                 file_db_path += &device.uuid;
                 file_db_path += ".db";
 
+                debug!(target: APP_TAG, "file_db_path:{file_db_path}");
 
-                self.database.init(file_db_path);
+                if let Err(error) = self.database.init(file_db_path) {
+                    match error {
+                        Message(e) => return Err(Message(e))
+                    }
+                }
+
+                
+                self.user = Some(User::new());
+    
+                if self.user.clone().unwrap().read(&self.database, &()) == Status::Error {
+                    self.user = None;
+                    return Err(Message("User read error"))
+                }
 
                 Ok(())
             },
-            (_, _) => Err(Message("")) 
+            (_, _) => Err(Message("Un handler error")) 
         }
 
     }
@@ -92,6 +110,10 @@ impl Session {
         Ok(())
     }
 
+    pub fn database(&self) -> &Database {
+        &self.database
+    }
+
 }
 
 
@@ -99,6 +121,8 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use log::info;
+
+    use crate::{database, pods::user::User, traits::database_read::DatabaseRead};
 
     use super::*;
 
@@ -126,9 +150,20 @@ mod tests {
 
         if let Ok(mut session) = s {
             
-            let _ = session.init();
+            if let Ok(()) = session.init() {
+                if let Some(ref user) = session.user {
+                    if user.is_empty() {
+                        debug!(target: APP_TAG, "not logged");
+                    } else {
+                        debug!(target: APP_TAG, "logged");
+                    }
+                }
+            }
 
+            assert!(true);
         }
+
+        assert!(false);
 
         
     }

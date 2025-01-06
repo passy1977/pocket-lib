@@ -1,6 +1,8 @@
 pub mod user;
 
+use crate::utils::{Error::Message, Result};
 use sqlite3::Connection;
+
 
 
 
@@ -24,6 +26,18 @@ CREATE INDEX group_fields_deleted ON group_fields (deleted);
 CREATE INDEX fields_deleted ON fields (deleted);
 "#;
 
+#[derive(Clone)]
+pub enum Status {
+    Ok,
+    Error,
+    Empty
+}
+
+impl PartialEq<Status> for Status {
+    fn eq(&self, other: &Status) -> bool {
+        self.clone() as u8 == other.clone() as u8
+    }
+}
 
 pub struct Database {
     connection: Option<Connection>,
@@ -31,13 +45,14 @@ pub struct Database {
 }
 
 impl std::fmt::Debug for Database {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
 }
 
 
 impl Database {
+
     pub fn new() -> Self {
         Database {
             connection: None,
@@ -45,28 +60,27 @@ impl Database {
         }
     } 
 
-    pub fn init(&mut self, mut file_db_path: String) -> bool {
+    pub fn init(&mut self, file_db_path: String) -> Result<()> {
 
-        if let Ok(connection) = sqlite3::open(&file_db_path) {
-            self.connection = Some(connection);
-        } else {
-          return false  
-        }
+        static mut MSG: String = String::new();
+
+        self.connection = match sqlite3::open(&file_db_path) {
+            Ok(connection) => Some(connection),
+            Err(msg) => {
+                unsafe {
+                    MSG = msg.message.unwrap();
+                
+                    return Err(Message(&MSG.as_str()))
+                }
+            }
+        };
 
         if !self.is_created() {
             self.init = self.create(&file_db_path);
-            if !self.init  {
-                return false;
-            }
         }
-        self.init = self.load(&file_db_path);
         
-        self.init
+        Ok(())
     } 
-
-    fn load(&mut self, _file_db_path: &String) -> bool {
-        todo!("Check file version")
-    }
 
     fn create(&self, _file_db_path: &String) -> bool {
         if let Some(ref connection) = self.connection {

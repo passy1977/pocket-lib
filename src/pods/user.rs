@@ -2,6 +2,7 @@ use crate::traits::pod::Pod;
 
 #[allow(unused)] 
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Status {
     Unactive = 1,
     Active = 0,
@@ -10,6 +11,7 @@ pub enum Status {
 
 #[allow(unused)] 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct User {
     pub id: u64,
     pub uuid: String,
@@ -26,6 +28,10 @@ impl User {
             uuid: "".to_owned(),
             status: Status::Active
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.id == 0 && self.uuid == ""
     }
 }
 
