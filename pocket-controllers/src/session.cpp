@@ -19,8 +19,65 @@
 
 #include "pocket-controllers/session.hpp"
 
+#include <filesystem>
+
 namespace pocket::controllers::inline v5
 {
+using pods::device;
+using namespace std;
+using namespace std::filesystem;
+
+session::session(const optional<string>& config_json, const optional<string>& config_path)
+{
+    if(!config_json.has_value())
+    {
+        throw runtime_error("config_json not defined it's mandatory");
+    }
+
+    if(config_json->empty())
+    {
+        throw runtime_error("config_json empty mandatory");
+    }
+
+    this->config = make_unique<class config>(config_path);
+
+    device = std::move(config->parse(*config_json));
+
+    info(typeid(*this).name(), "Create new session:" + device->uuid);
+}
+
+session::~session()
+{
+    database->close();
+}
+
+void session::init()
+{
+    if(config.get() == nullptr)
+    {
+        throw runtime_error("config not defined");
+    }
+
+    if(!device.has_value())
+    {
+        throw runtime_error("config not defined");
+    }
+
+    auto&& file_db_path = config->get_config_path();
+
+    if(!file_db_path.ends_with(path::preferred_separator))
+    {
+        file_db_path += path::preferred_separator;
+    }
+
+    file_db_path += device->uuid;
+    file_db_path += ".db";
+
+    database = make_unique<class database>();
+
+    database->open(file_db_path);
+}
+
 
 }
 

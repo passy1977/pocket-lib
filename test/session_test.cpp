@@ -19,33 +19,42 @@
 
 #include <gtest/gtest.h>
 
-#include "pocket-controllers/config.hpp"
+#include "pocket-controllers/session.hpp"
 using namespace pocket::controllers;
 
-constexpr char data[] = R"json({
+constexpr char data[] = R"json(
 {
     "uuid": "de10b648-9e9c-4b63-96df-2aa662fe20ba",
     "user_uuid": "1281d20e-4e6f-43d8-9aa5-099039f36206",
     "host": "127.0.0.1",
     "host_pub_key": "fookey"
-
-})json";
+}
+)json";
 
 struct session_test : public ::testing::Test {};
 
-TEST_F(session_test, config)
+TEST_F(session_test, config_parse) try
 {
     config config;
-    try
-    {
-        config.parse(data);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
 
+    config.parse(data);
 
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
 
+TEST_F(session_test, session_init) try
+{
+    session session(data);
 
+    session.init();
+
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
 }

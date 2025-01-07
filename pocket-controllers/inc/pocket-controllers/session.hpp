@@ -19,7 +19,13 @@
 
 #pragma once
 
+#include "pocket-controllers/config.hpp"
+#include "pocket-controllers/database.hpp"
+#include "pocket-pods/user.hpp"
+#include "pocket-pods/device.hpp"
+#include "pocket/globals.hpp"
 
+#include <optional>
 
 namespace pocket::controllers::inline v5
 {
@@ -28,6 +34,16 @@ class session final
 {
 
 
+    controllers::config::ptr config = nullptr;
+    controllers::database::ptr database = nullptr;
+    pods::device::opt device;
+
+public:
+    explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
+    ~session();
+    POCKET_NO_COPY_NO_MOVE(session)
+
+    void init();
 
 };
 

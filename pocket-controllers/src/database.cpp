@@ -1,0 +1,198 @@
+/***************************************************************************
+ *
+ * Pocket
+ * Copyright (C) 2018/2025 Antonio Salsi <passy.linux@zresa.it>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ***************************************************************************/
+
+#include "pocket-controllers/database.hpp"
+#include "pocket/globals.hpp"
+
+#include <stdexcept>
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <unistd.h>
+namespace pocket::controllers::inline v5
+{
+
+using namespace std;
+using std::filesystem::exists;
+
+database::database() = default;
+database::~database() try
+{
+    close();
+}
+catch(const exception& e)
+{
+    cerr << e.what() << std::endl;
+    debug(typeid(*this).name(), e.what());
+}
+
+bool database::open(const string& file_db_path)
+{
+    lock_guard<mutex> lg(m);
+
+    if(check_lock(file_db_path + LOCK_EXTENSION))
+    {
+        return false;
+    }
+
+    int rc = sqlite3_open_v2(file_db_path.c_str(), &db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_FULLMUTEX, nullptr);
+    if (rc != SQLITE_OK)
+    {
+        string msg = "Error opening database: ";
+        msg += sqlite3_errmsg(db);
+        sqlite3_close(db);
+        throw runtime_error(msg);
+    }
+
+    database::file_db_path = file_db_path;
+
+    write_lock();
+
+    return true;
+}
+
+
+
+inline void database::close()
+{
+    lock_guard<mutex> lg(m);
+
+    if(db == nullptr)
+    {
+        return;
+    }
+    int rc = sqlite3_close(db);
+    if (rc != SQLITE_OK)
+    {
+        string msg = "Error closing database: ";
+        msg += sqlite3_errmsg(db);
+        throw runtime_error(msg);
+    }
+    db = nullptr;
+    delete_lock();
+}
+
+bool database::is_created()
+{
+    lock_guard<mutex> lg(m);
+
+    try
+    {
+        result_set rs(*this, "SELECT * FROM user");
+    }
+    catch (...)
+    {
+        return false;
+    }
+
+    return true;
+
+}
+
+bool database::create()
+{
+    lock_guard<mutex> lg(m);
+
+    return false;
+}
+
+
+bool database::check_lock(const string& file_db_path) noexcept
+{
+    if (exists(file_db_path))
+    {
+        ifstream file(file_db_path);
+        if (!file.is_open())
+        {
+            throw runtime_error("Error opening file.");
+        }
+
+        string pid((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
+
+        file.close();
+
+        info(typeid(*this).name(), "DB locked: " + file_db_path + LOCK_EXTENSION + " by pid:" + pid);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+void database::write_lock()
+{
+    pid_t pid = getpid();
+
+    ofstream out(file_db_path + LOCK_EXTENSION);
+
+    if (!out)
+    {
+        throw runtime_error("Error: Could not open file for writing.");
+    }
+
+    out << pid << endl;
+
+    out.close();
+}
+
+void database::delete_lock()
+{
+    if (exists(file_db_path + LOCK_EXTENSION))
+    {
+        filesystem::remove(file_db_path + LOCK_EXTENSION);  //throw exception
+    }
+    else
+    {
+        throw runtime_error("File does not exist.");
+    }
+}
+
+//result_set
+
+result_set::result_set(class database& database, const std::string& query)
+: database(database)
+{
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        for (int i = 0; i < sqlite3_column_count(stmt); i++)
+        {
+
+            int type = 0;
+            switch (sqlite3_column_type(stmt, i))
+            {
+                case (SQLITE3_TEXT):  type = SQLITE3_TEXT;  break;
+                case (SQLITE_INTEGER): type = SQLITE_INTEGER; break;
+                case (SQLITE_FLOAT): type = SQLITE_FLOAT; break;
+                case (SQLITE_BLOB): type = SQLITE_BLOB; break;
+                default: break;
+            }
+            columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
+        }
+    }
+    count++;
+}
+
+}
+
+
+
+
+

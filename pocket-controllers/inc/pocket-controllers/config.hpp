@@ -19,10 +19,9 @@
 
 #pragma once
 
+#include "pocket/globals.hpp"
 #include "pocket-pods/device.hpp"
 
-#include <optional>
-#include <string>
 
 namespace pocket::controllers::inline v5
 {
@@ -32,9 +31,12 @@ class config final
     std::optional<std::string> config_path;
 
 public:
-    explicit config(const std::optional<std::string>& config_path = {});
+    using ptr = std::unique_ptr<config>;
 
-    pods::device::ptr parse(const std::string& config_json);
+    explicit config(const std::optional<std::string>& config_path = {});
+    POCKET_NO_COPY_NO_MOVE(config)
+
+    pods::device parse(const std::string& config_json);
 
     inline std::string get_config_path() const noexcept
     {

@@ -20,8 +20,57 @@
 #pragma once
 
 #include <memory>
+#include <iostream>
+
+#define POCKET_ANSI_COLOR_RED     "\x1b[31m"
+#define POCKET_ANSI_COLOR_GREEN   "\x1b[32m"
+#define POCKET_ANSI_COLOR_YELLOW  "\x1b[33m"
+#define POCKET_ANSI_COLOR_BLUE    "\x1b[34m"
+#define POCKET_ANSI_COLOR_MAGENTA "\x1b[35m"
+#define POCKET_ANSI_COLOR_CYAN    "\x1b[36m"
+#define POCKET_ANSI_COLOR_RESET   "\x1b[0m"
+#define POCKET_NEW_LINE   "\n"
+
+#define POCKET_NO_COPY_NO_MOVE(clazz) \
+clazz(const clazz&) = delete; \
+clazz& operator=(const clazz&) = delete; \
+clazz(clazz&&) = delete; \
+clazz& operator=(clazz&&) = delete;
+
 
 namespace pocket::inline v5
 {
     constexpr char DATA_FOLDER[] = ".pocket";
+    constexpr char LOCK_EXTENSION[] = ".lock";
+
+    constexpr auto debug(const std::string& app_tag, const std::string& log) noexcept
+    {
+        std::printf(POCKET_ANSI_COLOR_BLUE "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
+    }
+
+    constexpr inline auto debug(const std::string& app_tag, const std::string&& log) noexcept
+    {
+        debug(app_tag, log);
+    }
+
+    constexpr auto info(const std::string& app_tag, const std::string& log) noexcept
+    {
+        std::printf(POCKET_ANSI_COLOR_GREEN "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
+    }
+
+    constexpr inline auto info(const std::string& app_tag, const std::string&& log) noexcept
+    {
+        info(app_tag, log);
+    }
+
+    constexpr auto error(const std::string& app_tag, const std::string& log) noexcept
+    {
+        std::printf(POCKET_ANSI_COLOR_RED "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
+    }
+
+    constexpr auto error(const std::string& app_tag, const std::string&& log) noexcept
+    {
+        error(app_tag, log);
+    }
+
 }

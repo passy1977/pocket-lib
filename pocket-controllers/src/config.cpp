@@ -18,7 +18,6 @@
  ***************************************************************************/
 
 #include "pocket-controllers/config.hpp"
-#include "pocket/globals.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -29,8 +28,10 @@ namespace pocket::controllers::inline v5
 {
 
 using pods::device;
+using nlohmann::json;
 using namespace std;
 using namespace std::filesystem;
+
 
 config::config(const optional<string>& config_path)
 {
@@ -51,9 +52,12 @@ config::config(const optional<string>& config_path)
     {
         try
         {
-            create_directories(absolute_path);
+            if(create_directories(absolute_path))
+            {
+                info(typeid(*this).name(), "Create new folder:" + absolute_path);
+            }
         }
-        catch (const std::filesystem::filesystem_error& e)
+        catch (const exception& e)
         {
             throw runtime_error(e.what());
         }
@@ -62,14 +66,54 @@ config::config(const optional<string>& config_path)
     this->config_path = absolute_path;
 }
 
-device::ptr config::parse(const string& config_json)
+device config::parse(const string& config_json)
 {
 
-    nlohmann::json json = config_json;
+    auto&& json = json::parse(config_json);
+    if (!json.is_object())
+    {
+        throw runtime_error("Config json is not a object");
+    }
 
-    auto device = make_unique<struct device>();
+    device device;
 
+    if(json.contains("uuid") && json["uuid"].is_string())
+    {
+        device.uuid = json["uuid"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field uuid");
+    }
 
+    if(json.contains("user_uuid") && json["user_uuid"].is_string())
+    {
+        device.user_uuid = json["user_uuid"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field user_uuid");
+    }
+
+    if(json.contains("host") && json["host"].is_string())
+    {
+        device.host = json["host"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field host");
+    }
+
+    if(json.contains("host_pub_key") && json["host_pub_key"].is_string())
+    {
+        device.host_pub_key = json["host_pub_key"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field host_pub_key");
+    }
+
+    debug(typeid(*this).name(), "Create new config");
 
     return device;
 }

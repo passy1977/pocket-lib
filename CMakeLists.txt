@@ -66,8 +66,7 @@ add_library(${PROJECT_NAME} STATIC
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}
-        inc/pocket/globals.hpp
-        test/session_test.cpp
+        src/globals.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

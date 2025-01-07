@@ -20,6 +20,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 
 namespace pocket::pods::inline v5
@@ -27,7 +28,8 @@ namespace pocket::pods::inline v5
 
 struct device final
 {
-    typedef std::unique_ptr<device> ptr;
+    using ptr = std::unique_ptr<device>;
+    using opt = std::optional<device>;
 
     enum class status {
         INACTIVE = 1,
@@ -41,8 +43,8 @@ struct device final
     std::string user_uuid;
     std::string host;
     std::string host_pub_key;
-    std::string timestamp_last_update;
-    std::string timestamp_creation;
+    uint64_t timestamp_last_update = 0;
+    uint64_t timestamp_creation = 0;
     status status = status::INACTIVE;
 
     ~device() = default;
