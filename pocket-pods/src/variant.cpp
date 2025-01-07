@@ -17,31 +17,37 @@
  *
  ***************************************************************************/
 
-#pragma once
-
-#include <memory>
+#include "pocket-pods/variant.hpp"
 
 namespace pocket::pods::inline v5
 {
 
-struct user final
+
+variant::variant(int64_t value) noexcept
+: type(INTEGER)
+, integer_value(value)
 {
-    using ptr = std::unique_ptr<user>;
 
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
+}
 
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
+variant::variant(float value) noexcept
+: type(FLOAT)
 
-    ~user() = default;
-};
+{
+
+}
+
+variant::variant(const std::string& value) noexcept
+: type(TEXT)
+, text_value(value)
+{
+
+}
+
+variant::variant(const std::string&& value) noexcept
+: variant(value)
+{
+
+}
 
 }

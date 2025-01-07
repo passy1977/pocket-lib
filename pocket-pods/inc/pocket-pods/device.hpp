@@ -28,7 +28,6 @@ namespace pocket::pods::inline v5
 
 struct device final
 {
-    using ptr = std::unique_ptr<device>;
     using opt = std::optional<device>;
 
     enum class status {

@@ -20,9 +20,10 @@
 #pragma once
 
 #include "pocket/globals.hpp"
+#include "pocket-pods/variant.hpp"
 
 #include <string>
-#include <vector>
+#include <initializer_list>
 #include <map>
 #include <mutex>
 #include <variant>
@@ -36,23 +37,24 @@ class database final
 {
 
     constexpr inline static char CREATION_SQL[] = R"sql(
-    CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_uuid TEXT NOT NULL DEFAULT '', status integer NOT NULL DEFAULT '0');
-    CREATE TABLE `properties` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `_key` TEXT NOT NULL DEFAULT '', `_value` TEXT NOT NULL DEFAULT '');
-    CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', FOREIGN KEY (user_id) REFERENCES addresses (id));
-    CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', is_temporary integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
-    CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', shared integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
-    CREATE INDEX `groups_title` ON `groups` (title);
-    CREATE INDEX `group_fields_group_id` ON `group_fields` (`group_id`);
-    CREATE INDEX fields_group_field_id ON fields (group_field_id);
-    CREATE INDEX groups_server_id ON groups (server_id);
-    CREATE INDEX group_fields_server_id ON group_fields (server_id);
-    CREATE INDEX fields_server_id ON fields (server_id);
-    CREATE INDEX groups_user_id ON groups (user_id);
-    CREATE INDEX group_fields_user_id ON group_fields (user_id);
-    CREATE INDEX fields_user_id ON fields (user_id);
-    CREATE INDEX groups_deleted ON groups (deleted);
-    CREATE INDEX group_fields_deleted ON group_fields (deleted);
-    CREATE INDEX fields_deleted ON fields (deleted);
+CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_uuid TEXT NOT NULL DEFAULT '', status integer NOT NULL DEFAULT '0');
+CREATE TABLE `properties` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `_key` TEXT NOT NULL DEFAULT '', `_value` TEXT NOT NULL DEFAULT '');
+CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', is_temporary integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', shared integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE INDEX `groups_title` ON `groups` (title);
+CREATE INDEX `group_fields_group_id` ON `group_fields` (`group_id`);
+CREATE INDEX fields_group_field_id ON fields (group_field_id);
+CREATE INDEX groups_server_id ON groups (server_id);
+CREATE INDEX group_fields_server_id ON group_fields (server_id);
+CREATE INDEX fields_server_id ON fields (server_id);
+CREATE INDEX groups_user_id ON groups (user_id);
+CREATE INDEX group_fields_user_id ON group_fields (user_id);
+CREATE INDEX fields_user_id ON fields (user_id);
+CREATE INDEX groups_deleted ON groups (deleted);
+CREATE INDEX group_fields_deleted ON group_fields (deleted);
+CREATE INDEX fields_deleted ON fields (deleted);
+INSERT INTO properties (_key, _value) VALUES (?, ?)
     )sql";
 
     std::string file_db_path;
@@ -62,6 +64,8 @@ class database final
 public:
     using ptr = std::unique_ptr<database>;
 
+    using parameters = std::initializer_list<pods::variant>;
+
     database();
     ~database();
     POCKET_NO_COPY_NO_MOVE(database)
@@ -69,48 +73,40 @@ public:
     bool open(const std::string& file_db_path);
     void close();
 
-
+    bool check_lock(const std::string& file_db_path);
 
 private:
     friend result_set;
 
-    bool is_created();
+    bool is_created() noexcept;
     bool create();
 
     void write_lock();
-    bool check_lock(const std::string& file_db_path) noexcept;
     void delete_lock();
 };
 
 class result_set final
 {
-    template<typename T>
-    using parameter = std::vector<std::variant<T>>;
-
-    enum class Type {
-        INTEGER = SQLITE_INTEGER,
-        FLOAT = SQLITE_FLOAT,
-        TEXT = SQLITE3_TEXT,
-        BLOB = SQLITE_BLOB,
-    };
-
-
     sqlite3_stmt *stmt = nullptr;
     uint64_t count = 0;
 
     std::map<std::string, std::pair<int, int>> columns; //idx, sql_type
 
     class database& database;
+    int statement_status = SQLITE_OK;
 public:
     explicit result_set(class database& database, const std::string& query);
 
-    inline explicit result_set(class database& database, const std::string&& query)
+    inline explicit result_set(class database& database, const std::string&& query, )
      : result_set(database, query)
     {}
 
     POCKET_NO_COPY_NO_MOVE(result_set)
 
-
+    inline int get_statement_status() const noexcept
+    {
+        return statement_status;
+    }
 };
 
 

@@ -20,28 +20,51 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 namespace pocket::pods::inline v5
 {
 
-struct user final
-{
-    using ptr = std::unique_ptr<user>;
 
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
+class variant final
+{
+public:
+    using ptr = std::unique_ptr<variant>;
+
+    enum class type
+    {
+        INTEGER = 1,
+        FLOAT,
+        TEXT
     };
 
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
+private:
+    using enum variant::type;
 
-    ~user() = default;
+    type type;
+    int64_t integer_value = 0;
+    float float_value = 0;
+    std::string text_value;
+public:
+    explicit variant(int64_t value) noexcept;
+    explicit variant(float value) noexcept;
+    explicit variant(const std::string& value) noexcept;
+    explicit variant(const std::string&& value) noexcept;
+
+    inline int64_t get_integer() const noexcept
+    {
+        return integer_value;
+    }
+
+    inline float get_float() const noexcept
+    {
+        return float_value;
+    }
+
+    inline std::string get_text() const noexcept
+    {
+        return text_value;
+    }
 };
 
 }

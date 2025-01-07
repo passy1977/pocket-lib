@@ -20,6 +20,7 @@
 #include "pocket-controllers/session.hpp"
 
 #include <filesystem>
+#include <thread>
 
 namespace pocket::controllers::inline v5
 {
@@ -75,7 +76,19 @@ void session::init()
 
     database = make_unique<class database>();
 
-    database->open(file_db_path);
+    uint8_t attempts = 10;
+    while(!database->open(file_db_path) && attempts > 0)
+    {
+        this_thread::sleep_for(chrono::milliseconds(10));
+        attempts--;
+    }
+
+    if(attempts == 0)
+    {
+        throw runtime_error("Database busy");
+    }
+
+
 }
 
 

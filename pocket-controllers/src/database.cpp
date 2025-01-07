@@ -46,7 +46,7 @@ bool database::open(const string& file_db_path)
 {
     lock_guard<mutex> lg(m);
 
-    if(check_lock(file_db_path + LOCK_EXTENSION))
+    if(check_lock(file_db_path + LOCK_EXTENSION)) //throw exception
     {
         return false;
     }
@@ -63,6 +63,15 @@ bool database::open(const string& file_db_path)
     database::file_db_path = file_db_path;
 
     write_lock();
+
+    if(is_created()) //throw exception
+    {
+       //todo: check version
+    }
+    else
+    {
+        create(); //throw exception
+    }
 
     return true;
 }
@@ -88,33 +97,40 @@ inline void database::close()
     delete_lock();
 }
 
-bool database::is_created()
+bool database::is_created() noexcept try
 {
-    lock_guard<mutex> lg(m);
-
-    try
-    {
-        result_set rs(*this, "SELECT * FROM user");
-    }
-    catch (...)
+    result_set rs(*this, "SELECT * FROM user");
+    if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
     }
 
     return true;
-
+}
+catch (...)
+{
+    return false;
 }
 
 bool database::create()
 {
-    lock_guard<mutex> lg(m);
+    result_set rs(*this, CREATION_SQL);
+    if(rs.get_statement_status() != SQLITE_OK)
+    {
+        return false;
+    }
 
-    return false;
+    info(typeid(*this).name(), "Create database:" + file_db_path);
+
+    return true;
 }
 
 
-bool database::check_lock(const string& file_db_path) noexcept
+bool database::check_lock(const string& file_db_path)
 {
+#ifdef DISABLE_LOCK
+    return false;
+#else
     if (exists(file_db_path))
     {
         ifstream file(file_db_path);
@@ -134,6 +150,7 @@ bool database::check_lock(const string& file_db_path) noexcept
     {
         return false;
     }
+#endif
 }
 
 
@@ -170,24 +187,28 @@ void database::delete_lock()
 result_set::result_set(class database& database, const std::string& query)
 : database(database)
 {
-    if (sqlite3_step(stmt) != SQLITE_DONE)
+    statement_status = sqlite3_prepare_v3(database.db, query.c_str(), -1, 0, &stmt, nullptr);
+    if( statement_status == SQLITE_OK )
     {
-        for (int i = 0; i < sqlite3_column_count(stmt); i++)
+        if (sqlite3_step(stmt) != SQLITE_DONE)
         {
-
-            int type = 0;
-            switch (sqlite3_column_type(stmt, i))
+            for (int i = 0; i < sqlite3_column_count(stmt); i++)
             {
-                case (SQLITE3_TEXT):  type = SQLITE3_TEXT;  break;
-                case (SQLITE_INTEGER): type = SQLITE_INTEGER; break;
-                case (SQLITE_FLOAT): type = SQLITE_FLOAT; break;
-                case (SQLITE_BLOB): type = SQLITE_BLOB; break;
-                default: break;
+
+                int type = 0;
+                switch (sqlite3_column_type(stmt, i))
+                {
+                    case (SQLITE3_TEXT):  type = SQLITE3_TEXT;  break;
+                    case (SQLITE_INTEGER): type = SQLITE_INTEGER; break;
+                    case (SQLITE_FLOAT): type = SQLITE_FLOAT; break;
+                    case (SQLITE_BLOB): type = SQLITE_BLOB; break;
+                    default: break;
+                }
+                columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
             }
-            columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
         }
+        count++;
     }
-    count++;
 }
 
 }
