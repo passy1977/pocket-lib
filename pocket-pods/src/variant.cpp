@@ -23,22 +23,28 @@ namespace pocket::pods::inline v5
 {
 
 
+variant::variant(int32_t value) noexcept
+: t(INT)
+, integer_value(value)
+{
+
+}
+
 variant::variant(int64_t value) noexcept
-: type(INTEGER)
+: t(INT64)
 , integer_value(value)
 {
 
 }
 
 variant::variant(float value) noexcept
-: type(FLOAT)
-
+: t(FLOAT)
 {
 
 }
 
 variant::variant(const std::string& value) noexcept
-: type(TEXT)
+: t(TEXT)
 , text_value(value)
 {
 

@@ -29,13 +29,13 @@
 #include <variant>
 #include <sqlite3.h>
 
-namespace pocket::controllers::inline v5
+namespace pocket::services::inline v5
 {
 
 class result_set;
 class database final
 {
-
+    constexpr inline static uint8_t VERSION = 2;
     constexpr inline static char CREATION_SQL[] = R"sql(
 CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_uuid TEXT NOT NULL DEFAULT '', status integer NOT NULL DEFAULT '0');
 CREATE TABLE `properties` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `_key` TEXT NOT NULL DEFAULT '', `_value` TEXT NOT NULL DEFAULT '');
@@ -54,7 +54,7 @@ CREATE INDEX fields_user_id ON fields (user_id);
 CREATE INDEX groups_deleted ON groups (deleted);
 CREATE INDEX group_fields_deleted ON group_fields (deleted);
 CREATE INDEX fields_deleted ON fields (deleted);
-INSERT INTO properties (_key, _value) VALUES (?, ?)
+INSERT INTO meta VALUES (?);
     )sql";
 
     std::string file_db_path;
@@ -83,30 +83,6 @@ private:
 
     void write_lock();
     void delete_lock();
-};
-
-class result_set final
-{
-    sqlite3_stmt *stmt = nullptr;
-    uint64_t count = 0;
-
-    std::map<std::string, std::pair<int, int>> columns; //idx, sql_type
-
-    class database& database;
-    int statement_status = SQLITE_OK;
-public:
-    explicit result_set(class database& database, const std::string& query);
-
-    inline explicit result_set(class database& database, const std::string&& query, )
-     : result_set(database, query)
-    {}
-
-    POCKET_NO_COPY_NO_MOVE(result_set)
-
-    inline int get_statement_status() const noexcept
-    {
-        return statement_status;
-    }
 };
 
 

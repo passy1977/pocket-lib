@@ -33,38 +33,45 @@ public:
 
     enum class type
     {
-        INTEGER = 1,
+        INT = 1,
         FLOAT,
-        TEXT
+        TEXT,
+        INT64,
     };
-
-private:
     using enum variant::type;
 
-    type type;
+private:
+    variant::type t;
     int64_t integer_value = 0;
     float float_value = 0;
     std::string text_value;
 public:
+    explicit variant(int32_t value) noexcept;
     explicit variant(int64_t value) noexcept;
     explicit variant(float value) noexcept;
     explicit variant(const std::string& value) noexcept;
     explicit variant(const std::string&& value) noexcept;
 
-    inline int64_t get_integer() const noexcept
+    inline int64_t to_integer() const noexcept
     {
         return integer_value;
     }
 
-    inline float get_float() const noexcept
+    inline float to_float() const noexcept
     {
         return float_value;
     }
 
-    inline std::string get_text() const noexcept
+    inline std::string to_text() const noexcept
     {
         return text_value;
     }
+
+    inline enum type get_type() const noexcept
+    {
+        return t;
+    }
+
 };
 
 }

@@ -25,6 +25,7 @@
 namespace pocket::controllers::inline v5
 {
 using pods::device;
+using services::database;
 using namespace std;
 using namespace std::filesystem;
 

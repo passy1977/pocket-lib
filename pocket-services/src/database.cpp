@@ -17,7 +17,8 @@
  *
  ***************************************************************************/
 
-#include "pocket-controllers/database.hpp"
+#include "pocket-services/database.hpp"
+#include "pocket-services/resultset.hpp"
 #include "pocket/globals.hpp"
 
 #include <stdexcept>
@@ -25,11 +26,13 @@
 #include <filesystem>
 #include <fstream>
 #include <unistd.h>
-namespace pocket::controllers::inline v5
+namespace pocket::services::inline v5
 {
 
 using namespace std;
 using std::filesystem::exists;
+using pods::variant;
+using enum pods::variant::type;
 
 database::database() = default;
 database::~database() try
@@ -99,7 +102,7 @@ inline void database::close()
 
 bool database::is_created() noexcept try
 {
-    result_set rs(*this, "SELECT * FROM user");
+    result_set rs(*this, "SELECT * FROM meta");
     if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
@@ -114,7 +117,8 @@ catch (...)
 
 bool database::create()
 {
-    result_set rs(*this, CREATION_SQL);
+
+    result_set rs(*this, CREATION_SQL, { variant{to_string(VERSION)} });
     if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
@@ -179,35 +183,6 @@ void database::delete_lock()
     else
     {
         throw runtime_error("File does not exist.");
-    }
-}
-
-//result_set
-
-result_set::result_set(class database& database, const std::string& query)
-: database(database)
-{
-    statement_status = sqlite3_prepare_v3(database.db, query.c_str(), -1, 0, &stmt, nullptr);
-    if( statement_status == SQLITE_OK )
-    {
-        if (sqlite3_step(stmt) != SQLITE_DONE)
-        {
-            for (int i = 0; i < sqlite3_column_count(stmt); i++)
-            {
-
-                int type = 0;
-                switch (sqlite3_column_type(stmt, i))
-                {
-                    case (SQLITE3_TEXT):  type = SQLITE3_TEXT;  break;
-                    case (SQLITE_INTEGER): type = SQLITE_INTEGER; break;
-                    case (SQLITE_FLOAT): type = SQLITE_FLOAT; break;
-                    case (SQLITE_BLOB): type = SQLITE_BLOB; break;
-                    default: break;
-                }
-                columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
-            }
-        }
-        count++;
     }
 }
 

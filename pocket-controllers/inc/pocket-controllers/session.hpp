@@ -20,7 +20,7 @@
 #pragma once
 
 #include "pocket-controllers/config.hpp"
-#include "pocket-controllers/database.hpp"
+#include "pocket-services/database.hpp"
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
@@ -35,7 +35,7 @@ class session final
 
 
     controllers::config::ptr config = nullptr;
-    controllers::database::ptr database = nullptr;
+    services::database::ptr database = nullptr;
     pods::device::opt device;
 
 public:
