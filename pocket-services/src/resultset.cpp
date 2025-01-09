@@ -29,7 +29,7 @@ using enum pods::variant::type;
 result_set::result_set(class database& database, const std::string& query, const database::parameters& parameters)
         : database(database)
 {
-    statement_status = sqlite3_prepare_v3(database.db, query.c_str(), -1, 0, &stmt, nullptr);
+    statement_status = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
     if( statement_status == SQLITE_OK )
     {
         for(int i = 1; auto &&param : parameters) {
@@ -43,11 +43,11 @@ result_set::result_set(class database& database, const std::string& query, const
             i++;
         }
 
-        if (sqlite3_step(stmt) != SQLITE_DONE)
+        int rc = SQLITE_DONE;
+        if (rc = sqlite3_step(stmt); rc != SQLITE_DONE && rc != SQLITE_ERROR)
         {
             for (int i = 0; i < sqlite3_column_count(stmt); i++)
             {
-
                 int type = 0;
                 switch (sqlite3_column_type(stmt, i))
                 {
@@ -59,12 +59,23 @@ result_set::result_set(class database& database, const std::string& query, const
                 }
                 columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
             }
+            sqlite3_finalize(stmt);
+        }
+        else if (rc == SQLITE_ERROR)
+        {
+            sqlite3_finalize(stmt);
+            throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
         }
         count++;
     }
+    else if(statement_status == SQLITE_ERROR)
+    {
+        sqlite3_finalize(stmt);
+        throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
+    }
 }
 
-    result_set::~result_set() = default;
+result_set::~result_set() = default;
 
 
 

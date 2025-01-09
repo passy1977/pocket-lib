@@ -23,14 +23,18 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
+
 #include <unistd.h>
 namespace pocket::services::inline v5
 {
 
 using namespace std;
-using std::filesystem::exists;
+using namespace std::filesystem;
 using pods::variant;
 using enum pods::variant::type;
 
@@ -65,7 +69,7 @@ bool database::open(const string& file_db_path)
 
     database::file_db_path = file_db_path;
 
-    write_lock();
+    lock();
 
     if(is_created()) //throw exception
     {
@@ -83,26 +87,26 @@ bool database::open(const string& file_db_path)
 
 inline void database::close()
 {
-    lock_guard<mutex> lg(m);
-
     if(db == nullptr)
     {
         return;
     }
-    int rc = sqlite3_close(db);
+    int rc = sqlite3_close_v2(db);
     if (rc != SQLITE_OK)
     {
-        string msg = "Error closing database: ";
+        string msg = "Error closing database:";
         msg += sqlite3_errmsg(db);
+        db = nullptr;
+        unlock();
         throw runtime_error(msg);
     }
     db = nullptr;
-    delete_lock();
+    unlock();
 }
 
 bool database::is_created() noexcept try
 {
-    result_set rs(*this, "SELECT * FROM meta");
+    result_set rs(*this, "SELECT * FROM meta"); //throw exception
     if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
@@ -117,16 +121,56 @@ catch (...)
 
 bool database::create()
 {
+    vector<string> result;
+    stringstream ss(CREATION_SQL);
+    string part;
 
-    result_set rs(*this, CREATION_SQL, { variant{to_string(VERSION)} });
-    if(rs.get_statement_status() != SQLITE_OK)
+    uint8_t i = 0;
+    bool error = false;
+    while (getline(ss, part, ';'))
     {
-        return false;
+        i++;
+        try
+        {
+            result_set rs(*this, part, { variant{VERSION} }); //throw exception
+            if(rs.get_statement_status() != SQLITE_OK)
+            {
+                error = true;
+                break;
+            }
+        }
+        catch (const exception& e)
+        {
+            close(); //throw exception
+            rm(); //throw exception
+            throw runtime_error("Impossible execute query:" + part + " at row:" + to_string(i) + " error:" + e.what());
+        }
+
+    }
+
+    if(error)
+    {
+        close(); //throw exception
+        rm(); //throw exception
+        throw runtime_error("Impossible execute query:" + part + " at row:" + to_string(i));
     }
 
     info(typeid(*this).name(), "Create database:" + file_db_path);
 
     return true;
+}
+
+bool database::rm()
+{
+    if (exists(file_db_path))
+    {
+        remove(file_db_path);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -158,31 +202,37 @@ bool database::check_lock(const string& file_db_path)
 }
 
 
-void database::write_lock()
+void database::lock()
 {
-    pid_t pid = getpid();
-
-    ofstream out(file_db_path + LOCK_EXTENSION);
-
-    if (!out)
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK)
     {
-        throw runtime_error("Error: Could not open file for writing.");
+        string msg = "Database lock error";
+        if(err)
+        {
+            msg += ":";
+            msg += err;
+            sqlite3_free(err);
+        }
+        throw runtime_error(msg);
     }
-
-    out << pid << endl;
-
-    out.close();
 }
 
-void database::delete_lock()
+void database::unlock()
 {
-    if (exists(file_db_path + LOCK_EXTENSION))
+    char* err = nullptr;
+    int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK)
     {
-        filesystem::remove(file_db_path + LOCK_EXTENSION);  //throw exception
-    }
-    else
-    {
-        throw runtime_error("File does not exist.");
+        string msg = "Database unlock error";
+        if(err)
+        {
+            msg += ":";
+            msg += err;
+            sqlite3_free(err);
+        }
+        throw runtime_error(msg);
     }
 }
 

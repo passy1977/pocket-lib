@@ -42,6 +42,7 @@ CREATE TABLE `properties` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, use
 CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', FOREIGN KEY (user_id) REFERENCES addresses (id));
 CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', is_temporary integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
 CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', shared integer, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE metadata (version INTEGER);
 CREATE INDEX `groups_title` ON `groups` (title);
 CREATE INDEX `group_fields_group_id` ON `group_fields` (`group_id`);
 CREATE INDEX fields_group_field_id ON fields (group_field_id);
@@ -54,7 +55,7 @@ CREATE INDEX fields_user_id ON fields (user_id);
 CREATE INDEX groups_deleted ON groups (deleted);
 CREATE INDEX group_fields_deleted ON group_fields (deleted);
 CREATE INDEX fields_deleted ON fields (deleted);
-INSERT INTO meta VALUES (?);
+INSERT INTO metadata VALUES (?);
     )sql";
 
     std::string file_db_path;
@@ -80,9 +81,10 @@ private:
 
     bool is_created() noexcept;
     bool create();
+    bool rm();
 
-    void write_lock();
-    void delete_lock();
+    void lock();
+    void unlock();
 };
 
 
