@@ -25,9 +25,8 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <algorithm>
 #include <filesystem>
-#include <fstream>
+
 
 #include <unistd.h>
 namespace pocket::services::inline v5
@@ -77,7 +76,7 @@ bool database::open(const string& file_db_path)
     }
     else
     {
-        create(); //throw exception
+        create(CREATION_SQL); //throw exception
     }
 
     return true;
@@ -91,6 +90,9 @@ inline void database::close()
     {
         return;
     }
+
+    unlock();
+
     int rc = sqlite3_close_v2(db);
     if (rc != SQLITE_OK)
     {
@@ -101,12 +103,12 @@ inline void database::close()
         throw runtime_error(msg);
     }
     db = nullptr;
-    unlock();
+
 }
 
 bool database::is_created() noexcept try
 {
-    result_set rs(*this, "SELECT * FROM meta"); //throw exception
+    result_set rs(*this, "SELECT * FROM metadata"); //throw exception
     if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
@@ -119,10 +121,10 @@ catch (...)
     return false;
 }
 
-bool database::create()
+bool database::create(const char creation_sql[])
 {
     vector<string> result;
-    stringstream ss(CREATION_SQL);
+    stringstream ss(creation_sql);
     string part;
 
     uint8_t i = 0;
@@ -154,6 +156,8 @@ bool database::create()
         rm(); //throw exception
         throw runtime_error("Impossible execute query:" + part + " at row:" + to_string(i));
     }
+
+    sqlite3_commit_hook(db, nullptr, nullptr);
 
     info(typeid(*this).name(), "Create database:" + file_db_path);
 
@@ -205,8 +209,7 @@ bool database::check_lock(const string& file_db_path)
 void database::lock()
 {
     char* err = nullptr;
-    int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err);
-    if (rc != SQLITE_OK)
+    if (int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
         string msg = "Database lock error";
         if(err)
@@ -217,13 +220,39 @@ void database::lock()
         }
         throw runtime_error(msg);
     }
+
+//    err = nullptr;
+//    if (int rc = sqlite3_exec(db, "BEGIN EXCLUSIVE",nullptr, nullptr,&err); rc != SQLITE_OK)
+//    {
+//        string msg = "Database lock error";
+//        if(err)
+//        {
+//            msg += ":";
+//            msg += err;
+//            sqlite3_free(err);
+//        }
+//        throw runtime_error(msg);
+//    }
 }
 
 void database::unlock()
 {
     char* err = nullptr;
-    int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err);
-    if (rc != SQLITE_OK)
+//    if (int rc = sqlite3_exec(db, "COMMIT",nullptr, nullptr,&err); rc != SQLITE_OK)
+//    {
+//        string msg = "Database lock error";
+//        if(err)
+//        {
+//            msg += ":";
+//            msg += err;
+//            sqlite3_free(err);
+//        }
+//        throw runtime_error(msg);
+//    }
+
+//    err = nullptr;
+//    int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err);
+    if (int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
         string msg = "Database unlock error";
         if(err)

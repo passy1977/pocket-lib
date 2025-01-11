@@ -37,8 +37,9 @@ variant::variant(int64_t value) noexcept
 
 }
 
-variant::variant(float value) noexcept
-: t(FLOAT)
+variant::variant(double value) noexcept
+: t(DOUBLE)
+, double_value(value)
 {
 
 }
@@ -52,6 +53,12 @@ variant::variant(const std::string& value) noexcept
 
 variant::variant(const std::string&& value) noexcept
 : variant(value)
+{
+
+}
+
+variant::variant(nullptr_t) noexcept
+: t(NULL_T)
 {
 
 }

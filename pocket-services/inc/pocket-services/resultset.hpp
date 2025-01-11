@@ -23,16 +23,13 @@
 #include "pocket-pods/variant.hpp"
 #include "pocket-services/database.hpp"
 
+#include <vector>
+
 namespace pocket::services::inline v5
 {
 
-class result_set final : private std::map<std::string, pods::variant>
+class result_set final : public std::vector<std::map<std::string, pods::variant>>
 {
-    sqlite3_stmt *stmt = nullptr;
-    uint64_t count = 0;
-
-    std::map<std::string, std::pair<int, int>> columns; //idx, sql_type
-
     class database& database;
     int statement_status = SQLITE_OK;
 public:
@@ -44,20 +41,22 @@ public:
     ~result_set();
     POCKET_NO_COPY_NO_MOVE(result_set)
 
-    using map::iterator;
-    using map::const_iterator;
-    using map::reverse_iterator;
-    using map::const_reverse_iterator;
+    using vector::iterator;
+    using vector::const_iterator;
+    using vector::reverse_iterator;
+    using vector::const_reverse_iterator;
 
-    using map::begin;
-    using map::end;
+    using vector::begin;
+    using vector::end;
 
-    using map::operator[];
+    using vector::operator[];
 
     inline int get_statement_status() const noexcept
     {
         return statement_status;
     }
+private:
+    using vector::push_back;
 };
 
 

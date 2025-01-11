@@ -29,19 +29,36 @@ using enum pods::variant::type;
 result_set::result_set(class database& database, const std::string& query, const database::parameters& parameters)
         : database(database)
 {
+    sqlite3_stmt *stmt = nullptr;
+
     statement_status = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
     if( statement_status == SQLITE_OK )
     {
+        debug(typeid(*this).name(), query);
         for(int i = 1; auto &&param : parameters) {
             switch (param.get_type()) {
                 default:
-                case TEXT: sqlite3_bind_text(stmt, i, param.to_text().c_str(), -1, SQLITE_TRANSIENT); break;
-                case INT: sqlite3_bind_int(stmt, i, static_cast<int32_t>(param.to_integer())); break;
-                case INT64: sqlite3_bind_int64(stmt, i, param.to_integer()); break;
-                case FLOAT: sqlite3_bind_double(stmt, i, param.to_float()); break;
+                case TEXT:
+                    sqlite3_bind_text(stmt, i, param.to_text().c_str(), -1, SQLITE_TRANSIENT);
+                    debug(typeid(*this).name(), to_string(i) + ": " + param.to_text());
+                    break;
+                case INT:
+                    sqlite3_bind_int(stmt, i, static_cast<int32_t>(param.to_integer()));
+                    debug(typeid(*this).name(), to_string(i) + ": " + param.to_text());
+                    break;
+                case INT64:
+                    sqlite3_bind_int64(stmt, i, param.to_integer());
+                    debug(typeid(*this).name(), to_string(i) + ": " + param.to_text());
+                    break;
+                case DOUBLE:
+                    sqlite3_bind_double(stmt, i, param.to_float());
+                    debug(typeid(*this).name(), to_string(i) + ": " + param.to_text());
+                    break;
             }
             i++;
         }
+
+        map<std::string, uint8_t> columns; //idx, sql_type
 
         int rc = SQLITE_DONE;
         if (rc = sqlite3_step(stmt); rc != SQLITE_DONE && rc != SQLITE_ERROR)
@@ -51,22 +68,51 @@ result_set::result_set(class database& database, const std::string& query, const
                 int type = 0;
                 switch (sqlite3_column_type(stmt, i))
                 {
-                    case (SQLITE3_TEXT):  type = SQLITE3_TEXT;  break;
-                    case (SQLITE_INTEGER): type = SQLITE_INTEGER; break;
-                    case (SQLITE_FLOAT): type = SQLITE_FLOAT; break;
-                    case (SQLITE_BLOB): type = SQLITE_BLOB; break;
+                    case SQLITE3_TEXT:  type = SQLITE3_TEXT;  break;
+                    case SQLITE_INTEGER: type = SQLITE_INTEGER; break;
+                    case SQLITE_FLOAT: type = SQLITE_FLOAT; break;
+                    case SQLITE_BLOB: type = SQLITE_BLOB; break;
                     default: break;
                 }
-                columns[sqlite3_column_name(stmt, i)] = pair<int, int>{i, type};
+
+                columns[sqlite3_column_name(stmt, i)] = i;
             }
+            sqlite3_reset(stmt);
+
+            while (sqlite3_step(stmt) != SQLITE_DONE)
+            {
+                map<string, variant> row;
+                for(auto&& [column, i] : columns)
+                {
+                    switch (sqlite3_column_type(stmt, i))
+                    {
+                        case SQLITE3_TEXT:
+                            row.try_emplace(column, reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
+                            break;
+                        case SQLITE_INTEGER:
+                            row.try_emplace(column, sqlite3_column_int(stmt, i));
+                            break;
+                        case SQLITE_FLOAT:
+                            row.try_emplace(column, sqlite3_column_double(stmt, i));
+                        case SQLITE_NULL:
+                            row.try_emplace(column, nullptr);
+                            break;
+                        default: break;
+                    }
+                }
+
+                push_back(row);
+            }
+
             sqlite3_finalize(stmt);
+            stmt = nullptr;
         }
         else if (rc == SQLITE_ERROR)
         {
             sqlite3_finalize(stmt);
             throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
         }
-        count++;
+
     }
     else if(statement_status == SQLITE_ERROR)
     {
