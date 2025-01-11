@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include "pocket-services/database.hpp"
-#include "pocket-services/resultset.hpp"
+#include "pocket-services/result-set.hpp"
 #include "pocket/globals.hpp"
 
 #include <stdexcept>

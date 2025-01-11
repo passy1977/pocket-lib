@@ -18,31 +18,18 @@
  ***************************************************************************/
 
 #pragma once
-
+#include <cinttypes>
 #include <memory>
-#include <string>
 
-namespace pocket::pods::inline v5
+namespace pocket::iface::inline v5
 {
 
-struct user final
+struct pod
 {
-    using ptr = std::unique_ptr<user>;
+    using ptr = std::unique_ptr<pod>;
 
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
-
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
-
-    ~user() = default;
+    uint64_t id;
+    virtual ~pod() = default;
 };
 
 }

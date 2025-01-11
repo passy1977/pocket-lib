@@ -18,31 +18,14 @@
  ***************************************************************************/
 
 #pragma once
+#include "pocket/globals.hpp"
+#include "pocket-iface/pod.hpp"
 
-#include <memory>
-#include <string>
+#include <optional>
 
-namespace pocket::pods::inline v5
+namespace pocket::services::inline v5
 {
 
-struct user final
-{
-    using ptr = std::unique_ptr<user>;
-
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
-
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
-
-    ~user() = default;
-};
+iface::pod::ptr factory_from_json(std::optional<std::string> str_json);
 
 }

@@ -28,7 +28,7 @@ namespace pocket::controllers::inline v5
 
 class config final
 {
-    std::optional<std::string> config_path;
+    std::string config_path;
 
 public:
     using ptr = std::unique_ptr<config>;
@@ -40,7 +40,7 @@ public:
 
     inline std::string get_config_path() const noexcept
     {
-        return config_path.value_or("");
+        return config_path;
     }
 };
 

@@ -17,32 +17,26 @@
  *
  ***************************************************************************/
 
-#pragma once
+#include "pocket-services/pod-factory.hpp"
 
-#include <memory>
-#include <string>
+#include <nlohmann/json.hpp>
 
-namespace pocket::pods::inline v5
+namespace pocket::services::inline v5
 {
 
-struct user final
+using namespace std;
+using namespace nlohmann;
+using iface::pod;
+
+pod::ptr factory_from_json(optional<string> str_json)
 {
-    using ptr = std::unique_ptr<user>;
+//    auto&& json = json::parse(str_json);
+//    if (!json.is_object())
+//    {
+//        throw runtime_error("Config json is not a object");
+//    }
 
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
-
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
-
-    ~user() = default;
-};
+    return {};
+}
 
 }

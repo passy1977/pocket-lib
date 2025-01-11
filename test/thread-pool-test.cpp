@@ -17,32 +17,31 @@
  *
  ***************************************************************************/
 
-#pragma once
+#include <gtest/gtest.h>
+#include <iostream>
 
-#include <memory>
-#include <string>
+#include "pocket-controllers/session.hpp"
 
-namespace pocket::pods::inline v5
+struct thread_pool_test : public ::testing::Test {};
+
+
+TEST_F(thread_pool_test, coroutine_test) try
 {
 
-struct user final
+
+}
+catch (const std::exception& e)
 {
-    using ptr = std::unique_ptr<user>;
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
 
-    enum class status {
-        INACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
+TEST_F(thread_pool_test, session_init) try
+{
 
-    uint64_t id = 0;
-    std::string uuid;
-    std::string name;
-    std::string email;
-    status status = status::INACTIVE;
-
-    ~user() = default;
-};
-
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
 }

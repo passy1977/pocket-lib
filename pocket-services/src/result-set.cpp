@@ -17,7 +17,7 @@
  *
  ***************************************************************************/
 
-#include "pocket-services/resultset.hpp"
+#include "pocket-services/result-set.hpp"
 
 namespace pocket::services::inline v5
 {

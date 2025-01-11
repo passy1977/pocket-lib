@@ -22,6 +22,7 @@
 #include <memory>
 #include <optional>
 #include <cstring>
+#include <string>
 
 namespace pocket::pods::inline v5
 {
