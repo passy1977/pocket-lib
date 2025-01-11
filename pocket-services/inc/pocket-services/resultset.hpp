@@ -33,6 +33,9 @@ class result_set final : public std::vector<std::map<std::string, pods::variant>
     class database& database;
     int statement_status = SQLITE_OK;
 public:
+
+    using ptr = std::unique_ptr<result_set>;
+
     explicit result_set(class database& database, const std::string& query, const database::parameters& parameters = {});
 
     inline explicit result_set(class database& database, const std::string&& query, const database::parameters& parameters = {})

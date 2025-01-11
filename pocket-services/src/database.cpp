@@ -35,14 +35,16 @@ namespace pocket::services::inline v5
 using namespace std;
 using namespace std::filesystem;
 using pods::variant;
-using enum pods::variant::type;
+using
+enum pods::variant::type;
 
 database::database() = default;
+
 database::~database() try
 {
     close();
 }
-catch(const exception& e)
+catch (const exception& e)
 {
     cerr << e.what() << std::endl;
     debug(typeid(*this).name(), e.what());
@@ -52,13 +54,8 @@ bool database::open(const string& file_db_path)
 {
     lock_guard<mutex> lg(m);
 
-    if(check_lock(file_db_path + LOCK_EXTENSION)) //throw exception
-    {
-        return false;
-    }
-
-    int rc = sqlite3_open_v2(file_db_path.c_str(), &db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_FULLMUTEX, nullptr);
-    if (rc != SQLITE_OK)
+    int rc = sqlite3_open_v2(file_db_path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+    if(rc != SQLITE_OK)
     {
         string msg = "Error opening database: ";
         msg += sqlite3_errmsg(db);
@@ -70,9 +67,18 @@ bool database::open(const string& file_db_path)
 
     lock();
 
-    if(is_created()) //throw exception
+    uint8_t version = 0;
+    if(is_created(version)) //throw exception
     {
-       //todo: check version
+        switch(version)
+        {
+            case 1:
+                error(typeid(*this).name(), "Db version not supported, delete and resynch");
+                [[fallthrough]];
+            default:
+            case 2:
+                break;
+        }
     }
     else
     {
@@ -81,7 +87,6 @@ bool database::open(const string& file_db_path)
 
     return true;
 }
-
 
 
 inline void database::close()
@@ -94,7 +99,7 @@ inline void database::close()
     unlock();
 
     int rc = sqlite3_close_v2(db);
-    if (rc != SQLITE_OK)
+    if(rc != SQLITE_OK)
     {
         string msg = "Error closing database:";
         msg += sqlite3_errmsg(db);
@@ -106,12 +111,17 @@ inline void database::close()
 
 }
 
-bool database::is_created() noexcept try
+bool database::is_created(uint8_t& db_version) noexcept try
 {
     result_set rs(*this, "SELECT * FROM metadata"); //throw exception
     if(rs.get_statement_status() != SQLITE_OK)
     {
         return false;
+    }
+
+    if(auto it = optional(*rs.begin()); it)
+    {
+        db_version = it->begin()->second.to_integer();
     }
 
     return true;
@@ -129,12 +139,12 @@ bool database::create(const char creation_sql[])
 
     uint8_t i = 0;
     bool error = false;
-    while (getline(ss, part, ';'))
+    while(getline(ss, part, ';'))
     {
         i++;
         try
         {
-            result_set rs(*this, part, { variant{VERSION} }); //throw exception
+            result_set rs(*this, part, {variant{VERSION}}); //throw exception
             if(rs.get_statement_status() != SQLITE_OK)
             {
                 error = true;
@@ -166,7 +176,7 @@ bool database::create(const char creation_sql[])
 
 bool database::rm()
 {
-    if (exists(file_db_path))
+    if(exists(file_db_path))
     {
         remove(file_db_path);
         return true;
@@ -178,38 +188,10 @@ bool database::rm()
 }
 
 
-bool database::check_lock(const string& file_db_path)
-{
-#ifdef DISABLE_LOCK
-    return false;
-#else
-    if (exists(file_db_path))
-    {
-        ifstream file(file_db_path);
-        if (!file.is_open())
-        {
-            throw runtime_error("Error opening file.");
-        }
-
-        string pid((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
-
-        file.close();
-
-        info(typeid(*this).name(), "DB locked: " + file_db_path + LOCK_EXTENSION + " by pid:" + pid);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-#endif
-}
-
-
 void database::lock()
 {
     char* err = nullptr;
-    if (int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
         string msg = "Database lock error";
         if(err)
@@ -252,7 +234,7 @@ void database::unlock()
 
 //    err = nullptr;
 //    int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err);
-    if (int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
         string msg = "Database unlock error";
         if(err)
@@ -265,9 +247,11 @@ void database::unlock()
     }
 }
 
+
+result_set::ptr database::execute(const string&& query, const parameters& parameters)
+{
+    result_set::ptr ret = make_unique<result_set>(*this, query, parameters);
+    return ret;
 }
 
-
-
-
-
+}

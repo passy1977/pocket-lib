@@ -81,7 +81,7 @@ result_set::result_set(class database& database, const std::string& query, const
 
             while (sqlite3_step(stmt) != SQLITE_DONE)
             {
-                map<string, variant> row;
+                database::row row;
                 for(auto&& [column, i] : columns)
                 {
                     switch (sqlite3_column_type(stmt, i))

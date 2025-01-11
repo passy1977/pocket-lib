@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <optional>
+#include <cstring>
 
 namespace pocket::pods::inline v5
 {
@@ -54,17 +55,17 @@ public:
     explicit variant(const std::string&& value) noexcept;
     explicit variant(std::nullptr_t) noexcept;
 
-    inline int64_t to_integer() const noexcept
+    [[nodiscard]] inline int64_t to_integer() const noexcept
     {
         return integer_value;
     }
 
-    inline double to_float() const noexcept
+    [[nodiscard]] inline double to_float() const noexcept
     {
         return double_value;
     }
 
-    inline std::string to_text() const noexcept
+    [[nodiscard]] inline std::string to_text() const noexcept
     {
         switch(t)
         {
@@ -75,7 +76,7 @@ public:
         }
     }
 
-    inline enum type get_type() const noexcept
+    [[nodiscard]] inline enum type get_type() const noexcept
     {
         return t;
     }

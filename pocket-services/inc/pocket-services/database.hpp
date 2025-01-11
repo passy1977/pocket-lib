@@ -66,6 +66,7 @@ public:
     using ptr = std::unique_ptr<database>;
 
     using parameters = std::initializer_list<pods::variant>;
+    using row = std::map<std::string, pods::variant>;
 
     database();
     ~database();
@@ -74,12 +75,12 @@ public:
     bool open(const std::string& file_db_path);
     void close();
 
-    bool check_lock(const std::string& file_db_path);
+    std::unique_ptr<result_set> execute(const std::string&& query, const parameters& parameters = {});
 
 private:
     friend result_set;
 
-    bool is_created() noexcept;
+    bool is_created(uint8_t& db_version) noexcept;
     bool create(const char creation_sql[]);
     bool rm();
 
