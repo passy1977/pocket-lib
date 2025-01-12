@@ -24,19 +24,136 @@
 namespace pocket::services::inline v5
 {
 
+namespace
+{
+constexpr char APP_TAG[] = "pod-factory";
+}
+
 using namespace std;
 using namespace nlohmann;
-using iface::pod;
+using iface::synchronizable;
+using pods::device;
+using pods::user;
 
-pod::ptr factory_from_json(optional<string> str_json)
+device factory_from_json_to_device(const std::string& str_json)
 {
-//    auto&& json = json::parse(str_json);
-//    if (!json.is_object())
-//    {
-//        throw runtime_error("Config json is not a object");
-//    }
 
-    return {};
+
+    if(str_json.empty())
+    {
+        throw runtime_error("String json empty");
+    }
+
+    auto&& json = json::parse(str_json);
+    if (!json.is_object())
+    {
+        throw runtime_error("Config json is not a object");
+    }
+
+    device device;
+
+    if(json.contains("user_id") && json["user_id"].is_number())
+    {
+        device.user_id = json["user_id"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field user_id");
+    }
+
+    if(json.contains("uuid") && json["uuid"].is_string())
+    {
+        device.uuid = json["uuid"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field uuid");
+    }
+
+    if(json.contains("host") && json["host"].is_string())
+    {
+        device.host = json["host"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field host");
+    }
+
+    if(json.contains("host_pub_key") && json["host_pub_key"].is_string())
+    {
+        device.host_pub_key = json["host_pub_key"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field host_pub_key");
+    }
+
+    if(json.contains("timestamp_last_update") && json["timestamp_last_update"].is_number())
+    {
+        device.timestamp_last_update = json["timestamp_last_update"];
+    }
+
+    if(json.contains("timestamp_creation") && json["timestamp_creation"].is_string())
+    {
+        device.timestamp_creation = json["timestamp_creation"];
+    }
+
+    if(json.contains("status") && json["status"].is_string())
+    {
+        device.status = json["status"];
+    }
+    else
+    {
+        device.status = pods::device::status::INACTIVE;
+    }
+
+    return device;
+}
+
+user factory_from_json_to_user(const std::string& str_json)
+{
+
+    if(str_json.empty())
+    {
+        throw runtime_error("String json empty");
+    }
+
+    auto&& json = json::parse(str_json);
+    if (!json.is_object())
+    {
+        throw runtime_error("Config json is not a object");
+    }
+
+    user user;
+
+    if(json.contains("name") && json["name"].is_string())
+    {
+        user.name = json["name"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field name");
+    }
+
+    if(json.contains("email") && json["email"].is_string())
+    {
+        user.email = json["email"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field email");
+    }
+
+    if(json.contains("status") && json["status"].is_string())
+    {
+        user.status = json["status"];
+    }
+    else
+    {
+        user.status = pods::user::status::INACTIVE;
+    }
+
+    return user;
 }
 
 }

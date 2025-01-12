@@ -25,7 +25,7 @@ using namespace pocket::controllers;
 constexpr char data[] = R"json(
 {
     "uuid": "de10b648-9e9c-4b63-96df-2aa662fe20ba",
-    "user_uuid": "1281d20e-4e6f-43d8-9aa5-099039f36206",
+    "user_id": 1,
     "host": "127.0.0.1",
     "host_pub_key": "fookey"
 }

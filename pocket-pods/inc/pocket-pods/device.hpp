@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "pocket-iface/synchronizable.hpp"
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -27,7 +29,7 @@
 namespace pocket::pods::inline v5
 {
 
-struct device final
+struct device final : public iface::synchronizable
 {
     using opt = std::optional<device>;
 
@@ -38,9 +40,7 @@ struct device final
         INVALIDATED = 3
     };
 
-    uint64_t id = 0;
     std::string uuid;
-    std::string user_uuid;
     std::string host;
     std::string host_pub_key;
     uint64_t timestamp_last_update = 0;

@@ -19,38 +19,30 @@
 
 #pragma once
 
-#include "pocket-controllers/config.hpp"
-#include "pocket-services/database.hpp"
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
-#include "BS_thread_pool.hpp"
+#include "pocket-services/database.hpp"
+#include "pocket-pods/device.hpp"
 
-#include <optional>
+#include <vector>
 
-namespace pocket::controllers::inline v5
+
+
+namespace pocket::daos::inline v5
 {
 
-class session final
+class device final
 {
-
-
-    controllers::config::ptr config = nullptr;
-    services::database::ptr database = nullptr;
-    pods::device::opt device;
-    pods::user::opt user;
-
-    BS::thread_pool<4> pool;
-    BS::synced_stream sync_out;
+    services::database& database;
 public:
-    explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
-    ~session();
-    POCKET_NO_COPY_NO_MOVE(session)
 
-    const pods::device::opt& init();
+    using list = std::vector<pods::device>;
 
-    const pods::user::opt& login(const std::string& user, const std::string& passwd);
+    explicit device(services::database& database) noexcept;
+    ~device() = default;
+    POCKET_NO_COPY_NO_MOVE(device)
+
+    list select(const pods::device& device);
 
 };
 
-}
+} // pocket

@@ -17,19 +17,22 @@
  *
  ***************************************************************************/
 
-#pragma once
-#include <cinttypes>
-#include <memory>
+#include "pocket-daos/device.hpp"
 
-namespace pocket::iface::inline v5
+namespace pocket::daos::inline v5
 {
 
-struct pod
+device::device(services::database& database) noexcept
+:database(database)
 {
-    using ptr = std::unique_ptr<pod>;
-
-    uint64_t id;
-    virtual ~pod() = default;
-};
 
 }
+
+std::vector<pods::device> device::select(const pods::device& device)
+{
+
+    return {};
+}
+
+}
+

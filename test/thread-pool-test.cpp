@@ -19,15 +19,54 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <thread>
+using namespace std;
 
 #include "pocket-controllers/session.hpp"
 
-struct thread_pool_test : public ::testing::Test {};
+struct thread_pool_test : public ::testing::Test
+{
+    BS::thread_pool<4> pool;
+    BS::synced_stream sync_out;
+
+};
 
 
-TEST_F(thread_pool_test, coroutine_test) try
+TEST_F(thread_pool_test, test) try
 {
 
+    std::future<void> my_future = pool.submit_task(
+            []
+            {
+                for(auto i : {1,2,3,4,5,6,7,8})
+                {
+
+                    this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(1));
+                }
+                std::cout << "my_future" << std::endl;
+            });
+
+    std::future<void> my_future1 = pool.submit_task(
+            [this]
+            {
+                for(auto i : {1,2})
+                {
+                    this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(1));
+                }
+                std::cout << "my_future2" << std::endl;
+                sync_out.println("ciao");
+            });
+
+    try
+    {
+        my_future.get();
+        my_future1.get();
+    }
+    catch (const std::exception& e)
+    {
+        sync_out.println("Caught exception: ", e.what());
+    }
+    std::cout << "end" << std::endl;
 
 }
 catch (const std::exception& e)
@@ -36,12 +75,3 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(thread_pool_test, session_init) try
-{
-
-}
-catch (const std::exception& e)
-{
-    std::cerr << e.what() << std::endl;
-    ASSERT_TRUE(false);
-}

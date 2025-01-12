@@ -18,39 +18,21 @@
  ***************************************************************************/
 
 #pragma once
+#include <cinttypes>
+#include <memory>
 
-#include "pocket-controllers/config.hpp"
-#include "pocket-services/database.hpp"
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/device.hpp"
-#include "pocket/globals.hpp"
-#include "BS_thread_pool.hpp"
-
-#include <optional>
-
-namespace pocket::controllers::inline v5
+namespace pocket::iface::inline v5
 {
 
-class session final
+struct synchronizable
 {
+    using ptr = std::unique_ptr<synchronizable>;
 
+    uint64_t id = 0;
+    uint64_t server_id = 0;
+    uint64_t user_id = 0;
 
-    controllers::config::ptr config = nullptr;
-    services::database::ptr database = nullptr;
-    pods::device::opt device;
-    pods::user::opt user;
-
-    BS::thread_pool<4> pool;
-    BS::synced_stream sync_out;
-public:
-    explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
-    ~session();
-    POCKET_NO_COPY_NO_MOVE(session)
-
-    const pods::device::opt& init();
-
-    const pods::user::opt& login(const std::string& user, const std::string& passwd);
-
+    virtual ~synchronizable() = default;
 };
 
 }

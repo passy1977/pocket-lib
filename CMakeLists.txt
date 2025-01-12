@@ -47,11 +47,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-file(GLOB_RECURSE POCKET_INCLUDES CONFIGURE_DEPENDS "inc/pocket/*.hpp")
+file(GLOB_RECURSE POCKET_INCLUDES CONFIGURE_DEPENDS "inc/pocket/*.hpp" "thread-pool/include/*.hpp")
 file(GLOB_RECURSE POCKET_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
 file(GLOB_RECURSE POCKET_CONTROLLERS_INCLUDES CONFIGURE_DEPENDS "pocket-controllers/inc/pocket-controllers/*.hpp")
 file(GLOB_RECURSE POCKET_CONTROLLERS_SOURCES CONFIGURE_DEPENDS "pocket-controllers/src/*.cpp")
+
+file(GLOB_RECURSE POCKET_DAOS_INCLUDES CONFIGURE_DEPENDS "pocket-daos/inc/pocket-daos/*.hpp")
+file(GLOB_RECURSE POCKET_DAOS_SOURCES CONFIGURE_DEPENDS "pocket-daos/src/*.cpp")
 
 file(GLOB_RECURSE POCKET_IFACE_INCLUDES CONFIGURE_DEPENDS "pocket-iface/inc/pocket-iface/*.hpp")
 
@@ -65,6 +68,7 @@ file(GLOB_RECURSE POCKET_SERVICES_SOURCES CONFIGURE_DEPENDS "pocket-services/src
 add_library(${PROJECT_NAME} STATIC
         ${POCKET_INCLUDES} ${POCKET_SOURCES}
         ${POCKET_CONTROLLERS_INCLUDES} ${POCKET_CONTROLLERS_SOURCES}
+        ${POCKET_DAOS_INCLUDES} ${POCKET_DAOS_SOURCES}
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}
@@ -81,14 +85,17 @@ target_link_libraries(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC
         inc
         pocket-controllers/inc
+        pocket-daos/inc
         pocket-iface/inc
         pocket-pods/inc
         pocket-services/inc
+        thread-pool/include
 )
 
 target_sources(${PROJECT_NAME} PUBLIC
         ${POCKET_INCLUDES} ${POCKET_SOURCES}
         ${POCKET_CONTROLLERS_INCLUDES} ${POCKET_CONTROLLERS_SOURCES}
+        ${POCKET_DAOS_INCLUDES} ${POCKET_DAOS_SOURCES}
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}

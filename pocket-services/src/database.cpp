@@ -76,7 +76,7 @@ bool database::open(const string& file_db_path)
                 error(typeid(*this).name(), "Db version not supported, delete and resynch");
                 [[fallthrough]];
             default:
-            case 2:
+                [[likely]] case 2:
                 break;
         }
     }

@@ -18,13 +18,17 @@
  ***************************************************************************/
 
 #include "pocket-controllers/session.hpp"
+#include "pocket-services/pod-factory.hpp"
 
 #include <filesystem>
 #include <thread>
+#include <chrono>
+
 
 namespace pocket::controllers::inline v5
 {
 using pods::device;
+using pods::user;
 using services::database;
 using namespace std;
 using namespace std::filesystem;
@@ -53,7 +57,7 @@ session::~session()
     database->close();
 }
 
-void session::init()
+const device::opt& session::init()
 {
     if(config.get() == nullptr)
     {
@@ -89,9 +93,15 @@ void session::init()
         throw runtime_error("Database busy");
     }
 
-
+    return device;
 }
 
+const user::opt& session::login(const std::string& user, const std::string& passwd)
+{
+
+
+    return session::user;
+}
 
 }
 

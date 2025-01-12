@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include "pocket-controllers/config.hpp"
+#include "pocket-services/pod-factory.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -28,6 +29,7 @@ namespace pocket::controllers::inline v5
 {
 
 using pods::device;
+using services::factory_from_json_to_device;
 using nlohmann::json;
 using namespace std;
 using namespace std::filesystem;
@@ -68,50 +70,7 @@ config::config(const optional<string>& config_path)
 
 device config::parse(const string& config_json)
 {
-
-    auto&& json = json::parse(config_json);
-    if (!json.is_object())
-    {
-        throw runtime_error("Config json is not a object");
-    }
-
-    device device;
-
-    if(json.contains("uuid") && json["uuid"].is_string())
-    {
-        device.uuid = json["uuid"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field uuid");
-    }
-
-    if(json.contains("user_uuid") && json["user_uuid"].is_string())
-    {
-        device.user_uuid = json["user_uuid"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field user_uuid");
-    }
-
-    if(json.contains("host") && json["host"].is_string())
-    {
-        device.host = json["host"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field host");
-    }
-
-    if(json.contains("host_pub_key") && json["host_pub_key"].is_string())
-    {
-        device.host_pub_key = json["host_pub_key"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field host_pub_key");
-    }
+    auto&& device = factory_from_json_to_device(config_json);
 
     debug(typeid(*this).name(), "Create new config");
 

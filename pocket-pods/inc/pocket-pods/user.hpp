@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
+#include <optional>
 
 namespace pocket::pods::inline v5
 {
 
 struct user final
 {
-    using ptr = std::unique_ptr<user>;
+    using opt = std::optional<user>;
 
     enum class status {
         INACTIVE = 1,
@@ -37,7 +37,7 @@ struct user final
     };
 
     uint64_t id = 0;
-    std::string uuid;
+    uint64_t server_id;
     std::string name;
     std::string email;
     status status = status::INACTIVE;
