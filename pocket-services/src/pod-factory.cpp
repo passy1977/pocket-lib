@@ -52,21 +52,13 @@ device factory_from_json_to_device(const std::string& str_json)
 
     device device;
 
-    if(json.contains("user") && json["user_id"].is_object())
+    if(json.contains("user_id") && json["user_id"].is_number())
     {
-        auto&& u = json["user_id"];
-        if(u.contains("id") && u["id"].is_number())
-        {
-            device.user_id = u["user_id"];
-        }
-        else
-        {
-            throw runtime_error("Invalid type or non defined field user.id");
-        }
+        device.user_id = json["user_id"];
     }
     else
     {
-        throw runtime_error("Invalid type or non defined field user");
+        throw runtime_error("Invalid type or non defined field user_id");
     }
 
     if(json.contains("uuid") && json["uuid"].is_string())
