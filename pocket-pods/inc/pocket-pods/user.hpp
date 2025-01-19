@@ -40,6 +40,7 @@ struct user final
     uint64_t server_id;
     std::string name;
     std::string email;
+    std::string passwd;
     status status = status::INACTIVE;
 
     ~user() = default;

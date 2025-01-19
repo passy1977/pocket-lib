@@ -41,6 +41,8 @@ struct device final : public iface::synchronizable
     };
 
     std::string uuid;
+    std::string version;
+    std::string token;
     std::string host;
     std::string host_pub_key;
     uint64_t timestamp_last_update = 0;
