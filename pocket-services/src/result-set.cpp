@@ -79,7 +79,7 @@ result_set::result_set(class database& database, const std::string& query, const
             }
             sqlite3_reset(stmt);
 
-            while (sqlite3_step(stmt) != SQLITE_DONE)
+            while (sqlite3_step(stmt) != SQLITE_DONE && !columns.empty())
             {
                 database::row row;
                 for(auto&& [column, i] : columns)

@@ -21,6 +21,7 @@
 
 #include <nlohmann/json.hpp>
 
+
 namespace pocket::services::inline v5
 {
 
@@ -52,13 +53,13 @@ device factory_from_json_to_device(const std::string& str_json)
 
     device device;
 
-    if(json.contains("user_id") && json["user_id"].is_number())
+    if(json.contains("userId") && json["userId"].is_number())
     {
-        device.user_id = json["user_id"];
+        device.user_id = json["userId"];
     }
     else
     {
-        throw runtime_error("Invalid type or non defined field user_id");
+        throw runtime_error("Invalid type or non defined field userId");
     }
 
     if(json.contains("uuid") && json["uuid"].is_string())
@@ -79,32 +80,49 @@ device factory_from_json_to_device(const std::string& str_json)
         throw runtime_error("Invalid type or non defined field host");
     }
 
-    if(json.contains("host_pub_key") && json["host_pub_key"].is_string())
+    if(json.contains("hostPublicKey") && json["hostPublicKey"].is_string())
     {
-        device.host_pub_key = json["host_pub_key"];
+        device.host_pub_key = json["hostPublicKey"];
     }
     else
     {
-        throw runtime_error("Invalid type or non defined field host_pub_key");
+        throw runtime_error("Invalid type or non defined field hostPubKey");
     }
 
-    if(json.contains("timestamp_last_update") && json["timestamp_last_update"].is_number())
+    if(json.contains("timestampLastUpdate") && json["timestampLastUpdate"].is_number())
     {
-        device.timestamp_last_update = json["timestamp_last_update"];
+        device.timestamp_last_update = json["timestampLastUpdate"];
     }
 
-    if(json.contains("timestamp_creation") && json["timestamp_creation"].is_string())
+    if(json.contains("timestampCreation") && json["timestampCreation"].is_string())
     {
-        device.timestamp_creation = json["timestamp_creation"];
+        device.timestamp_creation = json["timestampCreation"];
     }
 
     if(json.contains("status") && json["status"].is_string())
     {
-        device.status = json["status"];
+        string&& ref = json["status"];
+        if("NOT_ACTIVE" == ref)
+        {
+            device.status = device::status::NOT_ACTIVE;
+        }
+        else if("ACTIVE" == ref)
+        {
+            device.status = device::status::ACTIVE;
+        }
+        else if("DELETED" == ref)
+        {
+            device.status = device::status::DELETED;
+        }
+        else if("INVALIDATED" == ref)
+        {
+            device.status = device::status::INVALIDATED;
+        }
+
     }
     else
     {
-        device.status = pods::device::status::INACTIVE;
+        device.status = pods::device::status::NOT_ACTIVE;
     }
 
     return device;

@@ -19,37 +19,37 @@
 
 #pragma once
 
-#include "pocket-iface/synchronizable.hpp"
+#include "pocket/globals.hpp"
+#include "pocket-pods/variant.hpp"
 
-#include <memory>
-#include <optional>
-#include <string>
+#include <curl/curl.h>
+#include <vector>
+#include <map>
 
-
-namespace pocket::pods::inline v5
+namespace pocket::services::inline v5
 {
 
-struct device final : public iface::synchronizable
+class network final
 {
-    using opt = std::optional<device>;
 
-    enum class status {
-        NOT_ACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
+    using parameters = std::vector<pods::variant>;
+    using map_parameters = std::map<std::string, pods::variant>;
+
+    CURL* curl = nullptr;
+    curl_slist* headers = nullptr;
+public:
+    enum class method
+    {
+        GET, POST, PUT, DEL
     };
 
-    std::string uuid;
-    std::string version;
-    std::string token;
-    std::string host;
-    std::string host_pub_key;
-    uint64_t timestamp_last_update = 0;
-    uint64_t timestamp_creation = 0;
-    status status = status::NOT_ACTIVE;
+    network();
 
-    ~device() = default;
+    ~network();
+    POCKET_NO_COPY_NO_MOVE(network)
+
+    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& data = {});
+
 };
 
-} // pocket
+}

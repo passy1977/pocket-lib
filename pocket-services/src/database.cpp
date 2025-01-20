@@ -144,6 +144,7 @@ bool database::create(const char creation_sql[])
         i++;
         try
         {
+
             result_set rs(*this, part, {variant{VERSION}}); //throw exception
             if(rs.get_statement_status() != SQLITE_OK)
             {

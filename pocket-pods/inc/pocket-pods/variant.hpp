@@ -49,12 +49,12 @@ private:
     double double_value = 0;
     std::string text_value;
 public:
-    explicit variant(int32_t value) noexcept;
-    explicit variant(int64_t value) noexcept;
-    explicit variant(double value) noexcept;
-    explicit variant(const std::string& value) noexcept;
-    explicit variant(const std::string&& value) noexcept;
-    explicit variant(std::nullptr_t) noexcept;
+    variant(int32_t value) noexcept;
+    variant(int64_t value) noexcept;
+    variant(double value) noexcept;
+    variant(const std::string& value) noexcept;
+    variant(const std::string&& value) noexcept;
+    variant(std::nullptr_t) noexcept;
 
     [[nodiscard]] inline int64_t to_integer() const noexcept
     {
