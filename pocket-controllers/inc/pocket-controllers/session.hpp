@@ -24,6 +24,7 @@
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
+
 #include "BS_thread_pool.hpp"
 
 #include <optional>
@@ -37,6 +38,8 @@ class session final
 
     controllers::config::ptr config = nullptr;
     services::database::ptr database = nullptr;
+
+
     pods::device::opt device;
     pods::user::opt user;
 

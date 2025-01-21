@@ -17,40 +17,26 @@
  *
  ***************************************************************************/
 
-#pragma once
+#include "pocket-services/network.hpp"
 
-#include "pocket/globals.hpp"
-#include "pocket-pods/variant.hpp"
+#include <gtest/gtest.h>
 
-#include <curl/curl.h>
-#include <vector>
-#include <map>
 
-namespace pocket::services::inline v5
+using namespace pocket::services;
+using namespace std;
+
+struct network_test : public ::testing::Test {};
+
+TEST_F(network_test, base_connection) try
 {
+    network n;
 
-class network final
+    auto&& ret = n.perform(network::method::GET, "https://www.google.it");
+
+    ASSERT_FALSE(ret.empty());
+}
+catch (const std::exception& e)
 {
-
-    using parameters = std::vector<pods::variant>;
-    using map_parameters = std::map<std::string, pods::variant>;
-
-    CURL* curl = nullptr;
-    curl_slist* headers = nullptr;
-public:
-    enum class method
-    {
-        GET, POST, PUT, DEL
-    };
-
-    network();
-    ~network();
-    POCKET_NO_COPY_NO_MOVE(network)
-
-    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& data = {});
-private:
-    static size_t callback(char* buf, size_t size, size_t nmemb, std::string* ret_data);
-
-};
-
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
 }

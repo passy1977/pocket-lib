@@ -42,6 +42,21 @@ network::~network()
     }
 }
 
+size_t network::callback(char* buf, size_t size, size_t nmemb, string* ret_data)
+{
+    try
+    {
+        ret_data->append(buf, size * nmemb);
+    }
+    catch(bad_alloc &e)
+    {
+        cerr << e.what() << endl;
+        return 0;
+    }
+
+    return size * nmemb;
+}
+
 std::string network::perform(network::method method, const std::string_view& url, const map_parameters& params, const std::string_view& data)
 {
     if (headers)
@@ -55,7 +70,7 @@ std::string network::perform(network::method method, const std::string_view& url
         full_url = url;
     } else if (url.rfind("https://", 0) == 0) {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
         full_url = url;
     } else {
         full_url = "http://";
@@ -63,7 +78,7 @@ std::string network::perform(network::method method, const std::string_view& url
     }
 
     parameters rows;
-    string query = "";
+    string query;
     for (auto&& it = params.begin(); it!=params.end(); ++it) {
         if (it == params.begin()) {
             query += "?";
@@ -84,52 +99,67 @@ std::string network::perform(network::method method, const std::string_view& url
         string row = key;
         row += "=";
         row += value;
-        rows.push_back(row);
+        rows.emplace_back(row);
 
         query += row;
-        if (key)
-        {
-            curl_free(key);
-        }
-
-        if (value)
-        {
-            curl_free(value);
-        }
+        curl_free(key);
+        curl_free(value);
     }
 
     switch (method) {
         case method::GET:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+            info(typeid(*this).name(), full_url);
             break;
 
         case method::POST:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());
-            if (logWriter) {
-                logWriter(LogLevel::DBG, SOURCE, "type:POST url:" + fullUrl, rows);
-            }
+            info(typeid(*this).name(), full_url);
             break;
 
         case method::PUT:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());
-            if (logWriter) {
-                logWriter(LogLevel::DBG, SOURCE, "type:PUT url:" + fullUrl, rows);
-            }
+            info(typeid(*this).name(), full_url);
             break;
 
         case method::DEL:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-            fullUrl += query;
-            if (logWriter) {
-                logWriter(LogLevel::DBG, SOURCE, "type:DELETE url:" + fullUrl, {});
-            }
+            full_url += query;
+            info(typeid(*this).name(), full_url);
             break;
-
     }
 
-    return {};
+    curl_easy_setopt(curl, CURLOPT_URL, full_url.c_str());
+
+    if (!data.empty()) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.data());
+    }
+
+
+    string ret_data;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret_data);
+
+    CURLcode res = curl_easy_perform(curl);
+    if(res != CURLE_OK)
+    {
+        if (headers)
+        {
+            curl_slist_free_all(headers);
+            headers = nullptr;
+        }
+        throw runtime_error(curl_easy_strerror(res));
+    }
+
+    if (headers)
+    {
+        curl_slist_free_all(headers);
+        headers = nullptr;
+    }
+
+    return ret_data;
 }
 
 }

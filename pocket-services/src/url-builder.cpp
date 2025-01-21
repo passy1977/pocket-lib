@@ -17,40 +17,18 @@
  *
  ***************************************************************************/
 
-#pragma once
-
-#include "pocket/globals.hpp"
-#include "pocket-pods/variant.hpp"
-
-#include <curl/curl.h>
-#include <vector>
-#include <map>
+#include "pocket-services/url-builder.hpp"
 
 namespace pocket::services::inline v5
 {
 
-class network final
+url_builder::url_builder(controllers::config::ptr& config)
+: config(config)
 {
 
-    using parameters = std::vector<pods::variant>;
-    using map_parameters = std::map<std::string, pods::variant>;
+}
 
-    CURL* curl = nullptr;
-    curl_slist* headers = nullptr;
-public:
-    enum class method
-    {
-        GET, POST, PUT, DEL
-    };
 
-    network();
-    ~network();
-    POCKET_NO_COPY_NO_MOVE(network)
-
-    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& data = {});
-private:
-    static size_t callback(char* buf, size_t size, size_t nmemb, std::string* ret_data);
-
-};
 
 }
+
