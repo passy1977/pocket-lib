@@ -18,30 +18,31 @@
  ***************************************************************************/
 
 #pragma once
-
 #include "pocket/globals.hpp"
+#include "pocket-iface/synchronizable.hpp"
 #include "pocket-pods/device.hpp"
+#include "pocket-pods/response.hpp"
+#include "BS_thread_pool.hpp"
+
+#include <nlohmann/json.hpp>
+#include <optional>
 
 
-namespace pocket::controllers::inline v5
+namespace pocket::services::inline v5
 {
 
-class config final
-{
-    std::string config_path;
+void json_parse_response(BS::thread_pool<4>& pool, std::string_view response, pods::response& json_response);
 
-public:
-    using ptr = std::unique_ptr<config>;
+pods::device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timestamp_last_update);
 
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
+pods::device json_to_device(const std::string_view& str_json, uint64_t& user_timestamp_last_update);
 
-    pods::device parse(std::string_view config_json);
+pods::user json_to_user(const nlohmann::basic_json<>& json);
 
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
-    }
-};
+pods::user json_to_user(const std::string_view& str_json);
+
+pods::group json_to_group(const std::string_view& str_json);
+
+pods::group json_to_group(const nlohmann::basic_json<>& json);
 
 }

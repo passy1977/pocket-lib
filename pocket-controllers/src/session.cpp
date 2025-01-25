@@ -18,11 +18,11 @@
  ***************************************************************************/
 
 #include "pocket-controllers/session.hpp"
-#include "pocket-services/pod-factory.hpp"
+#include "pocket-services/json.hpp"
+#include "pocket-services/network.hpp"
 
 #include <filesystem>
 #include <thread>
-#include <chrono>
 
 
 namespace pocket::controllers::inline v5
@@ -30,6 +30,8 @@ namespace pocket::controllers::inline v5
 using pods::device;
 using pods::user;
 using services::database;
+using services::network;
+using services::synchronizer;
 using namespace std;
 using namespace std::filesystem;
 
@@ -93,14 +95,25 @@ const device::opt& session::init()
         throw runtime_error("Database busy");
     }
 
+    synchronizer = make_unique<class synchronizer>(*device);
+
     return device;
 }
 
-const user::opt& session::login(const std::string& user, const std::string& passwd)
+const user::opt& session::login(const string& email, const string& passwd) try
 {
 
+    synchronizer->get_full_data(synchronizer::FULL_SYNC, email, passwd);
 
     return session::user;
+}
+catch(...)
+{
+    try {
+        rethrow_exception(current_exception());
+    } catch (const exception& e) {
+        throw runtime_error(e.what());
+    }
 }
 
 }

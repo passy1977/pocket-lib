@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <optional>
 
@@ -28,9 +29,10 @@ namespace pocket::pods::inline v5
 struct user final
 {
     using opt = std::optional<user>;
+    using ptr = std::unique_ptr<user>;
 
     enum class status {
-        INACTIVE = 1,
+        NOT_ACTIVE = 1,
         ACTIVE = 0,
         DELETED = 2,
         INVALIDATED = 3
@@ -41,7 +43,8 @@ struct user final
     std::string name;
     std::string email;
     std::string passwd;
-    status status = status::INACTIVE;
+    status status = status::NOT_ACTIVE;
+    uint64_t timestamp_last_update = 0;
 
     ~user() = default;
 };

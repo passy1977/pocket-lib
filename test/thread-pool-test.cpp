@@ -23,6 +23,7 @@
 using namespace std;
 
 #include "pocket-controllers/session.hpp"
+#include "BS_thread_pool.hpp"
 
 struct thread_pool_test : public ::testing::Test
 {

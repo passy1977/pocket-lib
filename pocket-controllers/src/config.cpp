@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include "pocket-controllers/config.hpp"
-#include "pocket-services/pod-factory.hpp"
+#include "pocket-services/json.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -29,7 +29,7 @@ namespace pocket::controllers::inline v5
 {
 
 using pods::device;
-using services::factory_from_json_to_device;
+using services::json_to_device;
 using nlohmann::json;
 using namespace std;
 using namespace std::filesystem;
@@ -68,9 +68,24 @@ config::config(const optional<string>& config_path)
     this->config_path = absolute_path;
 }
 
-device config::parse(const string& config_json)
+device config::parse(string_view config_json)
 {
-    auto&& device = factory_from_json_to_device(config_json);
+    uint64_t user_timestamp_last_update = 0;
+    auto&& device = json_to_device(config_json, user_timestamp_last_update);
+    if(device.user_id == 0)
+    {
+        throw runtime_error("Invalid type or non defined field userId");
+    }
+
+    if(device.host.empty())
+    {
+        throw runtime_error("Invalid type or non defined field host");
+    }
+
+    if(device.host_pub_key.empty())
+    {
+        throw runtime_error("Invalid type or non defined field host_pub_key");
+    }
 
     debug(typeid(*this).name(), "Create new config");
 

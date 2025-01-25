@@ -43,6 +43,8 @@ public:
         GET, POST, PUT, DEL
     };
 
+    static inline constexpr uint32_t MAX_BUFFER = MAX_BUFFER_RESPONSE_SIZE;
+
     network();
     ~network();
     POCKET_NO_COPY_NO_MOVE(network)

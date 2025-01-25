@@ -19,29 +19,25 @@
 
 #pragma once
 
-#include "pocket/globals.hpp"
+#include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
+#include "pocket-pods/group.hpp"
+#include "pocket-pods/group_field.hpp"
+#include "pocket-pods/field.hpp"
 
+#include <vector>
 
-namespace pocket::controllers::inline v5
+namespace pocket::pods::inline v5
 {
 
-class config final
+struct response
 {
-    std::string config_path;
-
-public:
-    using ptr = std::unique_ptr<config>;
-
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
-
-    pods::device parse(std::string_view config_json);
-
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
-    }
+    std::string token;
+    pods::user::ptr user;
+    pods::device::ptr device;
+    std::vector<group::ptr> groups;
+    std::vector<group_field::ptr> groups_fields;
+    std::vector<field::ptr> fields;
 };
 
 }

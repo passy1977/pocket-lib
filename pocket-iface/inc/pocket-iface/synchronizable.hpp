@@ -24,9 +24,10 @@
 namespace pocket::iface::inline v5
 {
 
+template <typename T>
 struct synchronizable
 {
-    using ptr = std::unique_ptr<synchronizable>;
+    using ptr = std::unique_ptr<T>;
 
     uint64_t id = 0;
     uint64_t server_id = 0;

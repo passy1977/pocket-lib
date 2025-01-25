@@ -29,9 +29,10 @@
 namespace pocket::pods::inline v5
 {
 
-struct device final : public iface::synchronizable
+struct device final : public iface::synchronizable<device>
 {
     using opt = std::optional<device>;
+    using ptr = std::unique_ptr<device>;
 
     enum class status {
         NOT_ACTIVE = 1,
@@ -45,7 +46,6 @@ struct device final : public iface::synchronizable
     std::string token;
     std::string host;
     std::string host_pub_key;
-    uint64_t timestamp_last_update = 0;
     uint64_t timestamp_creation = 0;
     status status = status::NOT_ACTIVE;
 

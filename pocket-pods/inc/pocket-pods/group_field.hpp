@@ -18,34 +18,30 @@
  ***************************************************************************/
 
 #pragma once
-#include "pocket/globals.hpp"
-#include "pocket-iface/synchronizable.hpp"
-#include "pocket-pods/device.hpp"
-#include "pocket-pods/user.hpp"
 
+#include "pocket-iface/pod.hpp"
 
-#include <optional>
-
-namespace pocket::services::inline v5
+namespace pocket::pods::inline v5
 {
 
-//template <typename T>
-//concept C = requires(T x) {
-//    // Requirements on type `T`:
-//    {*x} -> std::convertible_to<typename T::inner>;
-//    typename T::id;
-//    typename T::server_id;
-//    typename T::user_id;
-//};
-//
-//
-//template <iface::synchronizable F>
-//iface::synchronizable::ptr factory_from_json_to_device(std::optional<std::string> str_json);
-//
-//}
+struct group_field final : public iface::pod<group_field>
+{
 
-pods::device factory_from_json_to_device(const std::string& str_json);
+    uint64_t group_id{0};
+    std::string title{""};
+    bool is_hidden{false};
+    bool synchronized{true};
+    bool deleted{false};
+    uint64_t timestamp_last_update = 0;
+    uint64_t timestamp_creation = 0;
 
-pods::user factory_from_json_to_user(const std::string& str_json);
+    ~group_field() override;
 
-}
+    inline const std::string& get_base_path() const noexcept override {
+        static std::string const ret = "group_field";
+        return ret;
+    }
+
+};
+
+} // pocket

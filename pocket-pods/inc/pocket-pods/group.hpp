@@ -19,29 +19,31 @@
 
 #pragma once
 
-#include "pocket/globals.hpp"
-#include "pocket-pods/device.hpp"
+#include "pocket-iface/pod.hpp"
 
-
-namespace pocket::controllers::inline v5
+namespace pocket::pods::inline v5
 {
 
-class config final
+struct group final : public iface::pod<group>
 {
-    std::string config_path;
+    uint64_t group_id{0};
+    uint64_t server_group_id{0};
+    std::string title{""};
+    std::string icon{""};
+    std::string note{""};
+    bool synchronized{true};
+    bool deleted{false};
+    bool shared{false};
+    uint64_t timestamp_last_update = 0;
+    uint64_t timestamp_creation = 0;
 
-public:
-    using ptr = std::unique_ptr<config>;
+    ~group() override;
 
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
-
-    pods::device parse(std::string_view config_json);
-
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
+    inline const std::string& get_base_path() const noexcept override {
+        static std::string const ret = "group";
+        return ret;
     }
+
 };
 
-}
+} // pocket

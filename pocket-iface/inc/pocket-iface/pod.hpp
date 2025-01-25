@@ -17,18 +17,22 @@
  *
  ***************************************************************************/
 
-#include "pocket-services/url-builder.hpp"
+#pragma once
+#include "pocket-iface/url-buildable.hpp"
+#include "pocket-iface/synchronizable.hpp"
 
-namespace pocket::services::inline v5
+#include <memory>
+
+namespace pocket::iface::inline v5
 {
 
-url_builder::url_builder(controllers::config::ptr& config)
-: config(config)
+template<typename T>
+struct pod : public url_buildable, public synchronizable<T>
 {
+    using ptr = std::unique_ptr<T>;
+
+    ~pod() override = default;
+
+};
 
 }
-
-
-
-}
-

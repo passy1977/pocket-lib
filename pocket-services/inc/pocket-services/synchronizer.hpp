@@ -21,27 +21,30 @@
 
 #include "pocket/globals.hpp"
 #include "pocket-pods/device.hpp"
+#include "pocket-pods/user.hpp"
+#include "BS_thread_pool.hpp"
 
+#include <optional>
 
-namespace pocket::controllers::inline v5
+namespace pocket::services::inline v5
 {
 
-class config final
+class synchronizer final
 {
-    std::string config_path;
+    const pods::device& device;
 
+    BS::thread_pool<4> pool;
 public:
-    using ptr = std::unique_ptr<config>;
+    using ptr = std::unique_ptr<synchronizer>;
 
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
+    static inline constexpr uint8_t FULL_SYNC = 0;
 
-    pods::device parse(std::string_view config_json);
 
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
-    }
+    explicit synchronizer(const pods::device& device) noexcept
+    : device(device) {}
+    POCKET_NO_COPY_NO_MOVE(synchronizer)
+
+    std::optional<pods::device> get_full_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
 };
 
 }

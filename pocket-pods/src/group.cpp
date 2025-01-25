@@ -17,31 +17,12 @@
  *
  ***************************************************************************/
 
-#pragma once
+#include "pocket-pods/group.hpp"
 
-#include "pocket/globals.hpp"
-#include "pocket-pods/device.hpp"
-
-
-namespace pocket::controllers::inline v5
+namespace pocket::pods::inline v5
 {
 
-class config final
-{
-    std::string config_path;
-
-public:
-    using ptr = std::unique_ptr<config>;
-
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
-
-    pods::device parse(std::string_view config_json);
-
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
-    }
-};
+group::~group() = default;
 
 }
+

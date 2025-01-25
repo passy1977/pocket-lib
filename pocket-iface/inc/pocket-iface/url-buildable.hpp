@@ -18,30 +18,16 @@
  ***************************************************************************/
 
 #pragma once
+#include <string>
 
-#include "pocket/globals.hpp"
-#include "pocket-pods/device.hpp"
-
-
-namespace pocket::controllers::inline v5
+namespace pocket::iface::inline v5
 {
 
-class config final
+struct url_buildable
 {
-    std::string config_path;
+    virtual ~url_buildable() = default;
 
-public:
-    using ptr = std::unique_ptr<config>;
-
-    explicit config(const std::optional<std::string>& config_path = {});
-    POCKET_NO_COPY_NO_MOVE(config)
-
-    pods::device parse(std::string_view config_json);
-
-    inline std::string get_config_path() const noexcept
-    {
-        return config_path;
-    }
+    virtual const std::string& get_base_path() const noexcept = 0;
 };
 
 }

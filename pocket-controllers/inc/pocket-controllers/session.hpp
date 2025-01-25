@@ -21,11 +21,10 @@
 
 #include "pocket-controllers/config.hpp"
 #include "pocket-services/database.hpp"
+#include "pocket-services/synchronizer.hpp"
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
-
-#include "BS_thread_pool.hpp"
 
 #include <optional>
 
@@ -38,21 +37,21 @@ class session final
 
     controllers::config::ptr config = nullptr;
     services::database::ptr database = nullptr;
+    services::synchronizer::ptr synchronizer = nullptr;
 
 
     pods::device::opt device;
     pods::user::opt user;
 
-    BS::thread_pool<4> pool;
-    BS::synced_stream sync_out;
 public:
+
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
     POCKET_NO_COPY_NO_MOVE(session)
 
     const pods::device::opt& init();
 
-    const pods::user::opt& login(const std::string& user, const std::string& passwd);
+    const pods::user::opt& login(const std::string& email, const std::string& passwd);
 
 };
 

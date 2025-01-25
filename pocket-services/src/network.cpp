@@ -159,6 +159,13 @@ std::string network::perform(network::method method, const std::string_view& url
         headers = nullptr;
     }
 
+    long http_code;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    if(http_code != 200)
+    {
+        throw runtime_error(to_string(http_code));
+    }
+
     return ret_data;
 }
 
