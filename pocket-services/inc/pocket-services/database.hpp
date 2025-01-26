@@ -75,7 +75,7 @@ public:
     bool open(const std::string& file_db_path);
     void close();
 
-    std::unique_ptr<result_set> execute(const std::string&& query, const parameters& parameters = {});
+    std::optional<std::unique_ptr<result_set>> execute(const std::string&& query, const parameters& parameters = {});
 
 private:
     friend result_set;

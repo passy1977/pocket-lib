@@ -18,26 +18,16 @@
  ***************************************************************************/
 
 #pragma once
+#include <string>
 
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/device.hpp"
-#include "pocket-pods/group.hpp"
-#include "pocket-pods/group_field.hpp"
-#include "pocket-pods/field.hpp"
-
-#include <vector>
-
-namespace pocket::pods::inline v5
+namespace pocket::iface::inline v5
 {
 
-struct response
+struct has_name
 {
-    std::string token;
-    pods::user::ptr user;
-    pods::device::ptr device;
-    std::vector<group::ptr> groups;
-    std::vector<group_field::ptr> group_fields;
-    std::vector<field::ptr> fields;
+    virtual ~has_name() = default;
+
+    static const std::string& get_name() noexcept;
 };
 
 }

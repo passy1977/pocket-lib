@@ -18,16 +18,35 @@
  ***************************************************************************/
 
 #pragma once
-#include <string>
 
-namespace pocket::iface::inline v5
+#include "pocket/globals.hpp"
+#include "pocket-services/database.hpp"
+#include "pocket-iface/read_write.hpp"
+
+
+#include <stdexcept>
+
+namespace pocket::daos::inline v5
 {
 
-struct url_buildable
-{
-    virtual ~url_buildable() = default;
 
-    virtual const std::string& get_base_path() const noexcept = 0;
+template<iface::require_pod T>
+class dao_read_write final : public iface::read_write<services::database::row, T>
+{
+public:
+    dao_read_write() = default;
+    ~dao_read_write() override = default;
+    POCKET_NO_COPY_NO_MOVE(dao_read_write)
+
+    std::optional<T> read(services::database::row& row) override
+    {
+        throw std::runtime_error("Not implemented");
+    }
+
+    bool write() override
+    {
+        throw std::runtime_error("Not implemented");
+    }
 };
 
 }

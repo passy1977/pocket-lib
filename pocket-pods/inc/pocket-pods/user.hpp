@@ -39,7 +39,7 @@ struct user final
     };
 
     uint64_t id = 0;
-    uint64_t server_id;
+    uint64_t server_id = 0;
     std::string name;
     std::string email;
     std::string passwd;

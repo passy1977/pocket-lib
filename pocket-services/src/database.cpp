@@ -249,10 +249,21 @@ void database::unlock()
 }
 
 
-result_set::ptr database::execute(const string&& query, const parameters& parameters)
+optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters)
 {
-    result_set::ptr ret = make_unique<result_set>(*this, query, parameters);
-    return ret;
+    auto rs = make_unique<result_set>(*this, query, parameters);
+
+    if(rs->get_statement_status() != SQLITE_OK)
+    {
+        return nullopt;
+    }
+
+    if(rs->empty())
+    {
+        return nullopt;
+    }
+
+    return rs;
 }
 
 }

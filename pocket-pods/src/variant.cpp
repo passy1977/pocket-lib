@@ -22,6 +22,11 @@
 namespace pocket::pods::inline v5
 {
 
+variant::variant() noexcept
+: variant(nullptr)
+{
+
+}
 
 variant::variant(int32_t value) noexcept
 : t(INT)

@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #pragma once
-#include "pocket-iface/url-buildable.hpp"
+#include "pocket-iface/has_name.hpp"
 #include "pocket-iface/synchronizable.hpp"
 
 #include <memory>
@@ -27,12 +27,18 @@ namespace pocket::iface::inline v5
 {
 
 template<typename T>
-struct pod : public url_buildable, public synchronizable<T>
+struct pod : public has_name, public synchronizable<T>
 {
     using ptr = std::unique_ptr<T>;
 
     ~pod() override = default;
 
 };
+
+template<typename T>
+concept require_pod = requires {
+    typename iface::pod<T>;
+};
+
 
 }

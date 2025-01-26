@@ -20,6 +20,7 @@
 #pragma once
 
 #include "pocket/globals.hpp"
+#include "pocket-services/database.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/user.hpp"
 #include "BS_thread_pool.hpp"
@@ -31,6 +32,7 @@ namespace pocket::services::inline v5
 
 class synchronizer final
 {
+    services::database::ptr& database;
     const pods::device& device;
 
     BS::thread_pool<4> pool;
@@ -40,8 +42,9 @@ public:
     static inline constexpr uint8_t FULL_SYNC = 0;
 
 
-    explicit synchronizer(const pods::device& device) noexcept
-    : device(device) {}
+    explicit synchronizer(services::database::ptr& database, const pods::device& device) noexcept
+    : database(database)
+    , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
     std::optional<pods::device> get_full_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);

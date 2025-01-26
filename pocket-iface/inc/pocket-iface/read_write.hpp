@@ -19,25 +19,22 @@
 
 #pragma once
 
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/device.hpp"
-#include "pocket-pods/group.hpp"
-#include "pocket-pods/group_field.hpp"
-#include "pocket-pods/field.hpp"
+#include <pocket-iface/pod.hpp>
 
-#include <vector>
+#include <cinttypes>
+#include <optional>
 
-namespace pocket::pods::inline v5
+namespace pocket::iface::inline v5
 {
 
-struct response
+template<typename RS, require_pod T>
+struct read_write
 {
-    std::string token;
-    pods::user::ptr user;
-    pods::device::ptr device;
-    std::vector<group::ptr> groups;
-    std::vector<group_field::ptr> group_fields;
-    std::vector<field::ptr> fields;
+    virtual ~read_write() = default;
+
+    virtual std::optional<T> read(RS& row) = 0;
+    virtual bool write() = 0;
+
 };
 
 }

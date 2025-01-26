@@ -20,6 +20,7 @@
 #include "pocket-services/synchronizer.hpp"
 #include "pocket-services/network.hpp"
 #include "pocket-services/json.hpp"
+#include "pocket-daos/dao.hpp"
 
 #include <openssl/sha.h>
 #include <stdexcept>
@@ -30,10 +31,12 @@ namespace pocket::services::inline v5
 
 using namespace std;
 using namespace pods;
+using namespace daos;
 
 namespace
 {
 constexpr char ERROR_HTTP_CODE[] = "http_code";
+constexpr char APP_TAG[] = "synchronizer";
 }
 
 optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
@@ -75,8 +78,32 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
     auto&& response = fut.get();
     if(!response.starts_with(ERROR_HTTP_CODE))
     {
+
         try
         {
+            struct data_server_id
+            {
+                vector<uint64_t> groups_server_id;
+                vector<uint64_t> group_fields_server_id;
+                vector<uint64_t> fields_server_id;
+            };
+
+            promise<data_server_id> prom_data;
+            auto&& fut_user_device = prom_data.get_future();
+            pool.detach_task([this, &prom_data]
+             {
+
+                 try
+                 {
+                     dao dao(database);
+                     dao.get_all<group>();
+                 }
+                 catch (const runtime_error& e)
+                 {
+                     error(APP_TAG, e.what());
+                 }
+             });
+
             struct response json_response;
             json_parse_response(pool, response, json_response);
 

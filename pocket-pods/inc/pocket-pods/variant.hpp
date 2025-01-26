@@ -48,7 +48,8 @@ private:
     int64_t integer_value = 0;
     double double_value = 0;
     std::string text_value;
-public:
+public: //keep the ctor not explicit
+    variant() noexcept;
     variant(int32_t value) noexcept;
     variant(int64_t value) noexcept;
     variant(double value) noexcept;

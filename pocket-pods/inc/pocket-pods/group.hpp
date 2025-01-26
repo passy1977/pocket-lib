@@ -28,19 +28,18 @@ struct group final : public iface::pod<group>
 {
     uint64_t group_id{0};
     uint64_t server_group_id{0};
-    std::string title{""};
-    std::string icon{""};
-    std::string note{""};
+    std::string title;
+    std::string icon;
+    std::string note;
     bool synchronized{true};
     bool deleted{false};
     bool shared{false};
-    uint64_t timestamp_last_update = 0;
     uint64_t timestamp_creation = 0;
 
     ~group() override;
 
-    inline const std::string& get_base_path() const noexcept override {
-        static std::string const ret = "group";
+    static inline const std::string& get_name() noexcept {
+        static std::string const ret = "groups";
         return ret;
     }
 

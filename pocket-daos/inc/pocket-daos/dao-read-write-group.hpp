@@ -19,25 +19,27 @@
 
 #pragma once
 
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/device.hpp"
+#include "pocket-daos/dao-read-write.hpp"
 #include "pocket-pods/group.hpp"
-#include "pocket-pods/group_field.hpp"
-#include "pocket-pods/field.hpp"
 
-#include <vector>
+#include <stdexcept>
 
-namespace pocket::pods::inline v5
+namespace pocket::daos::inline v5
 {
 
-struct response
+template<>
+class dao_read_write<pods::group> final : public iface::read_write<services::database::row, pods::group>
 {
-    std::string token;
-    pods::user::ptr user;
-    pods::device::ptr device;
-    std::vector<group::ptr> groups;
-    std::vector<group_field::ptr> group_fields;
-    std::vector<field::ptr> fields;
+public:
+    dao_read_write() = default;
+    ~dao_read_write() override = default;
+    POCKET_NO_COPY_NO_MOVE(dao_read_write)
+
+    std::optional<pods::group> read(services::database::row& row) override;
+
+    bool write() override;
 };
+
+
 
 }

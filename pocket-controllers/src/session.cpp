@@ -95,7 +95,7 @@ const device::opt& session::init()
         throw runtime_error("Database busy");
     }
 
-    synchronizer = make_unique<class synchronizer>(*device);
+    synchronizer = make_unique<class synchronizer>(database, *device);
 
     return device;
 }

@@ -45,4 +45,12 @@ pods::group json_to_group(const std::string_view& str_json);
 
 pods::group json_to_group(const nlohmann::basic_json<>& json);
 
+pods::group_field json_to_group_field(const std::string_view& str_json);
+
+pods::group_field json_to_group_field(const nlohmann::basic_json<>& json);
+
+pods::field json_to_field(const std::string_view& str_json);
+
+pods::field json_to_field(const nlohmann::basic_json<>& json);
+
 }

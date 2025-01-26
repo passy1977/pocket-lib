@@ -28,17 +28,18 @@ struct group_field final : public iface::pod<group_field>
 {
 
     uint64_t group_id{0};
-    std::string title{""};
+    uint64_t server_group_id{0};
+    std::string title;
     bool is_hidden{false};
     bool synchronized{true};
     bool deleted{false};
-    uint64_t timestamp_last_update = 0;
     uint64_t timestamp_creation = 0;
 
     ~group_field() override;
 
-    inline const std::string& get_base_path() const noexcept override {
-        static std::string const ret = "group_field";
+    static inline const std::string& get_name() noexcept
+    {
+        static std::string const ret = "group_fields";
         return ret;
     }
 

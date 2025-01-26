@@ -122,23 +122,53 @@ void json_parse_response(BS::thread_pool<4>& pool, string_view response, struct 
         }
     });
 
+    promise<vector<group_field::ptr>> prom_group_fields;
+    auto&& fut_group_fields = prom_group_fields.get_future();
+    pool.detach_task([&prom_group_fields, &json]
+     {
+         try
+         {
+             vector<group_field::ptr> ret;
+             for (auto& it : json["groupsFields"].items())
+             {
+                 ret.push_back(make_unique<group_field>(json_to_group_field(it.value())));
+             }
+
+             prom_group_fields.set_value(std::move(ret));
+         }
+         catch (const runtime_error& e)
+         {
+             error(APP_TAG, e.what());
+         }
+     });
+
+
+    promise<vector<field::ptr>> prom_fields;
+    auto&& fut_fields = prom_fields.get_future();
+    pool.detach_task([&prom_fields, &json]
+    {
+     try
+     {
+         vector<field::ptr> ret;
+         for (auto& it : json["fields"].items())
+         {
+             ret.push_back(make_unique<field>(json_to_field(it.value())));
+         }
+
+         prom_fields.set_value(std::move(ret));
+     }
+     catch (const runtime_error& e)
+     {
+         error(APP_TAG, e.what());
+     }
+    });
+
     auto&& [user, device] = fut_user_device.get();
     json_response.user = std::move(user);
     json_response.device = std::move(device);
     json_response.groups = std::move(fut_groups.get());
-
-//    std::vector<group::ptr> groups;
-//    for(auto&& it : fut_groups.get())
-//    {
-//        auto a  = make_unique<pods::group::ptr>(&it);
-//        groups.push_back(std::move(a));
-//    }
-//    json_response.groups.emplace();
-
-//    json_response.groups_fields = std::move(json["groupsFields"]);
-//    json_response.fields = std::move(json["fields"]);
-    
-
+    json_response.group_fields = std::move(fut_group_fields.get());
+    json_response.fields = std::move(fut_fields.get());
 }
 catch (...)
 {
@@ -327,28 +357,31 @@ group json_to_group(const nlohmann::basic_json<>& json)
 
     if(json.contains("serverId") && json["serverId"].is_number())
     {
-        group.id = json["serverId"];
+        group.server_id = json["serverId"];
     }
     else
     {
-        throw runtime_error("Invalid type or non defined field server_id");
+        throw runtime_error("Invalid type or non defined field serverId");
     }
-
-    if(json.contains("userId") && json["userId"].is_number())
-    {
-        group.id = json["userId"];
-    }
-
 
     if(json.contains("groupId") && json["groupId"].is_number())
     {
-        group.id = json["groupId"];
+        group.group_id = json["groupId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field groupId");
     }
 
     if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
     {
-        group.id = json["serverGroupId"];
+        group.server_group_id = json["serverGroupId"];
     }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverGroupId");
+    }
+
 
     if(json.contains("title") && json["title"].is_string())
     {
@@ -386,17 +419,250 @@ group json_to_group(const nlohmann::basic_json<>& json)
         throw runtime_error("Invalid type or non defined field deleted");
     }
 
-    if(json.contains("shared") && json["shared"].is_boolean())
+    if(json.contains("timestampCreation") && json["timestampCreation"].is_number())
     {
-        group.shared = json["shared"];
+        group.timestamp_creation = json["timestampCreation"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field timestampCreation");
+    }
+
+
+    return group;
+}
+
+
+
+group_field json_to_group_field(const std::string_view& str_json)
+{
+    if(str_json.empty())
+    {
+        throw runtime_error("String json empty");
+    }
+
+    return json_to_group_field(json::parse(str_json));
+}
+
+group_field json_to_group_field(const nlohmann::basic_json<>& json)
+{
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    group_field group_field;
+
+    if(json.contains("id") && json["id"].is_number())
+    {
+        group_field.id = json["id"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field id");
+    }
+
+    if(json.contains("serverId") && json["serverId"].is_number())
+    {
+        group_field.server_id = json["serverId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverId");
+    }
+
+    if(json.contains("groupId") && json["groupId"].is_number())
+    {
+        group_field.group_id = json["groupId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field groupId");
+    }
+
+    if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
+    {
+        group_field.server_group_id = json["serverGroupId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverGroupId");
+    }
+
+    if(json.contains("title") && json["title"].is_string())
+    {
+        group_field.title = json["title"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field title");
+    }
+
+    if(json.contains("isHidden") && json["isHidden"].is_boolean())
+    {
+        group_field.is_hidden = json["isHidden"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field isHidden");
+    }
+
+    if(json.contains("deleted") && json["deleted"].is_boolean())
+    {
+        group_field.deleted = json["deleted"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field deleted");
     }
 
     if(json.contains("timestampCreation") && json["timestampCreation"].is_number())
     {
-        group.id = json["timestampCreation"];
+        group_field.timestamp_creation = json["timestampCreation"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field timestampCreation");
     }
 
-    return group;
+    return group_field;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+field json_to_field(const std::string_view& str_json)
+{
+    if(str_json.empty())
+    {
+        throw runtime_error("String json empty");
+    }
+
+    return json_to_field(json::parse(str_json));
+}
+
+field json_to_field(const nlohmann::basic_json<>& json)
+{
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    field field;
+
+    if(json.contains("id") && json["id"].is_number())
+    {
+        field.id = json["id"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field id");
+    }
+
+    if(json.contains("serverId") && json["serverId"].is_number())
+    {
+        field.server_id = json["serverId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverId");
+    }
+
+    if(json.contains("groupId") && json["groupId"].is_number())
+    {
+        field.group_id = json["groupId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field groupId");
+    }
+
+    if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
+    {
+        field.server_group_id = json["serverGroupId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverGroupId");
+    }
+
+
+    if(json.contains("groupFieldId") && json["groupFieldId"].is_number())
+    {
+        field.group_field_id = json["groupFieldId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field groupFieldId");
+    }
+
+    if(json.contains("serverGroupFieldId") && json["serverGroupFieldId"].is_number())
+    {
+        field.server_group_field_id = json["serverGroupFieldId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field serverGroupFieldId");
+    }
+
+    if(json.contains("title") && json["title"].is_string())
+    {
+        field.title = json["title"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field title");
+    }
+
+    if(json.contains("value") && json["value"].is_string())
+    {
+        field.value = json["value"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field value");
+    }
+
+    if(json.contains("isHidden") && json["isHidden"].is_boolean())
+    {
+        field.is_hidden = json["isHidden"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field isHidden");
+    }
+
+    if(json.contains("deleted") && json["deleted"].is_boolean())
+    {
+        field.deleted = json["deleted"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field deleted");
+    }
+
+    if(json.contains("timestampCreation") && json["timestampCreation"].is_number())
+    {
+        field.timestamp_creation = json["timestampCreation"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field timestampCreation");
+    }
+
+
+    return field;
 }
 
 }
