@@ -122,9 +122,9 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
         }
     });
 
-    promise<vector<group_field::ptr>> prom_group_fields;
-    auto&& fut_group_fields = prom_group_fields.get_future();
-    pool.detach_task([&prom_group_fields, &json]
+    promise<vector<group_field::ptr>> prom_groups_fields;
+    auto&& fut_groups_fields = prom_groups_fields.get_future();
+    pool.detach_task([&prom_groups_fields, &json]
      {
          try
          {
@@ -134,7 +134,7 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
                  ret.push_back(make_unique<group_field>(json_to_group_field(it.value())));
              }
 
-             prom_group_fields.set_value(std::move(ret));
+             prom_groups_fields.set_value(std::move(ret));
          }
          catch (const runtime_error& e)
          {
@@ -167,7 +167,7 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
     json_response.user = std::move(user);
     json_response.device = std::move(device);
     json_response.groups = std::move(fut_groups.get());
-    json_response.group_fields = std::move(fut_group_fields.get());
+    json_response.group_fields = std::move(fut_groups_fields.get());
     json_response.fields = std::move(fut_fields.get());
 }
 catch (...)

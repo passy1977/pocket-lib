@@ -25,9 +25,10 @@ using namespace std;
 using pods::group_field;
 using services::result_set;
 using row = services::database::row;
+using parameters = services::database::parameters;
 
 
-optional<group_field> dao_read_write<group_field>::read(services::database::row& row)
+optional<group_field> dao_read_write<group_field>::read(row& row)
 {
     group_field field;
     field.id = row["id"].to_integer();
@@ -43,9 +44,20 @@ optional<group_field> dao_read_write<group_field>::read(services::database::row&
     return field;
 }
 
-bool dao_read_write<group_field>::write()
+parameters dao_read_write<group_field>::write(const group_field::ptr& t)
 {
-    throw std::runtime_error("Not implemented");
+    vector<pods::variant> ret;
+    ret.push_back(t->id);
+    ret.push_back(t->server_id);
+    ret.push_back(t->user_id);
+    ret.push_back(t->group_id);
+    ret.push_back(t->server_group_id);
+    ret.push_back(t->title);
+    ret.push_back(t->is_hidden);
+    ret.push_back(t->synchronized);
+    ret.push_back(t->deleted);
+    ret.push_back(t->timestamp_creation);
+    return ret;
 }
 
 }

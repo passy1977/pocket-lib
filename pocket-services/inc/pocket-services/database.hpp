@@ -26,7 +26,7 @@
 #include <initializer_list>
 #include <map>
 #include <mutex>
-#include <variant>
+#include <vector>
 #include <sqlite3.h>
 
 namespace pocket::services::inline v5
@@ -65,7 +65,7 @@ INSERT INTO metadata VALUES (?);
 public:
     using ptr = std::unique_ptr<database>;
 
-    using parameters = std::initializer_list<pods::variant>;
+    using parameters = std::vector<pods::variant>;
     using row = std::map<std::string, pods::variant>;
 
     database();

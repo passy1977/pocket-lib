@@ -27,13 +27,13 @@
 namespace pocket::iface::inline v5
 {
 
-template<typename RS, require_pod T>
+template<typename PR, typename RW, require_pod T>
 struct read_write
 {
     virtual ~read_write() = default;
 
-    virtual std::optional<T> read(RS& row) = 0;
-    virtual bool write() = 0;
+    virtual std::optional<T> read(PR& row) = 0;
+    virtual RW write(const T::ptr& t) = 0;
 
 };
 

@@ -28,7 +28,7 @@ namespace pocket::daos::inline v5
 {
 
 template<>
-class dao_read_write<pods::group_field> final : public iface::read_write<services::database::row, pods::group_field>
+class dao_read_write<pods::group_field> final : public iface::read_write<services::database::row, services::database::parameters, pods::group_field>
 {
 public:
     dao_read_write() = default;
@@ -37,7 +37,7 @@ public:
 
     std::optional<pods::group_field> read(services::database::row& row) override;
 
-    bool write() override;
+    services::database::parameters write(const pods::group_field::ptr& t) override;
 };
 
 

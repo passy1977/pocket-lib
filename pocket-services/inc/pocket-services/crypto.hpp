@@ -19,39 +19,13 @@
 
 #pragma once
 
-#include "pocket/globals.hpp"
-#include "pocket-services/database.hpp"
-#include "pocket-pods/device.hpp"
-#include "pocket-pods/user.hpp"
-#include "pocket-pods/response.hpp"
-#include "BS_thread_pool.hpp"
-
-#include <optional>
+#include <string>
 
 namespace pocket::services::inline v5
 {
 
-class synchronizer final
-{
-    services::database::ptr& database;
-    const pods::device& device;
+std::string crypto_encode_sha512(const std::string_view& str) noexcept;
 
-    BS::thread_pool<6> pool;
-public:
-    using ptr = std::unique_ptr<synchronizer>;
-
-    static inline constexpr uint8_t FULL_SYNC = 0;
-
-
-    explicit synchronizer(services::database::ptr& database, const pods::device& device) noexcept
-    : database(database)
-    , device(device) {}
-    POCKET_NO_COPY_NO_MOVE(synchronizer)
-
-    std::optional<pods::device::ptr> get_full_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
-
-private:
-    bool handle_token(const pods::response& response) const noexcept;
-};
+std::string crypto_decode_rsa(const std::string_view& pub_key, const std::string_view& cipher_text) noexcept;
 
 }

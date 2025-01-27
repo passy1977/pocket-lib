@@ -31,7 +31,7 @@ namespace pocket::daos::inline v5
 
 
 template<iface::require_pod T>
-class dao_read_write final : public iface::read_write<services::database::row, T>
+class dao_read_write final : public iface::read_write<services::database::row, services::database::parameters, T>
 {
 public:
     dao_read_write() = default;
@@ -43,7 +43,7 @@ public:
         throw std::runtime_error("Not implemented");
     }
 
-    bool write() override
+    bool write(services::database::parameters& params) override
     {
         throw std::runtime_error("Not implemented");
     }

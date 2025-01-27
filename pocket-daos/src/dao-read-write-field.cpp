@@ -19,15 +19,18 @@
 
 #include "pocket-daos/dao-read-write-field.hpp"
 
+#include <vector>
+
 namespace pocket::daos::inline v5
 {
 using namespace std;
 using pods::field;
 using services::result_set;
 using row = services::database::row;
+using parameters = services::database::parameters;
 
 
-optional<field> dao_read_write<field>::read(services::database::row& row)
+optional<field> dao_read_write<field>::read(row& row)
 {
     field field;
     field.id = row["id"].to_integer();
@@ -46,9 +49,23 @@ optional<field> dao_read_write<field>::read(services::database::row& row)
     return field;
 }
 
-bool dao_read_write<field>::write()
+parameters dao_read_write<field>::write(const field::ptr& t)
 {
-    throw std::runtime_error("Not implemented");
+    vector<pods::variant> ret;
+    ret.push_back(t->id);
+    ret.push_back(t->server_id);
+    ret.push_back(t->user_id);
+    ret.push_back(t->group_id);
+    ret.push_back(t->server_group_id);
+    ret.push_back(t->group_field_id);
+    ret.push_back(t->server_group_field_id);
+    ret.push_back(t->title);
+    ret.push_back(t->value);
+    ret.push_back(t->is_hidden);
+    ret.push_back(t->synchronized);
+    ret.push_back(t->deleted);
+    ret.push_back(t->timestamp_creation);
+    return ret;
 }
 
 }

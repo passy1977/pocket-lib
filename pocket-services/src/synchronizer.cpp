@@ -20,11 +20,10 @@
 #include "pocket-services/synchronizer.hpp"
 #include "pocket-services/network.hpp"
 #include "pocket-services/json.hpp"
+#include "pocket-services/crypto.hpp"
 #include "pocket-daos/dao.hpp"
 
-#include <openssl/sha.h>
 #include <stdexcept>
-#include <iomanip>
 #include <ranges>
 
 namespace pocket::services::inline v5
@@ -40,38 +39,25 @@ constexpr char ERROR_HTTP_CODE[] = "http_code";
 constexpr char APP_TAG[] = "synchronizer";
 }
 
-optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
+optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
 {
     struct data_server_id
     {
-        vector<uint64_t> groups_server_id;
-        vector<uint64_t> group_fields_server_id;
-        vector<uint64_t> fields_server_id;
+        std::vector<uint64_t> groups_server_id;
+        std::vector<uint64_t> group_fields_server_id;
+        std::vector<uint64_t> fields_server_id;
     };
-
 
     if(email.empty() || passwd.empty())
     {
         throw runtime_error("Some parameter are empty");
     }
 
-    uint8_t hash[SHA512_DIGEST_LENGTH];
-    SHA512(reinterpret_cast<const uint8_t *>(passwd.data()), passwd.length(), hash);
-
-    stringstream ss;
-    for (auto&& i : hash)
-    {
-        ss << hex << setw(2) << setfill('0')  << static_cast<uint32_t>(i);
-    }
-
     promise<string> prom;
-
     auto&& fut = prom.get_future();
-
-    pool.submit_task([this, timestamp_last_update, email, passwd = ss.str(), &prom]
+    pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd)), &prom]
      {
          network network;
-
          try
          {
              prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
@@ -80,7 +66,6 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
          {
              prom.set_value(string(ERROR_HTTP_CODE) + e.what());
          }
-
      })
     .wait();
 
@@ -95,7 +80,6 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
             auto&& fut_data = prom_data.get_future();
             pool.detach_task([this, &prom_data]
              {
-
                  try
                  {
                      data_server_id data ;
@@ -118,6 +102,22 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
                  }
              });
 
+            struct response json_response;
+            try
+            {
+                json_parse_response(pool, response, json_response);
+
+                if(!handle_token(json_response))
+                {
+                    return nullopt;
+                }
+            }
+            catch (const runtime_error& e)
+            {
+                error(APP_TAG, e.what());
+                return nullopt;
+            }
+
             data_server_id data;
             try
             {
@@ -125,28 +125,68 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
             }
             catch (const runtime_error& e)
             {
-                prom.set_value(string(ERROR_HTTP_CODE) + e.what());
+                error(APP_TAG, e.what());
+                return nullopt;
             }
 
-            struct response json_response;
-            json_parse_response(pool, response, json_response);
+            promise<void> prom_groups;
+            auto&& fut_groups = prom_groups.get_future();
+            pool.detach_task([&prom_groups, groups_server_id = &data.groups_server_id]
+             {
+                 try
+                 {
+
+                     prom_groups.set_value();
+                 }
+                 catch (const runtime_error& e)
+                 {
+                     error(APP_TAG, e.what());
+                 }
+             });
+
+            promise<void> prom_groups_fields;
+            auto&& fut_groups_fields = prom_groups_fields.get_future();
+            pool.detach_task([&prom_groups_fields, group_fields_server_id = &data.group_fields_server_id]
+             {
+                 try
+                 {
+
+                     prom_groups_fields.set_value();
+                 }
+                 catch (const runtime_error& e)
+                 {
+                     error(APP_TAG, e.what());
+                 }
+             });
+
+            promise<void> prom_fields;
+            auto&& fut_fields = prom_fields.get_future();
+            pool.detach_task([&prom_fields, fields_server_id = &data.fields_server_id]
+             {
+                 try
+                 {
+
+                     prom_fields.set_value();
+                 }
+                 catch (const runtime_error& e)
+                 {
+                     error(APP_TAG, e.what());
+                 }
+             });
+
+            fut_groups.get();
+            fut_groups_fields.get();
+            fut_fields.get();
 
 
-
-//            promise<vector<group::ptr>> prom_groups;
-//            auto&& fut_groups = prom_groups.get_future();
-//            pool.detach_task([&prom_groups]
-//             {
-//                 try
-//                 {
-//
-//                 }
-//                 catch (const runtime_error& e)
-//                 {
-//                     error(APP_TAG, e.what());
-//                 }
-//             });
-
+            if(json_response.device.get())
+            {
+                return {std::move(json_response.device) };
+            }
+            else
+            {
+                return nullopt;
+            }
         }
         catch (const runtime_error& e)
         {
@@ -175,6 +215,12 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
     return nullopt;
 }
 
+bool synchronizer::handle_token(const response& response) const noexcept
+{
+    auto&& token = crypto_decode_rsa(device.host_pub_key, response.token);
+
+    return false;
+}
 
 
 }
