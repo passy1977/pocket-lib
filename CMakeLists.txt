@@ -73,6 +73,8 @@ add_library(${PROJECT_NAME} STATIC
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}
+        pocket-daos/inc/pocket-daos/dao-group.hpp
+        pocket-daos/src/dao-group.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -31,7 +31,7 @@
 namespace pocket::services::inline v5
 {
 
-void json_parse_response(BS::thread_pool<4>& pool, std::string_view response, pods::response& json_response);
+void json_parse_response(BS::thread_pool<6>& pool, std::string_view response, pods::response& json_response);
 
 pods::device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timestamp_last_update);
 

@@ -51,7 +51,9 @@ private:
 public: //keep the ctor not explicit
     variant() noexcept;
     variant(int32_t value) noexcept;
+    variant(uint32_t value) noexcept;
     variant(int64_t value) noexcept;
+    variant(uint64_t value) noexcept;
     variant(double value) noexcept;
     variant(const std::string& value) noexcept;
     variant(const std::string&& value) noexcept;

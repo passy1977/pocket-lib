@@ -17,67 +17,29 @@
  *
  ***************************************************************************/
 
-#include "pocket-pods/variant.hpp"
+#pragma once
 
-namespace pocket::pods::inline v5
+#include "pocket-daos/dao-read-write.hpp"
+#include "pocket-pods/group_field.hpp"
+
+#include <stdexcept>
+
+namespace pocket::daos::inline v5
 {
 
-variant::variant() noexcept
-: variant(nullptr)
+template<>
+class dao_read_write<pods::group_field> final : public iface::read_write<services::database::row, pods::group_field>
 {
+public:
+    dao_read_write() = default;
+    ~dao_read_write() override = default;
+    POCKET_NO_COPY_NO_MOVE(dao_read_write)
 
-}
+    std::optional<pods::group_field> read(services::database::row& row) override;
 
-variant::variant(int32_t value) noexcept
-: t(INT)
-, integer_value(value)
-{
+    bool write() override;
+};
 
-}
 
-variant::variant(uint32_t value) noexcept
-:variant(static_cast<int32_t>(value))
-{
-
-}
-
-variant::variant(int64_t value) noexcept
-: t(INT64)
-, integer_value(value)
-{
-
-}
-
-variant::variant(uint64_t value) noexcept
-:variant(static_cast<int64_t>(value))
-{
-
-}
-
-variant::variant(double value) noexcept
-: t(DOUBLE)
-, double_value(value)
-{
-
-}
-
-variant::variant(const std::string& value) noexcept
-: t(TEXT)
-, text_value(value)
-{
-
-}
-
-variant::variant(const std::string&& value) noexcept
-: variant(value)
-{
-
-}
-
-variant::variant(nullptr_t) noexcept
-: t(NULL_T)
-{
-
-}
 
 }

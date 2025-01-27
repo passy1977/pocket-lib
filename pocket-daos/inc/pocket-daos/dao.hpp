@@ -24,6 +24,8 @@
 #include "pocket-services/result-set.hpp"
 #include "pocket-iface/pod.hpp"
 #include "pocket-daos/dao-read-write-group.hpp"
+#include "pocket-daos/dao-read-write-group-field.hpp"
+#include "pocket-daos/dao-read-write-field.hpp"
 
 #include <vector>
 
@@ -43,12 +45,12 @@ public:
 
 
     template<iface::require_pod T>
-    constexpr std::vector<iface::pod<T>> get_all()
+    constexpr std::vector<iface::pod<T>> get_all() const
     {
         std::vector<iface::pod<T>> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE deleted = 0"); opt_rs.has_value())
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE deleted = 0"); opt_rs.has_value()) //throw exception
         {
             for(auto&& row : **opt_rs)
             {
@@ -60,12 +62,45 @@ public:
                         ret.push_back(*g);
                     }
                 }
+                else if constexpr (std::is_same_v<T, pods::group_field>)
+                {
+                    dao_read_write<pods::group_field> dao;
+                    if(auto&& g = dao.read(row); g.has_value())
+                    {
+                        ret.push_back(*g);
+                    }
+                }
+                else if constexpr (std::is_same_v<T, pods::field>)
+                {
+                    dao_read_write<pods::field> dao;
+                    if(auto&& g = dao.read(row); g.has_value())
+                    {
+                        ret.push_back(*g);
+                    }
+                }
             }
         }
 
         return ret;
     }
 
+    template<iface::require_pod T>
+    inline int64_t del(uint64_t id) const
+    {
+        return database->update("UPDATE " + T::get_name() + " SET deleted = 1 WHERE id = ?", { {id} });
+    }
+
+    template<iface::require_pod T>
+    inline int64_t del(const T& t) const
+    {
+        return del(t.id);
+    }
+
+    template<iface::require_pod T>
+    constexpr void pippo()
+    {
+        printf("--->pippo() %s\n", typeid(T).name());
+    }
 };
 
 

@@ -107,6 +107,10 @@ result_set::result_set(class database& database, const std::string& query, const
             sqlite3_finalize(stmt);
             stmt = nullptr;
         }
+        else if (rc == SQLITE_DONE)
+        {
+            total_changes = sqlite3_total_changes64(database.db);
+        }
         else if (rc == SQLITE_ERROR)
         {
             sqlite3_finalize(stmt);
@@ -119,6 +123,7 @@ result_set::result_set(class database& database, const std::string& query, const
         sqlite3_finalize(stmt);
         throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
     }
+
 }
 
 result_set::~result_set() = default;

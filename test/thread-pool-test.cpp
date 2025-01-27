@@ -27,7 +27,7 @@ using namespace std;
 
 struct thread_pool_test : public ::testing::Test
 {
-    BS::thread_pool<4> pool;
+    BS::thread_pool<6> pool;
     BS::synced_stream sync_out;
 
 };

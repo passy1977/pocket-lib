@@ -25,6 +25,7 @@
 #include <openssl/sha.h>
 #include <stdexcept>
 #include <iomanip>
+#include <ranges>
 
 namespace pocket::services::inline v5
 {
@@ -41,6 +42,14 @@ constexpr char APP_TAG[] = "synchronizer";
 
 optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
 {
+    struct data_server_id
+    {
+        vector<uint64_t> groups_server_id;
+        vector<uint64_t> group_fields_server_id;
+        vector<uint64_t> fields_server_id;
+    };
+
+
     if(email.empty() || passwd.empty())
     {
         throw runtime_error("Some parameter are empty");
@@ -81,22 +90,27 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
 
         try
         {
-            struct data_server_id
-            {
-                vector<uint64_t> groups_server_id;
-                vector<uint64_t> group_fields_server_id;
-                vector<uint64_t> fields_server_id;
-            };
 
             promise<data_server_id> prom_data;
-            auto&& fut_user_device = prom_data.get_future();
+            auto&& fut_data = prom_data.get_future();
             pool.detach_task([this, &prom_data]
              {
 
                  try
                  {
+                     data_server_id data ;
                      dao dao(database);
-                     dao.get_all<group>();
+
+                     auto&& g = dao.get_all<group>();
+                     transform(g.begin(), g.end(), data.groups_server_id.begin(), [](auto it) { return it.server_id; });
+
+                     auto&& gf = dao.get_all<group_field>();
+                     transform(gf.begin(), gf.end(), data.group_fields_server_id.begin(), [](auto it) { return it.server_id; });
+
+                     auto&& f = dao.get_all<field>();
+                     transform(f.begin(), f.end(), data.fields_server_id.begin(), [](auto it) { return it.server_id; });
+
+                     prom_data.set_value(data);
                  }
                  catch (const runtime_error& e)
                  {
@@ -104,9 +118,34 @@ optional<device> synchronizer::get_full_data(uint64_t timestamp_last_update, str
                  }
              });
 
+            data_server_id data;
+            try
+            {
+                data = std::move(fut_data.get());
+            }
+            catch (const runtime_error& e)
+            {
+                prom.set_value(string(ERROR_HTTP_CODE) + e.what());
+            }
+
             struct response json_response;
             json_parse_response(pool, response, json_response);
 
+
+
+//            promise<vector<group::ptr>> prom_groups;
+//            auto&& fut_groups = prom_groups.get_future();
+//            pool.detach_task([&prom_groups]
+//             {
+//                 try
+//                 {
+//
+//                 }
+//                 catch (const runtime_error& e)
+//                 {
+//                     error(APP_TAG, e.what());
+//                 }
+//             });
 
         }
         catch (const runtime_error& e)

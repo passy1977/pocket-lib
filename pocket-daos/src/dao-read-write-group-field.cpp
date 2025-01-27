@@ -17,35 +17,33 @@
  *
  ***************************************************************************/
 
-#include "pocket-daos/dao-read-write-group.hpp"
+#include "pocket-daos/dao-read-write-group-field.hpp"
 
 namespace pocket::daos::inline v5
 {
 using namespace std;
-using pods::group;
+using pods::group_field;
 using services::result_set;
 using row = services::database::row;
 
 
-optional<group> dao_read_write<group>::read(services::database::row& row)
+optional<group_field> dao_read_write<group_field>::read(services::database::row& row)
 {
-    group group;
-    group.id = row["id"].to_integer();
-    group.server_id = row["server_id"].to_integer();
-    group.user_id = row["user_id"].to_integer();
-    group.group_id = row["group_id"].to_integer();
-    group.server_group_id = row["server_group_id"].to_integer();
-    group.title  = row["title"].to_text();
-    group.icon = row["icon"].to_text();
-    group.note = row["_note"].to_text();
-    group.synchronized = row["synchronized"].to_integer();
-    group.deleted = row["deleted"].to_integer();
-    group.shared = row["shared"].to_integer();
-    group.timestamp_creation = row["timestamp_creation"].to_integer();
-    return group;
+    group_field field;
+    field.id = row["id"].to_integer();
+    field.server_id = row["server_id"].to_integer();
+    field.user_id = row["user_id"].to_integer();
+    field.group_id = row["group_id"].to_integer();
+    field.server_group_id = row["server_group_id"].to_integer();
+    field.title  = row["title"].to_text();
+    field.is_hidden = row["is_hidden"].to_integer();
+    field.synchronized = row["synchronized"].to_integer();
+    field.deleted = row["deleted"].to_integer();
+    field.timestamp_creation = row["timestamp_creation"].to_integer();
+    return field;
 }
 
-bool dao_read_write<group>::write()
+bool dao_read_write<group_field>::write()
 {
     throw std::runtime_error("Not implemented");
 }

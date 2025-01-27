@@ -17,67 +17,17 @@
  *
  ***************************************************************************/
 
-#include "pocket-pods/variant.hpp"
+#include "pocket-daos/dao-group-field.hpp"
 
-namespace pocket::pods::inline v5
+namespace pocket::daos::inline v5
 {
 
-variant::variant() noexcept
-: variant(nullptr)
+using pods::group_field;
+
+template<>
+void dao::pippo<group_field>()
 {
-
-}
-
-variant::variant(int32_t value) noexcept
-: t(INT)
-, integer_value(value)
-{
-
-}
-
-variant::variant(uint32_t value) noexcept
-:variant(static_cast<int32_t>(value))
-{
-
-}
-
-variant::variant(int64_t value) noexcept
-: t(INT64)
-, integer_value(value)
-{
-
-}
-
-variant::variant(uint64_t value) noexcept
-:variant(static_cast<int64_t>(value))
-{
-
-}
-
-variant::variant(double value) noexcept
-: t(DOUBLE)
-, double_value(value)
-{
-
-}
-
-variant::variant(const std::string& value) noexcept
-: t(TEXT)
-, text_value(value)
-{
-
-}
-
-variant::variant(const std::string&& value) noexcept
-: variant(value)
-{
-
-}
-
-variant::variant(nullptr_t) noexcept
-: t(NULL_T)
-{
-
+    debug("--->", "pipo() group_field spec");
 }
 
 }

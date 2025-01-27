@@ -258,12 +258,20 @@ optional<result_set::ptr> database::execute(const string&& query, const paramete
         return nullopt;
     }
 
-    if(rs->empty())
-    {
-        return nullopt;
-    }
-
     return rs;
 }
+
+int64_t database::update(const string&& query, const parameters& parameters)
+{
+    auto rs = make_unique<result_set>(*this, query, parameters);
+
+    if(rs->get_statement_status() != SQLITE_OK)
+    {
+        return -1;
+    }
+
+    return rs->get_total_changes();
+}
+
 
 }

@@ -35,7 +35,7 @@ class synchronizer final
     services::database::ptr& database;
     const pods::device& device;
 
-    BS::thread_pool<4> pool;
+    BS::thread_pool<6> pool;
 public:
     using ptr = std::unique_ptr<synchronizer>;
 

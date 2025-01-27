@@ -33,7 +33,7 @@ using namespace nlohmann;
 using namespace pods;
 using iface::synchronizable;
 
-void json_parse_response(BS::thread_pool<4>& pool, string_view response, struct response& json_response) try
+void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct response& json_response) try
 {
     if(response.empty())
     {

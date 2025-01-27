@@ -77,6 +77,7 @@ public:
 
     std::optional<std::unique_ptr<result_set>> execute(const std::string&& query, const parameters& parameters = {});
 
+    int64_t update(const std::string&& query, const parameters& parameters = {});
 private:
     friend result_set;
 

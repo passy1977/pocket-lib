@@ -32,6 +32,7 @@ class result_set final : public std::vector<std::map<std::string, pods::variant>
 {
     class database& database;
     int statement_status = SQLITE_OK;
+    uint64_t total_changes = 0;
 public:
 
     using ptr = std::unique_ptr<result_set>;
@@ -57,6 +58,11 @@ public:
     inline int get_statement_status() const noexcept
     {
         return statement_status;
+    }
+
+    inline uint64_t get_total_changes() const noexcept
+    {
+        return total_changes;
     }
 private:
     using vector::push_back;
