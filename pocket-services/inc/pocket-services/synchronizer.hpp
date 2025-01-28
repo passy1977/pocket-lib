@@ -27,6 +27,7 @@
 #include "BS_thread_pool.hpp"
 
 #include <optional>
+#include <string_view>
 
 namespace pocket::services::inline v5
 {
@@ -48,10 +49,8 @@ public:
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    std::optional<pods::device::ptr> get_full_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
+    std::optional<pods::device::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
 
-private:
-    bool handle_token(const pods::response& response) const noexcept;
 };
 
 }

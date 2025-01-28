@@ -103,7 +103,7 @@ const device::opt& session::init()
 const user::opt& session::login(const string& email, const string& passwd) try
 {
 
-    synchronizer->get_full_data(synchronizer::FULL_SYNC, email, passwd);
+    synchronizer->get_data(synchronizer::FULL_SYNC, email, passwd);
 
     return session::user;
 }

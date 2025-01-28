@@ -20,12 +20,13 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 namespace pocket::services::inline v5
 {
 
 std::string crypto_encode_sha512(const std::string_view& str) noexcept;
 
-std::string crypto_decode_rsa(const std::string_view& pub_key, const std::string_view& cipher_text) noexcept;
+std::optional<std::string> crypto_encrypt_rsa(const std::string_view& pub_key, const std::string_view& plain_text) noexcept;
 
 }

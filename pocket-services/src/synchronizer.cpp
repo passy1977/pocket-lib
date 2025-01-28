@@ -39,7 +39,7 @@ constexpr char ERROR_HTTP_CODE[] = "http_code";
 constexpr char APP_TAG[] = "synchronizer";
 }
 
-optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
+optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
 {
     struct data_server_id
     {
@@ -47,6 +47,8 @@ optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update
         std::vector<uint64_t> group_fields_server_id;
         std::vector<uint64_t> fields_server_id;
     };
+
+    auto i = crypto_encrypt_rsa(device.host_pub_key, "ciao");
 
     if(email.empty() || passwd.empty())
     {
@@ -106,11 +108,6 @@ optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update
             try
             {
                 json_parse_response(pool, response, json_response);
-
-                if(!handle_token(json_response))
-                {
-                    return nullopt;
-                }
             }
             catch (const runtime_error& e)
             {
@@ -197,8 +194,9 @@ optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update
     {
         try {
             int http_code = stoi(response.substr(strnlen(ERROR_HTTP_CODE, sizeof ERROR_HTTP_CODE)));
-            if(http_code == 401)
+            if(http_code >= 600)
             {
+                error(APP_TAG, "Server error http_code:" + to_string(http_code));
                 return nullopt;
             }
             else
@@ -211,16 +209,8 @@ optional<device::ptr> synchronizer::get_full_data(uint64_t timestamp_last_update
             throw runtime_error(oor.what());
         }
     }
-
-    return nullopt;
 }
 
-bool synchronizer::handle_token(const response& response) const noexcept
-{
-    auto&& token = crypto_decode_rsa(device.host_pub_key, response.token);
-
-    return false;
-}
 
 
 }

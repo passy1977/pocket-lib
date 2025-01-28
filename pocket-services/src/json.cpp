@@ -77,7 +77,6 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
     }
 
 
-    json_response.token = json["token"];
 
     promise<pair<user::ptr, device::ptr>> prom_user_device;
     auto&& fut_user_device = prom_user_device.get_future();

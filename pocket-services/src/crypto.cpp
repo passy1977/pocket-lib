@@ -20,14 +20,15 @@
 #include "pocket-services/crypto.hpp"
 
 #include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/evperr.h>
 #include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/bio.h>
-#include <openssl/bn.h>
-#include <openssl/err.h>
+#include <openssl/types.h>
+
 
 #include <iomanip>
 #include <iostream>
+#include <cstring>
 
 
 namespace pocket::services::inline v5
@@ -35,7 +36,7 @@ namespace pocket::services::inline v5
 
 using namespace std;
 
-std::string crypto_encode_sha512(const std::string_view& str) noexcept
+string crypto_encode_sha512(const std::string_view& str) noexcept
 {
     uint8_t hash[SHA512_DIGEST_LENGTH];
     SHA512(reinterpret_cast<const uint8_t *>(str.data()), str.length(), hash);
@@ -49,46 +50,35 @@ std::string crypto_encode_sha512(const std::string_view& str) noexcept
     return ss.str();
 }
 
-// Funzione per convertire una stringa in una struttura EVP_PKEY da RSA
-evp_pkey_st* createPublicKey(const unsigned char* publicKeyPEM, size_t len) {
-    BIO *bio = BIO_new_mem_buf(publicKeyPEM, len);
-    if (!bio) {
-        std::cerr << "Errore nella creazione del bio" << std::endl;
-        return NULL;
-    }
-
-    evp_pkey_st* publicKey = PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
-    BIO_free_all(bio);
-
-    if (!publicKey) {
-        ERR_print_errors_fp(stderr);
-    }
-    return publicKey;
-}
-
-// Funzione per decifrare il messaggio
-int decryptWithPublicKey(EVP_PKEY *pkey, const unsigned char *ciphertext, size_t ciphertext_len, unsigned char **plaintext) {
-    RSA *rsa = EVP_PKEY_get0_RSA(pkey);
-
-    int plaintextlen = RSA_public_decrypt(ciphertext_len,
-                                          (const unsigned char*)ciphertext,
-                                          (*plaintext),
-                                          rsa,
-                                          RSA_PKCS1_PADDING);
-
-    if (plaintextlen < 0) {
-        // Gestisci l'errore
-        return -1;
-    }
-    *plaintextlen = plaintextlen;
-
-    return 0;
-}
 
 
-std::string crypto_decode_rsa(const std::string_view& pub_key, const std::string_view& cipher_text) noexcept
+optional<string> crypto_encrypt_rsa(const std::string_view& pub_key, const std::string_view& plain_text) noexcept
 {
-    return "";
+    uint8_t buffer[256];
+    int bytes_written = 0;
+    
+    EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
+    if(ctx == nullptr)
+    {
+        return nullopt;
+    }
+
+    EVP_EncodeInit(ctx);
+
+    if (EVP_RSAEncryption(ctx, pub_key, EVP_PKEY_PUBLIC()) != 1) {
+        printf("Errore in EVP_RSAEncryption\n");
+        return nullopt;
+    }
+
+    if (EVP_EncodeUpdate(ctx, buffer, &bytes_written, reinterpret_cast<const uint8_t*>(plain_text.data()), plain_text.length()) != 1) {
+        printf("Errore in EVP_EncodeUpdate\n");
+        return nullopt;
+    }
+
+    EVP_EncodeFinal(ctx, buffer + bytes_written, &bytes_written);
+
+
+    return string(reinterpret_cast<const char*>(buffer), strnlen(reinterpret_cast<const char*>(buffer), sizeof(buffer)));
 }
 
 }
