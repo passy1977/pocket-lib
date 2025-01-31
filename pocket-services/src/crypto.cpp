@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include "pocket-services/crypto.hpp"
+#include "pocket/globals.hpp"
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -28,14 +29,30 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-
+#include <string>
+#include <random>
+#include <chrono>
+#include <memory>
 
 namespace pocket::services::inline v5
 {
 
 using namespace std;
 
-string crypto_encode_sha512(const std::string_view& str) noexcept
+namespace
+{
+
+void throw_rsa_error(const string& msg)
+{
+    char err[256] = { 0 };
+    ERR_error_string_n(ERR_get_error(), err, sizeof(err));
+
+    throw runtime_error(msg + " err: " + err);
+}
+
+}
+
+string crypto_encode_sha512(const string_view& str) noexcept
 {
     uint8_t hash[SHA512_DIGEST_LENGTH];
     SHA512(reinterpret_cast<const uint8_t *>(str.data()), str.length(), hash);
@@ -49,93 +66,127 @@ string crypto_encode_sha512(const std::string_view& str) noexcept
     return ss.str();
 }
 
-
-
-optional<string> crypto_encrypt_rsa(const std::string_view& pub_key, const std::string_view& plain_text)
+string crypto_encrypt_rsa(const string_view& pub_key, const string_view& plain_text, bool url_compliant)
 {
-
-    string k = R"(
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh/GDeTWnA15/M1Yiw+Cm0Umm+kCInzLWqFpKsWQ5g36GNnr24v0/cNyxRziSYKvF2bg9MHoyrqyfNP0bZ85NmAe3uc75uONYinjKwwRy1arp6LWO387ATIvpyGGGWKs8cYgEm5qndHW4NTYp7IRHE4KKyT24FVCD0ASOJx4HTZkSev3XnvLaV3oIlM8Ay3Ogf8NHhJKny91SQ8YSGrJ7nFZoAWlk/mv1Z43DS9P1KoTSCzX2LrF2H7ARF59mnx/8T1NWK+VltssxF0kJWzDVSCVJfILzoF3Kr8EUX42boKTszeOw/+X6614SEs6vvNwOSQMl83Q5MzIyAVRkw+58VQIDAQAB
------END PUBLIC KEY-----
-)";
-
-    EVP_PKEY_CTX *ctx = nullptr;
+    
     ENGINE *eng = nullptr;
-    unsigned char *out = (uint8_t*)plain_text.data(), *in = nullptr;
-    size_t outlen = 0, inlen  = 0;
-    EVP_PKEY *pkey = NULL;
-// Creiamo un BIO della memoria
-    BIO *bio = BIO_new_mem_buf(k.data(), k.length());
-    if (bio == NULL) {
-        // Gestire l'errore
-        throw runtime_error("BIO_new_mem_buf()");
+    EVP_PKEY *pkey = nullptr;
+    uint8_t *out = nullptr;
+    size_t out_len = 0;
+
+
+    BIO *bio = BIO_new_mem_buf(pub_key.data(), pub_key.length());
+    if (bio == nullptr)
+    {
+        throw_rsa_error("Error on alloc BIO");
     }
 
-// Leggiamo la chiave pubblica dal BIO
-pkey = PEM_read_bio_PUBKEY(bio, &pkey, NULL, NULL);
-    if (pkey == NULL) {
-        // Gestire l'errore
-        throw runtime_error("PEM_read_bio_PUBKEY()");
+    pkey = PEM_read_bio_PUBKEY(bio, &pkey, nullptr, nullptr);
+    if (pkey == nullptr)
+    {
+        throw_rsa_error("Error on read public key");
     }
-// Dobbiamo chiudere il BIO
-    BIO_free(bio);
 
-// Verificare se la chiave è stata caricata correttamente
-
-
-/*
- * NB: assumes key, eng, in, inlen are already set up
- * and that key is an RSA private key
- */
-    ctx = EVP_PKEY_CTX_new(pkey, eng);
+    auto ctx = EVP_PKEY_CTX_new(pkey, eng);
     if (!ctx)
     {
-        /* Error occurred */
-        throw runtime_error("EVP_PKEY_CTX_new()");
+        throw_rsa_error("Error on allocates public key algorithm context");
     }
 
     if (EVP_PKEY_encrypt_init(ctx) <= 0)
     {
-        /* Error */
-        throw runtime_error("EVP_PKEY_encrypt_init()");
+        throw_rsa_error("Error on initializes a public key algorithm context");
     }
 
-    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
     {
-        /* Error */
-        throw runtime_error("EVP_PKEY_CTX_set_rsa_padding()");
+        throw_rsa_error("Error on set rsa padding");
     }
 
-    /* Determine buffer length */
-    if (EVP_PKEY_encrypt(ctx, NULL, &outlen, in, inlen) <= 0)
+    if (EVP_PKEY_encrypt(ctx, nullptr, &out_len, reinterpret_cast<const uint8_t *>(plain_text.data()), plain_text.length()) <= 0)
     {
-        /* Error */
-        throw runtime_error("EVP_PKEY_encrypt()");
+        throw_rsa_error("Error determine buffer length");
     }
 
-    out = reinterpret_cast<unsigned char *>(OPENSSL_malloc(outlen));
-    if (!out)
+    if (out = reinterpret_cast<uint8_t *>(OPENSSL_malloc(out_len)); out == nullptr)
     {
-        /* malloc failure */
-        throw runtime_error("OPENSSL_malloc()");
+        throw_rsa_error("Error on OPENSSL_malloc()");
     }
 
-
-    if (EVP_PKEY_encrypt(ctx, out, &outlen, in, inlen) <= 0)
+    if (EVP_PKEY_encrypt(ctx, out, &out_len, reinterpret_cast<const uint8_t *>(plain_text.data()), plain_text.length()) <= 0)
     {
-        /* Error */
-        throw runtime_error("EVP_PKEY_encrypt()");
+        throw_rsa_error("Error on encrypt");
     }
 
+    auto&& ret = crypto_base64_encode(out, out_len, url_compliant);
 
+    BIO_free_all(bio);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     OPENSSL_free(out);
 
 
-    //return string(reinterpret_cast<const char*>(buffer), strnlen(reinterpret_cast<const char*>(buffer), sizeof(buffer)));
-    return string("");
+    return ret;
 }
+
+string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compliant)
+{
+    if(data == nullptr)
+    {
+        throw_rsa_error("data null");
+    }
+
+    size_t out_len = (static_cast<size_t>(EVP_ENCODE_LENGTH(data_len)) + 2) / 3 * 4;
+
+    auto out = new(nothrow) uint8_t[out_len];
+    if(out == nullptr)
+    {
+        throw_rsa_error("out impossible alloc");
+    }
+    int num_encoded = EVP_EncodeBlock(out, data, data_len);
+
+    if (num_encoded < out_len && ((data[0] & 0x80) == 0 || (data[1] & 0x80) == 0))
+    {
+        memset(&out[num_encoded], '=', out_len - num_encoded);
+    }
+
+    string ret(reinterpret_cast<char*>(out), num_encoded);
+
+    if(url_compliant)
+    {
+        str_replace_all(ret, "/", "_");
+
+        str_replace_all(ret, "+", "-");
+    }
+
+    delete[] out;
+
+    return ret;
+}
+
+string crypto_base64_encode(const string_view& data, bool url_compliant)
+{
+    return crypto_base64_encode(reinterpret_cast<const uint8_t*>(data.data()), static_cast<int>(data.length()), url_compliant);
+}
+
+
+string crypto_generate_random_string(size_t length)
+{
+    string const CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    random_device random_device;
+    mt19937 generator(random_device());
+    uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    string random_string;
+
+    for (size_t i = 0; i < length; ++i)
+    {
+        random_string += CHARACTERS[distribution(generator)];
+    }
+
+    return random_string;
+}
+
 
 }

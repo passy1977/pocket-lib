@@ -49,7 +49,9 @@ struct device final : public iface::synchronizable<device>
     uint64_t timestamp_creation = 0;
     status status = status::NOT_ACTIVE;
 
-    ~device() override = default;
+    std::string secret;
+
+    ~device() override;
 };
 
 } // pocket

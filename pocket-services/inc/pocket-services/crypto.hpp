@@ -20,13 +20,18 @@
 #pragma once
 
 #include <string>
-#include <optional>
 
 namespace pocket::services::inline v5
 {
 
 std::string crypto_encode_sha512(const std::string_view& str) noexcept;
 
-std::optional<std::string> crypto_encrypt_rsa(const std::string_view& pub_key, const std::string_view& plain_text);
+std::string crypto_encrypt_rsa(const std::string_view& pub_key, const std::string_view& plain_text, bool url_compliant = true);
+
+std::string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compliant = true);
+
+std::string crypto_base64_encode(const std::string_view& data, bool url_compliant = true);
+
+std::string crypto_generate_random_string(size_t length);
 
 }

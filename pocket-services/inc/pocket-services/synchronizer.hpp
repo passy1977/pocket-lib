@@ -35,7 +35,7 @@ namespace pocket::services::inline v5
 class synchronizer final
 {
     services::database::ptr& database;
-    const pods::device& device;
+    pods::device& device;
 
     BS::thread_pool<6> pool;
 public:
@@ -44,7 +44,7 @@ public:
     static inline constexpr uint8_t FULL_SYNC = 0;
 
 
-    explicit synchronizer(services::database::ptr& database, const pods::device& device) noexcept
+    explicit synchronizer(services::database::ptr& database, pods::device& device) noexcept
     : database(database)
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)

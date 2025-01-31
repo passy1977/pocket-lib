@@ -46,9 +46,9 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
         throw runtime_error("json is not a object");
     }
 
-    if(json["token"].is_null() || !json["token"].is_string())
+    if(json["secret"].is_null() || !json["secret"].is_string())
     {
-        throw runtime_error("token is not a string");
+        throw runtime_error("secret is not a string");
     }
 
     if(json["user"].is_null() || !json["user"].is_object())
@@ -187,9 +187,22 @@ device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timesta
 
     device device;
 
+    if(json.contains("id") && json["id"].is_number())
+    {
+        device.id = json["id"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field id");
+    }
+
     if(json.contains("userId") && json["userId"].is_number())
     {
         device.user_id = json["userId"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field uuid");
     }
 
     if(json.contains("uuid") && json["uuid"].is_string())

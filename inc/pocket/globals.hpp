@@ -43,6 +43,7 @@ namespace pocket::inline v5
     constexpr char DATA_FOLDER[] = ".pocket";
     constexpr char LOCK_EXTENSION[] = ".lock";
     constexpr char API_VERSION[] = "/api/v5";
+    constexpr char DIVISOR[] = "|";
 
     constexpr auto debug(const std::string& app_tag, const std::string& log) noexcept
     {
@@ -73,5 +74,7 @@ namespace pocket::inline v5
     {
         error(app_tag, log);
     }
+
+    void str_replace_all(std::string &s, const std::string_view &to_replace, const std::string_view &replacement) noexcept;
 
 }

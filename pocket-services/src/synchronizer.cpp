@@ -48,8 +48,6 @@ optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, str
         std::vector<uint64_t> fields_server_id;
     };
 
-    auto i = crypto_encrypt_rsa(device.host_pub_key, "ciao");
-
     if(email.empty() || passwd.empty())
     {
         throw runtime_error("Some parameter are empty");
@@ -62,10 +60,19 @@ optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, str
          network network;
          try
          {
-             prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
+             if(device.secret.empty())
+             {
+                 device.secret = crypto_generate_random_string(10);
+             }
+
+             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + device.secret);
+
+             prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
+
          }
          catch (const runtime_error& e)
          {
+             device.secret = "";
              prom.set_value(string(ERROR_HTTP_CODE) + e.what());
          }
      })
