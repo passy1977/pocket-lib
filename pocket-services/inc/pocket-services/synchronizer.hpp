@@ -35,6 +35,7 @@ namespace pocket::services::inline v5
 class synchronizer final
 {
     services::database::ptr& database;
+    std::string& secret;
     pods::device& device;
 
     BS::thread_pool<6> pool;
@@ -44,12 +45,13 @@ public:
     static inline constexpr uint8_t FULL_SYNC = 0;
 
 
-    explicit synchronizer(services::database::ptr& database, pods::device& device) noexcept
+    explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
     : database(database)
+    , secret(secret)
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    std::optional<pods::device::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
+    std::optional<pods::user::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
 
 };
 

@@ -40,8 +40,9 @@ class session final
     services::synchronizer::ptr synchronizer = nullptr;
 
 
+    std::string secret;
     pods::device::opt device;
-    pods::user::opt user;
+
 
 public:
 
@@ -51,7 +52,7 @@ public:
 
     const pods::device::opt& init();
 
-    const pods::user::opt& login(const std::string& email, const std::string& passwd);
+    std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
 
 };
 

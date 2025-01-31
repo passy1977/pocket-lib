@@ -20,6 +20,8 @@
 #include "pocket-controllers/session.hpp"
 #include "pocket-services/json.hpp"
 #include "pocket-services/network.hpp"
+#include "pocket-services/crypto.hpp"
+#include "pocket-daos/dao-user.hpp"
 
 #include <filesystem>
 #include <thread>
@@ -32,8 +34,12 @@ using pods::user;
 using services::database;
 using services::network;
 using services::synchronizer;
+using services::crypto_encode_sha512;
+using daos::dao_user;
 using namespace std;
 using namespace std::filesystem;
+
+
 
 session::session(const optional<string>& config_json, const optional<string>& config_path)
 {
@@ -57,6 +63,10 @@ session::session(const optional<string>& config_json, const optional<string>& co
 session::~session()
 {
     database->close();
+    for(auto& it : secret)
+    {
+        it = '\0';
+    }
 }
 
 const device::opt& session::init()
@@ -95,25 +105,50 @@ const device::opt& session::init()
         throw runtime_error("Database busy");
     }
 
-    synchronizer = make_unique<class synchronizer>(database, *device);
+    synchronizer = make_unique<class synchronizer>(database, secret, *device);
 
     return device;
 }
 
-const user::opt& session::login(const string& email, const string& passwd) try
+std::optional<pods::user::ptr> session::login(const string& email, const string& passwd) try
 {
 
-    synchronizer->get_data(synchronizer::FULL_SYNC, email, passwd);
+    dao_user dao(database);
 
-    return session::user;
-}
-catch(...)
-{
-    try {
-        rethrow_exception(current_exception());
-    } catch (const exception& e) {
-        throw runtime_error(e.what());
+    uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
+    auto&& user_from_db = dao.login(email, std::move(crypto_encode_sha512(passwd)));
+    if(user_from_db)
+    {
+        auto&& user = user_from_db.value();
+        timestamp_last_update = user.timestamp_last_update;
     }
+
+    auto&& it = synchronizer->get_data(timestamp_last_update, email, passwd);
+    if(it.has_value())
+    {
+        auto&& user = it.value();
+        user->passwd = std::move(crypto_encode_sha512(passwd));
+        dao.write(user);
+        return std::move(user);
+    }
+    else if(user_from_db.has_value())
+    {
+        auto&& user = user_from_db.value();
+        user.passwd = std::move(crypto_encode_sha512(passwd));
+        user.timestamp_last_update = timestamp_last_update;
+        dao.write(user);
+        return make_unique<pods::user>(user);
+    }
+    else
+    {
+        return nullopt;
+    }
+
+}
+catch(const exception& e)
+{
+    error(typeid(this).name(), e.what());
+    return nullopt;
 }
 
 }

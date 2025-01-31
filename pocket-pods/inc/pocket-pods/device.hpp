@@ -29,7 +29,7 @@
 namespace pocket::pods::inline v5
 {
 
-struct device final : public iface::synchronizable<device>
+struct device final
 {
     using opt = std::optional<device>;
     using ptr = std::unique_ptr<device>;
@@ -41,6 +41,8 @@ struct device final : public iface::synchronizable<device>
         INVALIDATED = 3
     };
 
+    uint64_t id = 0;
+    uint64_t user_id = 0;
     std::string uuid;
     std::string version;
     std::string token;
@@ -49,9 +51,6 @@ struct device final : public iface::synchronizable<device>
     uint64_t timestamp_creation = 0;
     status status = status::NOT_ACTIVE;
 
-    std::string secret;
-
-    ~device() override;
 };
 
 } // pocket

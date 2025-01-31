@@ -46,9 +46,9 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
         throw runtime_error("json is not a object");
     }
 
-    if(json["secret"].is_null() || !json["secret"].is_string())
+    if(json["timestampLastUpdate"].is_null() || !json["timestampLastUpdate"].is_number())
     {
-        throw runtime_error("secret is not a string");
+        throw runtime_error("timestampLastUpdate is not a number");
     }
 
     if(json["user"].is_null() || !json["user"].is_object())
@@ -86,8 +86,9 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
         try
         {
             auto&& u =  make_unique<struct user>( json_to_user(json["user"]) );
-            auto&& d = make_unique<struct device>(json_to_device(json["device"], u->timestamp_last_update));
+            auto&& d = make_unique<struct device>(json_to_device(json["device"]));
 
+            u->timestamp_last_update = json["timestampLastUpdate"];
             d->user_id = u->id;
 
             prom_user_device.set_value(std::move(
@@ -162,6 +163,7 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
      }
     });
 
+
     auto&& [user, device] = fut_user_device.get();
     json_response.user = std::move(user);
     json_response.device = std::move(device);
@@ -178,7 +180,7 @@ catch (...)
     }
 }
 
-device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timestamp_last_update)
+device json_to_device(const nlohmann::basic_json<>& json)
 {
     if (!json.is_object())
     {
@@ -224,11 +226,6 @@ device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timesta
         device.host_pub_key = json["hostPublicKey"];
     }
 
-    if(json.contains("timestampLastUpdate") && json["timestampLastUpdate"].is_number())
-    {
-        user_timestamp_last_update = json["timestampLastUpdate"];
-    }
-
     if(json.contains("timestampCreation") && json["timestampCreation"].is_number())
     {
         device.timestamp_creation = json["timestampCreation"];
@@ -263,14 +260,14 @@ device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timesta
     return device;
 }
 
-device json_to_device(const string_view& str_json, uint64_t& user_timestamp_last_update)
+device json_to_device(const string_view& str_json)
 {
     if(str_json.empty())
     {
         throw runtime_error("str_json json empty");
     }
 
-    return json_to_device(json::parse(str_json), user_timestamp_last_update);
+    return json_to_device(json::parse(str_json));
 }
 
 user json_to_user(const nlohmann::basic_json<>& json)

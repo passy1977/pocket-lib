@@ -39,7 +39,7 @@ constexpr char ERROR_HTTP_CODE[] = "http_code";
 constexpr char APP_TAG[] = "synchronizer";
 }
 
-optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
+optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
 {
     struct data_server_id
     {
@@ -60,19 +60,19 @@ optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, str
          network network;
          try
          {
-             if(device.secret.empty())
+             if(secret.empty())
              {
-                 device.secret = crypto_generate_random_string(10);
+                 secret = crypto_generate_random_string(10);
              }
 
-             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + device.secret);
+             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret);
 
              prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
 
          }
          catch (const runtime_error& e)
          {
-             device.secret = "";
+             secret = "";
              prom.set_value(string(ERROR_HTTP_CODE) + e.what());
          }
      })
@@ -182,15 +182,15 @@ optional<device::ptr> synchronizer::get_data(uint64_t timestamp_last_update, str
             fut_groups_fields.get();
             fut_fields.get();
 
-
-            if(json_response.device.get())
+            if(json_response.device->id == device.id)
             {
-                return {std::move(json_response.device) };
+                return {std::move(json_response.user) };
             }
             else
             {
                 return nullopt;
             }
+
         }
         catch (const runtime_error& e)
         {

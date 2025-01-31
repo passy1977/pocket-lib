@@ -70,8 +70,8 @@ config::config(const optional<string>& config_path)
 
 device config::parse(string_view config_json)
 {
-    uint64_t user_timestamp_last_update = 0;
-    auto&& device = json_to_device(config_json, user_timestamp_last_update);
+    auto&& device = json_to_device(config_json);
+
     if(device.user_id == 0)
     {
         throw runtime_error("Invalid type or non defined field userId");

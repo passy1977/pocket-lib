@@ -22,10 +22,5 @@
 namespace pocket::pods::inline v5
 {
 
-device::~device() {
-    for(auto& it : secret)
-    {
-        it = '\0';
-    }
-}
+
 }

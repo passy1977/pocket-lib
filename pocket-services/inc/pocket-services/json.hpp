@@ -33,9 +33,9 @@ namespace pocket::services::inline v5
 
 void json_parse_response(BS::thread_pool<6>& pool, std::string_view response, pods::response& json_response);
 
-pods::device json_to_device(const nlohmann::basic_json<>& json, uint64_t& user_timestamp_last_update);
+pods::device json_to_device(const nlohmann::basic_json<>& json);
 
-pods::device json_to_device(const std::string_view& str_json, uint64_t& user_timestamp_last_update);
+pods::device json_to_device(const std::string_view& str_json);
 
 pods::user json_to_user(const nlohmann::basic_json<>& json);
 

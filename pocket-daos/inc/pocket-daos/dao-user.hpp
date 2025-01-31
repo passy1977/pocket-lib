@@ -17,22 +17,39 @@
  *
  ***************************************************************************/
 
-#include "pocket-daos/device.hpp"
+#pragma once
+
+#include "pocket/globals.hpp"
+#include "pocket-services/database.hpp"
+#include "pocket-pods/user.hpp"
+
+#include <string_view>
+
+
 
 namespace pocket::daos::inline v5
 {
 
-device::device(services::database& database) noexcept
-:database(database)
+class dao_user final
 {
+    services::database::ptr& database;
+public:
 
-}
+    explicit dao_user(services::database::ptr& database) noexcept;
+    ~dao_user() = default;
+    POCKET_NO_COPY_NO_MOVE(dao_user)
 
-std::vector<pods::device> device::select(const pods::device& device)
-{
+    pods::user::opt get();
 
-    return {};
-}
+    pods::user::opt login(std::string_view email, std::string_view passwd);
 
-}
+    bool write(const pods::user& user);
 
+    inline bool write(const pods::user::ptr& user)
+    {
+        return write(*user);
+    }
+
+};
+
+} // pocket
