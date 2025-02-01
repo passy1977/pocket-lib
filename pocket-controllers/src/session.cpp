@@ -123,10 +123,10 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
         timestamp_last_update = user.timestamp_last_update;
     }
 
-    auto&& it = synchronizer->get_data(timestamp_last_update, email, passwd);
-    if(it.has_value())
+    auto&& user_from_net = synchronizer->get_data(timestamp_last_update, email, passwd);
+    if(user_from_net.has_value())
     {
-        auto&& user = it.value();
+        auto&& user = user_from_net.value();
         user->passwd = std::move(crypto_encode_sha512(passwd));
         dao.write(user);
         return std::move(user);

@@ -41,17 +41,16 @@ dao_user::dao_user(services::database::ptr& database) noexcept
 user::opt dao_user::get()
 {
 
-    if(auto&& opt_rs = database->execute("SELECT * FROM users LIMIT 1"); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT * FROM user LIMIT 1"); opt_rs.has_value()) //throw exception
     {
         for(auto&& row : **opt_rs)
         {
             user ret {
                     .id = static_cast<uint64_t>(row["id"].to_integer()),
-                    .server_id = static_cast<uint64_t>(row["server_id"].to_integer()),
                     .name = row["name"].to_text(),
                     .email = row["email"].to_text(),
                     .passwd = row["passwd"].to_text(),
-                    .status = static_cast<enum user::status>(row["passwd"].to_integer()),
+                    .status = user::stat(row["passwd"].to_integer()),
                     .timestamp_last_update = static_cast<uint64_t>(row["timestamp_last_update"].to_integer())
             };
             return ret;
@@ -60,19 +59,18 @@ user::opt dao_user::get()
     return nullopt;
 }
 
-user::opt dao_user::login(std::string_view email, std::string_view passwd)
+user::opt dao_user::login(const string& email, const string& passwd)
 {
-    if(auto&& opt_rs = database->execute("SELECT * FROM users WHERE email = ? AND passwd = ?", { email.data(), passwd.data() }); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT * FROM user WHERE email = ? AND passwd = ?", { email, passwd }); opt_rs.has_value()) //throw exception
     {
         for(auto&& row : **opt_rs)
         {
             user ret {
                     .id = static_cast<uint64_t>(row["id"].to_integer()),
-                    .server_id = static_cast<uint64_t>(row["server_id"].to_integer()),
                     .name = row["name"].to_text(),
                     .email = row["email"].to_text(),
                     .passwd = row["passwd"].to_text(),
-                    .status = static_cast<enum user::status>(row["passwd"].to_integer()),
+                    .status = user::stat(row["passwd"].to_integer()),
                     .timestamp_last_update = static_cast<uint64_t>(row["timestamp_last_update"].to_integer())
             };
             return ret;
@@ -84,8 +82,6 @@ user::opt dao_user::login(std::string_view email, std::string_view passwd)
 bool dao_user::write(const pods::user& user)
 {
     database::parameters params = {
-            user.id,
-            user.server_id,
             user.name,
             user.email,
             user.passwd,
@@ -100,7 +96,6 @@ bool dao_user::write(const pods::user& user)
         count = database->update(R"(
 UPDATE user
 SET
-    server_id = ?,
     name = ?,
     email = ?,
     passwd = ?,
@@ -115,7 +110,6 @@ WHERE
         count = database->update(R"(
 INSERT INTO user
 (
-    server_id,
     name,
     email,
     passwd,
@@ -123,7 +117,6 @@ INSERT INTO user
     timestamp_last_update,
     id
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

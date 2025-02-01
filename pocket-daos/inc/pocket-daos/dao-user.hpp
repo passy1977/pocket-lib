@@ -41,7 +41,7 @@ public:
 
     pods::user::opt get();
 
-    pods::user::opt login(std::string_view email, std::string_view passwd);
+    pods::user::opt login(const std::string& email, const std::string& passwd);
 
     bool write(const pods::user& user);
 

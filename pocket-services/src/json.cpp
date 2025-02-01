@@ -202,10 +202,6 @@ device json_to_device(const nlohmann::basic_json<>& json)
     {
         device.user_id = json["userId"];
     }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field uuid");
-    }
 
     if(json.contains("uuid") && json["uuid"].is_string())
     {
@@ -215,6 +211,7 @@ device json_to_device(const nlohmann::basic_json<>& json)
     {
         throw runtime_error("Invalid type or non defined field uuid");
     }
+
 
     if(json.contains("host") && json["host"].is_string())
     {
@@ -236,25 +233,25 @@ device json_to_device(const nlohmann::basic_json<>& json)
         string&& ref = json["status"];
         if("NOT_ACTIVE" == ref)
         {
-            device.status = device::status::NOT_ACTIVE;
+            device.status = device::stat::NOT_ACTIVE;
         }
         else if("ACTIVE" == ref)
         {
-            device.status = device::status::ACTIVE;
+            device.status = device::stat::ACTIVE;
         }
         else if("DELETED" == ref)
         {
-            device.status = device::status::DELETED;
+            device.status = device::stat::DELETED;
         }
         else if("INVALIDATED" == ref)
         {
-            device.status = device::status::INVALIDATED;
+            device.status = device::stat::INVALIDATED;
         }
 
     }
     else
     {
-        device.status = device::status::NOT_ACTIVE;
+        device.status = device::stat::NOT_ACTIVE;
     }
 
     return device;
@@ -279,6 +276,15 @@ user json_to_user(const nlohmann::basic_json<>& json)
 
     user user;
 
+    if(json.contains("id") && json["id"].is_number())
+    {
+        user.id = json["id"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field id");
+    }
+
     if(json.contains("name") && json["name"].is_string())
     {
         user.name = json["name"];
@@ -302,24 +308,24 @@ user json_to_user(const nlohmann::basic_json<>& json)
         string&& ref = json["status"];
         if("NOT_ACTIVE" == ref)
         {
-            user.status = user::status::NOT_ACTIVE;
+            user.status = user::stat::NOT_ACTIVE;
         }
         else if("ACTIVE" == ref)
         {
-            user.status = user::status::ACTIVE;
+            user.status = user::stat::ACTIVE;
         }
         else if("DELETED" == ref)
         {
-            user.status = user::status::DELETED;
+            user.status = user::stat::DELETED;
         }
         else if("INVALIDATED" == ref)
         {
-            user.status = user::status::INVALIDATED;
+            user.status = user::stat::INVALIDATED;
         }
     }
     else
     {
-        user.status = user::status::NOT_ACTIVE;
+        user.status = user::stat::NOT_ACTIVE;
     }
 
     return user;

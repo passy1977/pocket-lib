@@ -31,8 +31,8 @@ result_set::result_set(class database& database, const std::string& query, const
 {
     sqlite3_stmt *stmt = nullptr;
 
-    statement_status = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
-    if( statement_status == SQLITE_OK )
+    statementstat = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
+    if( statementstat == SQLITE_OK )
     {
         debug(typeid(*this).name(), query);
         for(int i = 1; auto &&param : parameters) {
@@ -118,7 +118,7 @@ result_set::result_set(class database& database, const std::string& query, const
         }
 
     }
-    else if(statement_status == SQLITE_ERROR)
+    else if(statementstat == SQLITE_ERROR)
     {
         sqlite3_finalize(stmt);
         throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));

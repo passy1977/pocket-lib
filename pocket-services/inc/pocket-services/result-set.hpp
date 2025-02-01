@@ -31,7 +31,7 @@ namespace pocket::services::inline v5
 class result_set final : public std::vector<std::map<std::string, pods::variant>>
 {
     class database& database;
-    int statement_status = SQLITE_OK;
+    int statementstat = SQLITE_OK;
     uint64_t total_changes = 0;
 public:
 
@@ -55,9 +55,9 @@ public:
 
     using vector::operator[];
 
-    inline int get_statement_status() const noexcept
+    inline int get_statementstat() const noexcept
     {
-        return statement_status;
+        return statementstat;
     }
 
     inline uint64_t get_total_changes() const noexcept

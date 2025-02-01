@@ -34,7 +34,7 @@ struct device final
     using opt = std::optional<device>;
     using ptr = std::unique_ptr<device>;
 
-    enum class status {
+    enum class stat {
         NOT_ACTIVE = 1,
         ACTIVE = 0,
         DELETED = 2,
@@ -49,7 +49,7 @@ struct device final
     std::string host;
     std::string host_pub_key;
     uint64_t timestamp_creation = 0;
-    status status = status::NOT_ACTIVE;
+    stat status = stat::NOT_ACTIVE;
 
 };
 

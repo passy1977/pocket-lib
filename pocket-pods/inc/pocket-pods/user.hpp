@@ -31,7 +31,7 @@ struct user final
     using opt = std::optional<user>;
     using ptr = std::unique_ptr<user>;
 
-    enum class status {
+    enum class stat {
         NOT_ACTIVE = 1,
         ACTIVE = 0,
         DELETED = 2,
@@ -39,11 +39,10 @@ struct user final
     };
 
     uint64_t id = 0;
-    uint64_t server_id = 0;
     std::string name;
     std::string email;
     std::string passwd;
-    status status = status::NOT_ACTIVE;
+    stat status = stat::NOT_ACTIVE;
     uint64_t timestamp_last_update = 0;
 
     ~user() = default;
