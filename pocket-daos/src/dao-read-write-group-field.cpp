@@ -28,26 +28,25 @@ using row = services::database::row;
 using parameters = services::database::parameters;
 
 
-optional<group_field> dao_read_write<group_field>::read(row& row)
+group_field::ptr dao_read_write<group_field>::read(row& row)
 {
-    group_field field;
-    field.id = row["id"].to_integer();
-    field.server_id = row["server_id"].to_integer();
-    field.user_id = row["user_id"].to_integer();
-    field.group_id = row["group_id"].to_integer();
-    field.server_group_id = row["server_group_id"].to_integer();
-    field.title  = row["title"].to_text();
-    field.is_hidden = row["is_hidden"].to_integer();
-    field.synchronized = row["synchronized"].to_integer();
-    field.deleted = row["deleted"].to_integer();
-    field.timestamp_creation = row["timestamp_creation"].to_integer();
-    return field;
+    auto group_field = make_unique<pods::group_field>();
+    group_field->id = row["id"].to_integer();
+    group_field->server_id = row["server_id"].to_integer();
+    group_field->user_id = row["user_id"].to_integer();
+    group_field->group_id = row["group_id"].to_integer();
+    group_field->server_group_id = row["server_group_id"].to_integer();
+    group_field->title  = row["title"].to_text();
+    group_field->is_hidden = row["is_hidden"].to_integer();
+    group_field->synchronized = row["synchronized"].to_integer();
+    group_field->deleted = row["deleted"].to_integer();
+    group_field->timestamp_creation = row["timestamp_creation"].to_integer();
+    return group_field;
 }
 
 parameters dao_read_write<group_field>::write(const group_field::ptr& t)
 {
     vector<pods::variant> ret;
-    ret.push_back(t->id);
     ret.push_back(t->server_id);
     ret.push_back(t->user_id);
     ret.push_back(t->group_id);
@@ -57,6 +56,7 @@ parameters dao_read_write<group_field>::write(const group_field::ptr& t)
     ret.push_back(t->synchronized);
     ret.push_back(t->deleted);
     ret.push_back(t->timestamp_creation);
+    ret.push_back(t->id);
     return ret;
 }
 

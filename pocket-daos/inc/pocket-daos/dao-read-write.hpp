@@ -38,12 +38,12 @@ public:
     ~dao_read_write() override = default;
     POCKET_NO_COPY_NO_MOVE(dao_read_write)
 
-    std::optional<T> read(services::database::row& row) override
+    T::ptr read(services::database::row& row) override
     {
         throw std::runtime_error("Not implemented");
     }
 
-    bool write(services::database::parameters& params) override
+    services::database::parameters write(const T::ptr& t) override
     {
         throw std::runtime_error("Not implemented");
     }

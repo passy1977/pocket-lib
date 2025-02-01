@@ -45,9 +45,9 @@ public:
 
 
     template<iface::require_pod T>
-    constexpr std::vector<iface::pod<T>> get_all() const
+    constexpr std::vector<typename iface::pod<T>::ptr> get_all() const
     {
-        std::vector<iface::pod<T>> ret;
+        std::vector<typename iface::pod<T>::ptr> ret;
 
 
         if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE deleted = 0"); opt_rs.has_value()) //throw exception
@@ -57,25 +57,25 @@ public:
                 if constexpr (std::is_same_v<T, pods::group>)
                 {
                     dao_read_write<pods::group> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+//                        ret.push_back(*g);
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::group_field>)
                 {
                     dao_read_write<pods::group_field> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+//                        ret.push_back(*g);
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::field>)
                 {
                     dao_read_write<pods::field> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+                        //ret.push_back(*g);
                     }
                 }
             }
@@ -97,10 +97,11 @@ public:
     }
 
     template<iface::require_pod T>
-    constexpr void pippo()
+    uint64_t persist(const T::ptr& t)
     {
-        printf("--->pippo() %s\n", typeid(T).name());
+        throw std::runtime_error("Not implemented");
     }
+
 };
 
 

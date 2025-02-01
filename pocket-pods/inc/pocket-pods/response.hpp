@@ -32,7 +32,6 @@ namespace pocket::pods::inline v5
 
 struct response
 {
-
     pods::user::ptr user;
     pods::device::ptr device;
     std::vector<group::ptr> groups;

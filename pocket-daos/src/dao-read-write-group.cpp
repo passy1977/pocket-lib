@@ -28,28 +28,27 @@ using row = services::database::row;
 using parameters = services::database::parameters;
 
 
-optional<group> dao_read_write<group>::read(row& row)
+group::ptr dao_read_write<group>::read(row& row)
 {
-    group group;
-    group.id = row["id"].to_integer();
-    group.server_id = row["server_id"].to_integer();
-    group.user_id = row["user_id"].to_integer();
-    group.group_id = row["group_id"].to_integer();
-    group.server_group_id = row["server_group_id"].to_integer();
-    group.title  = row["title"].to_text();
-    group.icon = row["icon"].to_text();
-    group.note = row["_note"].to_text();
-    group.synchronized = row["synchronized"].to_integer();
-    group.deleted = row["deleted"].to_integer();
-    group.shared = row["shared"].to_integer();
-    group.timestamp_creation = row["timestamp_creation"].to_integer();
+    auto group = make_unique<pods::group>();
+    group->id = row["id"].to_integer();
+    group->server_id = row["server_id"].to_integer();
+    group->user_id = row["user_id"].to_integer();
+    group->group_id = row["group_id"].to_integer();
+    group->server_group_id = row["server_group_id"].to_integer();
+    group->title  = row["title"].to_text();
+    group->icon = row["icon"].to_text();
+    group->note = row["_note"].to_text();
+    group->synchronized = row["synchronized"].to_integer();
+    group->deleted = row["deleted"].to_integer();
+    group->shared = row["shared"].to_integer();
+    group->timestamp_creation = row["timestamp_creation"].to_integer();
     return group;
 }
 
 parameters dao_read_write<group>::write(const group::ptr& t)
 {
     vector<pods::variant> ret;
-    ret.push_back(t->id);
     ret.push_back(t->server_id);
     ret.push_back(t->user_id);
     ret.push_back(t->group_id);
@@ -61,6 +60,7 @@ parameters dao_read_write<group>::write(const group::ptr& t)
     ret.push_back(t->deleted);
     ret.push_back(t->shared);
     ret.push_back(t->timestamp_creation);
+    ret.push_back(t->id);
     return ret;
 }
 

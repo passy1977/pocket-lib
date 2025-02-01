@@ -235,6 +235,38 @@ void database::unlock()
 }
 
 
+void database::disable_foreign_keys()
+{
+    char* err = nullptr;
+    if(int rc = sqlite3_exec(db, "PRAGMA foreign_keys = OFF;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    {
+        string msg = "Database disable foreign keys error";
+        if(err)
+        {
+            msg += ":";
+            msg += err;
+            sqlite3_free(err);
+        }
+        throw runtime_error(msg);
+    }
+}
+
+void database::enable_foreign_keys()
+{
+    char* err = nullptr;
+    if(int rc = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    {
+        string msg = "Database enable foreign keys error";
+        if(err)
+        {
+            msg += ":";
+            msg += err;
+            sqlite3_free(err);
+        }
+        throw runtime_error(msg);
+    }
+}
+
 optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters)
 {
     auto rs = make_unique<result_set>(*this, query, parameters);

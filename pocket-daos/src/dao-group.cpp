@@ -25,9 +25,59 @@ namespace pocket::daos::inline v5
 using pods::group;
 
 template<>
-void dao::pippo<group>()
+uint64_t dao::persist<group>(const group::ptr& t)
 {
-    debug("--->", "pipo() group spec");
+
+    dao_read_write<group> dao_rw;
+
+    auto&& params = dao_rw.write(t);
+    int64_t count = 0;
+    if(t->id > 0)
+    {
+        count = database->update(R"(
+UPDATE groups
+SET
+    group_id = ?,
+    title = ?,
+    icon = ?,
+    note = ?,
+    synchronized = ?,
+    deleted = ?,
+    shared = ?,
+    timestamp_creation = ?
+WHERE
+    id = ?
+        )", params);
+    }
+    else
+    {
+        count = database->update(R"(
+INSERT INTO groups
+(
+    group_id,
+    title,
+    icon,
+    note,
+    synchronized,
+    deleted,
+    shared,
+    timestamp_creation,
+    id
+) VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+)
+        )", params);
+    }
+
+    return count;
 }
 
 }

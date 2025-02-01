@@ -30,29 +30,28 @@ using row = services::database::row;
 using parameters = services::database::parameters;
 
 
-optional<field> dao_read_write<field>::read(row& row)
+field::ptr dao_read_write<field>::read(row& row)
 {
-    field field;
-    field.id = row["id"].to_integer();
-    field.server_id = row["server_id"].to_integer();
-    field.user_id = row["user_id"].to_integer();
-    field.group_id = row["group_id"].to_integer();
-    field.server_group_id = row["server_group_id"].to_integer();
-    field.group_field_id = row["group_field_id"].to_integer();
-    field.server_group_field_id = row["server_group_field_id"].to_integer();
-    field.title  = row["title"].to_text();
-    field.value = row["value"].to_text();
-    field.is_hidden = row["is_hidden"].to_integer();
-    field.synchronized = row["synchronized"].to_integer();
-    field.deleted = row["deleted"].to_integer();
-    field.timestamp_creation = row["timestamp_creation"].to_integer();
+    auto field = make_unique<pods::field>();
+    field->id = row["id"].to_integer();
+    field->server_id = row["server_id"].to_integer();
+    field->user_id = row["user_id"].to_integer();
+    field->group_id = row["group_id"].to_integer();
+    field->server_group_id = row["server_group_id"].to_integer();
+    field->group_field_id = row["group_field_id"].to_integer();
+    field->server_group_field_id = row["server_group_field_id"].to_integer();
+    field->title  = row["title"].to_text();
+    field->value = row["value"].to_text();
+    field->is_hidden = row["is_hidden"].to_integer();
+    field->synchronized = row["synchronized"].to_integer();
+    field->deleted = row["deleted"].to_integer();
+    field->timestamp_creation = row["timestamp_creation"].to_integer();
     return field;
 }
 
 parameters dao_read_write<field>::write(const field::ptr& t)
 {
     vector<pods::variant> ret;
-    ret.push_back(t->id);
     ret.push_back(t->server_id);
     ret.push_back(t->user_id);
     ret.push_back(t->group_id);
@@ -65,6 +64,7 @@ parameters dao_read_write<field>::write(const field::ptr& t)
     ret.push_back(t->synchronized);
     ret.push_back(t->deleted);
     ret.push_back(t->timestamp_creation);
+    ret.push_back(t->id);
     return ret;
 }
 

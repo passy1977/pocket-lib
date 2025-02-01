@@ -36,18 +36,10 @@ using namespace daos;
 namespace
 {
 constexpr char ERROR_HTTP_CODE[] = "http_code";
-constexpr char APP_TAG[] = "synchronizer";
 }
 
 optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
 {
-    struct data_server_id
-    {
-        std::vector<uint64_t> groups_server_id;
-        std::vector<uint64_t> group_fields_server_id;
-        std::vector<uint64_t> fields_server_id;
-    };
-
     if(email.empty() || passwd.empty())
     {
         throw runtime_error("Some parameter are empty");
@@ -95,19 +87,19 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                      dao dao(database);
 
                      auto&& g = dao.get_all<group>();
-                     transform(g.begin(), g.end(), data.groups_server_id.begin(), [](auto it) { return it.server_id; });
+                     for_each(g.begin(), g.end(), [&data](auto &&it) mutable { data.groups_server_id[it->server_id] = it->id; });
 
                      auto&& gf = dao.get_all<group_field>();
-                     transform(gf.begin(), gf.end(), data.group_fields_server_id.begin(), [](auto it) { return it.server_id; });
+                     for_each(gf.begin(), gf.end(), [&data](auto &&it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
 
                      auto&& f = dao.get_all<field>();
-                     transform(f.begin(), f.end(), data.fields_server_id.begin(), [](auto it) { return it.server_id; });
+                     for_each(f.begin(), f.end(), [&data](auto &&it) mutable { data.fields_server_id[it->server_id] = it->id; });
 
                      prom_data.set_value(data);
                  }
                  catch (const runtime_error& e)
                  {
-                     error(APP_TAG, e.what());
+                     error(typeid(this).name(), e.what());
                  }
              });
 
@@ -118,7 +110,7 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             }
             catch (const runtime_error& e)
             {
-                error(APP_TAG, e.what());
+                error(typeid(this).name(), e.what());
                 return nullopt;
             }
 
@@ -129,58 +121,13 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             }
             catch (const runtime_error& e)
             {
-                error(APP_TAG, e.what());
+                error(typeid(this).name(), e.what());
                 return nullopt;
             }
 
-            promise<void> prom_groups;
-            auto&& fut_groups = prom_groups.get_future();
-            pool.detach_task([&prom_groups, groups_server_id = &data.groups_server_id]
-             {
-                 try
-                 {
-
-                     prom_groups.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            promise<void> prom_groups_fields;
-            auto&& fut_groups_fields = prom_groups_fields.get_future();
-            pool.detach_task([&prom_groups_fields, group_fields_server_id = &data.group_fields_server_id]
-             {
-                 try
-                 {
-
-                     prom_groups_fields.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            promise<void> prom_fields;
-            auto&& fut_fields = prom_fields.get_future();
-            pool.detach_task([&prom_fields, fields_server_id = &data.fields_server_id]
-             {
-                 try
-                 {
-
-                     prom_fields.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            fut_groups.get();
-            fut_groups_fields.get();
-            fut_fields.get();
+            update_database_table<group>(json_response, data.groups_server_id);
+            update_database_table<group_field>(json_response, data.groups_fields_server_id);
+            update_database_table<field>(json_response, data.fields_server_id);
 
             if(json_response.device->id == device.id)
             {
@@ -203,7 +150,7 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             int http_code = stoi(response.substr(strnlen(ERROR_HTTP_CODE, sizeof ERROR_HTTP_CODE)));
             if(http_code >= 600)
             {
-                error(APP_TAG, "Server error http_code:" + to_string(http_code));
+                error(typeid(this).name(), "Server error http_code:" + to_string(http_code));
                 return nullopt;
             }
             else
@@ -218,6 +165,65 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
     }
 }
 
+void synchronizer::update_group_table(const data_server_id& data)
+{
+//    promise<void> prom_groups;
+//    auto&& fut_groups = prom_groups.get_future();
+//    pool.detach_task([&prom_groups, groups_server_id = &data.groups_server_id]
+//     {
+//         try
+//         {
+//             prom_groups.set_value();
+//         }
+//         catch (const runtime_error& e)
+//         {
+//             error(typeid(this).name(), e.what());
+//         }
+//     });
+//
+//    fut_groups.get();
+
+}
+
+void synchronizer::update_group_field_table(const data_server_id& data)
+{
+//    promise<void> prom_groups_fields;
+//    auto&& fut_groups_fields = prom_groups_fields.get_future();
+//    pool.detach_task([&prom_groups_fields, group_fields_server_id = &data.groups_fields_server_id]
+//     {
+//         try
+//         {
+//             prom_groups_fields.set_value();
+//         }
+//         catch (const runtime_error& e)
+//         {
+//             error(typeid(this).name(), e.what());
+//         }
+//     });
+//
+//
+//    fut_groups_fields.get();
+
+}
+
+void synchronizer::update_field_table(const data_server_id& data)
+{
+//    promise<void> prom_fields;
+//    auto&& fut_fields = prom_fields.get_future();
+//    pool.detach_task([&prom_fields, fields_server_id = &data.fields_server_id]
+//     {
+//         try
+//         {
+//             prom_fields.set_value();
+//         }
+//         catch (const runtime_error& e)
+//         {
+//             error(typeid(this).name(), e.what());
+//         }
+//     });
+//
+//    fut_fields.get();
+}
 
 
 }

@@ -26,6 +26,7 @@ namespace pocket::daos::inline v5
 {
 
 template<>
-void dao::pippo<pods::group_field>();
+uint64_t dao::persist<pods::field>(const pods::field::ptr& t);
+
 
 }
