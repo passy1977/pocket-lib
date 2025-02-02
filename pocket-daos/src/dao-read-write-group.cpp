@@ -41,13 +41,17 @@ group::ptr dao_read_write<group>::read(row& row)
     group->note = row["_note"].to_text();
     group->synchronized = row["synchronized"].to_integer();
     group->deleted = row["deleted"].to_integer();
-    group->shared = row["shared"].to_integer();
     group->timestamp_creation = row["timestamp_creation"].to_integer();
     return group;
 }
 
 parameters dao_read_write<group>::write(const group::ptr& t)
 {
+    if(t.get() == nullptr)
+    {
+        return {};
+    }
+
     vector<pods::variant> ret;
     ret.push_back(t->server_id);
     ret.push_back(t->user_id);
@@ -58,7 +62,6 @@ parameters dao_read_write<group>::write(const group::ptr& t)
     ret.push_back(t->note);
     ret.push_back(t->synchronized);
     ret.push_back(t->deleted);
-    ret.push_back(t->shared);
     ret.push_back(t->timestamp_creation);
     ret.push_back(t->id);
     return ret;

@@ -38,7 +38,7 @@ struct field final : public iface::pod<field>
     bool deleted{false};
     uint64_t timestamp_creation = 0;
 
-    ~field() override;
+    ~field() override = default;
 
     static inline const std::string& get_name() noexcept {
         static std::string const ret = "fields";

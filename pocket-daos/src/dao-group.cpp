@@ -40,10 +40,9 @@ SET
     group_id = ?,
     title = ?,
     icon = ?,
-    note = ?,
+    _note = ?,
     synchronized = ?,
     deleted = ?,
-    shared = ?,
     timestamp_creation = ?
 WHERE
     id = ?
@@ -57,14 +56,12 @@ INSERT INTO groups
     group_id,
     title,
     icon,
-    note,
+    _note,
     synchronized,
     deleted,
-    shared,
     timestamp_creation,
     id
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

@@ -35,7 +35,7 @@ struct group_field final : public iface::pod<group_field>
     bool deleted{false};
     uint64_t timestamp_creation = 0;
 
-    ~group_field() override;
+    ~group_field() override = default;
 
     static inline const std::string& get_name() noexcept
     {

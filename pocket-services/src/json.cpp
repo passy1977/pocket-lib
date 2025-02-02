@@ -168,7 +168,7 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
     json_response.user = std::move(user);
     json_response.device = std::move(device);
     json_response.groups = std::move(fut_groups.get());
-    json_response.group_fields = std::move(fut_groups_fields.get());
+    json_response.groups_fields = std::move(fut_groups_fields.get());
     json_response.fields = std::move(fut_fields.get());
 }
 catch (...)

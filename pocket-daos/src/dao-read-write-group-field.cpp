@@ -46,6 +46,10 @@ group_field::ptr dao_read_write<group_field>::read(row& row)
 
 parameters dao_read_write<group_field>::write(const group_field::ptr& t)
 {
+    if(t.get() == nullptr)
+    {
+        return {};
+    }
     vector<pods::variant> ret;
     ret.push_back(t->server_id);
     ret.push_back(t->user_id);

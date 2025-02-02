@@ -24,6 +24,7 @@
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/response.hpp"
+#include "pocket-daos/dao.hpp"
 #include "BS_thread_pool.hpp"
 
 #include <optional>
@@ -54,50 +55,41 @@ public:
     std::optional<pods::user::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
 
 private:
-    struct data_server_id
-    {
-        std::map<uint64_t, uint64_t> groups_server_id;
-        std::map<uint64_t, uint64_t> groups_fields_server_id;
-        std::map<uint64_t, uint64_t> fields_server_id;
-    };
 
-    template<iface::require_pod T>
-    std::future<void> update_database_table(struct pods::response& response, const std::map<uint64_t, uint64_t>& data_server_id)
+    template<iface::require_pod T, typename V>
+    std::future<bool> update_database_table(const V& v)
     {
-        std::promise<void> prom;
+
+        std::vector<typename T::ptr> tmp;
+        std::promise<bool> prom;
         auto&& fut = prom.get_future();
-        pool.detach_task([this, &prom, type = std::forward<pods::response>(response), data_server_id]
+        pool.detach_task([this, &prom, vect = &v]
          {
              try
              {
-
-//                 if constexpr (std::is_same_v<T, pods::group>)
-//                 {
-//                    //for(auto&& it : response)
-//                 }
-//                 else if constexpr (std::is_same_v<T, pods::group_field>)
-//                 {
+                 daos::dao dao(database);
 //
-//                 }
-//                 else if constexpr (std::is_same_v<T, pods::field>)
+//                 for(auto&& it : *vect)
 //                 {
-//
+//                     if(dao.persist<T>(it) == 0)
+//                     {
+//                         std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + "it->server_id:" + std::to_string(it->server_id);
+//                         error(typeid(this).name(),  msg);
+//                         prom.set_value(false);
+//                     }
 //                 }
 
-                 prom.set_value();
+                 prom.set_value(true);
              }
              catch (const std::runtime_error& e)
              {
                  error(typeid(this).name(), e.what());
+                 prom.set_value(false);
              }
          });
 
         return fut;
     }
-
-    void update_group_table(const data_server_id& data);
-    void update_group_field_table(const data_server_id& data);
-    void update_field_table(const data_server_id& data);
 
 };
 

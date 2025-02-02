@@ -21,7 +21,7 @@
 #include "pocket-services/network.hpp"
 #include "pocket-services/json.hpp"
 #include "pocket-services/crypto.hpp"
-#include "pocket-daos/dao.hpp"
+
 
 #include <stdexcept>
 #include <ranges>
@@ -77,32 +77,6 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
         try
         {
 
-            promise<data_server_id> prom_data;
-            auto&& fut_data = prom_data.get_future();
-            pool.detach_task([this, &prom_data]
-             {
-                 try
-                 {
-                     data_server_id data ;
-                     dao dao(database);
-
-                     auto&& g = dao.get_all<group>();
-                     for_each(g.begin(), g.end(), [&data](auto &&it) mutable { data.groups_server_id[it->server_id] = it->id; });
-
-                     auto&& gf = dao.get_all<group_field>();
-                     for_each(gf.begin(), gf.end(), [&data](auto &&it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
-
-                     auto&& f = dao.get_all<field>();
-                     for_each(f.begin(), f.end(), [&data](auto &&it) mutable { data.fields_server_id[it->server_id] = it->id; });
-
-                     prom_data.set_value(data);
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(typeid(this).name(), e.what());
-                 }
-             });
-
             struct response json_response;
             try
             {
@@ -114,20 +88,29 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                 return nullopt;
             }
 
-            data_server_id data;
-            try
+            database->disable_foreign_keys();
+            auto&& fut_group = update_database_table<group, std::vector<group::ptr>>(json_response.groups);
+//            auto&& fut_group_field = update_database_table<group_field, std::vector<group_field::ptr>>(json_response.groups_fields);
+//            auto&& fut_field = update_database_table<field, std::vector<field::ptr>>(json_response.fields);
+            database->enable_foreign_keys();
+
+            if(!fut_group.get())
             {
-                data = std::move(fut_data.get());
-            }
-            catch (const runtime_error& e)
-            {
-                error(typeid(this).name(), e.what());
+                error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
 
-            update_database_table<group>(json_response, data.groups_server_id);
-            update_database_table<group_field>(json_response, data.groups_fields_server_id);
-            update_database_table<field>(json_response, data.fields_server_id);
+//            if(!fut_group_field.get())
+//            {
+//                error(typeid(this).name(), "Some error on populate groups_fields table");
+//                return nullopt;
+//            }
+//
+//            if(!fut_field.get())
+//            {
+//                error(typeid(this).name(), "Some error on populate fields table");
+//                return nullopt;
+//            }
 
             if(json_response.device->id == device.id)
             {
@@ -157,23 +140,34 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             {
                 throw runtime_error(response);
             }
-        } catch (const std::invalid_argument& ia) {
+        } catch (const invalid_argument& ia) {
             throw runtime_error(ia.what());
-        } catch (const std::out_of_range& oor) {
+        } catch (const out_of_range& oor) {
             throw runtime_error(oor.what());
         }
     }
 }
-
-void synchronizer::update_group_table(const data_server_id& data)
-{
-//    promise<void> prom_groups;
-//    auto&& fut_groups = prom_groups.get_future();
-//    pool.detach_task([&prom_groups, groups_server_id = &data.groups_server_id]
+//
+//future<void> synchronizer::update_group_table(const struct response& response)
+//{
+//    promise<void> prom;
+//    auto&& fut = prom.get_future();
+//    pool.detach_task([this, &prom, vect = &response.groups]
 //     {
 //         try
 //         {
-//             prom_groups.set_value();
+//             dao dao(database);
+//
+//             for(auto&& it : *vect)
+//             {
+//                if(dao.persist<group>(it) == 0)
+//                {
+//                    string msg = "Persist group error id:" + to_string(it->id) + "it->server_id:" + to_string(it->server_id);
+//                    error(typeid(this).name(),  msg);
+//                }
+//             }
+//
+//             prom.set_value();
 //         }
 //         catch (const runtime_error& e)
 //         {
@@ -181,19 +175,59 @@ void synchronizer::update_group_table(const data_server_id& data)
 //         }
 //     });
 //
-//    fut_groups.get();
-
-}
-
-void synchronizer::update_group_field_table(const data_server_id& data)
-{
-//    promise<void> prom_groups_fields;
-//    auto&& fut_groups_fields = prom_groups_fields.get_future();
-//    pool.detach_task([&prom_groups_fields, group_fields_server_id = &data.groups_fields_server_id]
+//    return fut;
+//}
+//
+//future<void> synchronizer::update_group_field_table(const struct response& response)
+//{
+//    promise<void> prom;
+//    auto&& fut = prom.get_future();
+//    pool.detach_task([this, &prom, vect = &response.groups]
+//    {
+//        try
+//        {
+//            dao dao(database);
+//
+//            for(auto&& it : *vect)
+//            {
+//                if(dao.persist<group>(it) == 0)
+//                {
+//                    string msg = "Persist group error id:" + to_string(it->id) + "it->server_id:" + to_string(it->server_id);
+//                    error(typeid(this).name(),  msg);
+//                }
+//            }
+//
+//            prom.set_value();
+//        }
+//        catch (const runtime_error& e)
+//        {
+//            error(typeid(this).name(), e.what());
+//        }
+//    });
+//
+//    return fut;
+//}
+//
+//future<void> synchronizer::update_field_table(const struct response& response)
+//{
+//    promise<void> prom;
+//    auto&& fut = prom.get_future();
+//    pool.detach_task([this, &prom, vect = &response.groups_fields]
 //     {
 //         try
 //         {
-//             prom_groups_fields.set_value();
+//             dao dao(database);
+//
+//             for(auto&& it : *vect)
+//             {
+//                 if(dao.persist<group_field>(it) == 0)
+//                 {
+//                     string msg = "Persist group_field error id:" + to_string(it->id) + "it->server_id:" + to_string(it->server_id);
+//                     error(typeid(this).name(),  msg);
+//                 }
+//             }
+//
+//             prom.set_value();
 //         }
 //         catch (const runtime_error& e)
 //         {
@@ -201,29 +235,8 @@ void synchronizer::update_group_field_table(const data_server_id& data)
 //         }
 //     });
 //
-//
-//    fut_groups_fields.get();
-
-}
-
-void synchronizer::update_field_table(const data_server_id& data)
-{
-//    promise<void> prom_fields;
-//    auto&& fut_fields = prom_fields.get_future();
-//    pool.detach_task([&prom_fields, fields_server_id = &data.fields_server_id]
-//     {
-//         try
-//         {
-//             prom_fields.set_value();
-//         }
-//         catch (const runtime_error& e)
-//         {
-//             error(typeid(this).name(), e.what());
-//         }
-//     });
-//
-//    fut_fields.get();
-}
+//    return fut;
+//}
 
 
 }

@@ -35,8 +35,10 @@ struct response
     pods::user::ptr user;
     pods::device::ptr device;
     std::vector<group::ptr> groups;
-    std::vector<group_field::ptr> group_fields;
+    std::vector<group_field::ptr> groups_fields;
     std::vector<field::ptr> fields;
+
+    std::vector<pods::group> get_groups_ref() noexcept;
 };
 
 }
