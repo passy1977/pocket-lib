@@ -31,10 +31,10 @@ result_set::result_set(class database& database, const std::string& query, const
 {
     sqlite3_stmt *stmt = nullptr;
 
-    statementstat = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
-    if( statementstat == SQLITE_OK )
+    debug(typeid(*this).name(), query);
+    statement_stat = sqlite3_prepare_v3(database.db, query.c_str(), query.length(), 0, &stmt, nullptr);
+    if(statement_stat == SQLITE_OK )
     {
-        debug(typeid(*this).name(), query);
         for(int i = 1; auto &&param : parameters) {
             switch (param.get_type()) {
                 default:
@@ -118,7 +118,7 @@ result_set::result_set(class database& database, const std::string& query, const
         }
 
     }
-    else if(statementstat == SQLITE_ERROR)
+    else if(statement_stat == SQLITE_ERROR)
     {
         sqlite3_finalize(stmt);
         throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));

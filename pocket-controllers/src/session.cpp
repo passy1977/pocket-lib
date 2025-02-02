@@ -124,9 +124,14 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     }
 
     auto&& user_from_net = synchronizer->get_data(timestamp_last_update, email, passwd);
+
+
+
     if(user_from_net.has_value())
     {
         auto&& user = user_from_net.value();
+        user->timestamp_last_update = 0;
+
         user->passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);
         return std::move(user);
@@ -134,8 +139,10 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     else if(user_from_db.has_value())
     {
         auto&& user = user_from_db.value();
+        user.timestamp_last_update = 0;
+
+
         user.passwd = std::move(crypto_encode_sha512(passwd));
-        user.timestamp_last_update = timestamp_last_update;
         dao.persist(user);
         return make_unique<pods::user>(user);
     }

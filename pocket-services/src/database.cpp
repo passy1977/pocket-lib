@@ -54,6 +54,11 @@ bool database::open(const string& file_db_path)
 {
     lock_guard<mutex> lg(m);
 
+    if(sqlite3_threadsafe() == 0)
+    {
+        throw runtime_error("sqlite3 is not thread safe");
+    }
+
     int rc = sqlite3_open_v2(file_db_path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if(rc != SQLITE_OK)
     {
@@ -65,7 +70,7 @@ bool database::open(const string& file_db_path)
 
     database::file_db_path = file_db_path;
 
-    lock();
+    //lock();
 
     uint8_t version = 0;
     if(is_created(version)) //throw exception
@@ -96,7 +101,7 @@ inline void database::close()
         return;
     }
 
-    unlock();
+    //unlock();
 
     int rc = sqlite3_close_v2(db);
     if(rc != SQLITE_OK)
@@ -113,8 +118,9 @@ inline void database::close()
 
 bool database::is_created(uint8_t& db_version) noexcept try
 {
+    lock();
     result_set rs(*this, "SELECT * FROM metadata"); //throw exception
-    if(rs.get_statementstat() != SQLITE_OK)
+    if(rs.get_statement_stat() != SQLITE_OK)
     {
         return false;
     }
@@ -124,10 +130,12 @@ bool database::is_created(uint8_t& db_version) noexcept try
         db_version = it->begin()->second.to_integer();
     }
 
+    unlock();
     return true;
 }
 catch (...)
 {
+    unlock();
     return false;
 }
 
@@ -136,6 +144,8 @@ bool database::create(const char creation_sql[])
     vector<string> result;
     stringstream ss(creation_sql);
     string part;
+
+    lock();
 
     uint8_t i = 0;
     bool error = false;
@@ -146,7 +156,7 @@ bool database::create(const char creation_sql[])
         {
 
             result_set rs(*this, part, {variant{VERSION}}); //throw exception
-            if(rs.get_statementstat() != SQLITE_OK)
+            if(rs.get_statement_stat() != SQLITE_OK)
             {
                 error = true;
                 break;
@@ -156,6 +166,7 @@ bool database::create(const char creation_sql[])
         {
             close(); //throw exception
             rm(); //throw exception
+            unlock();
             throw runtime_error("Impossible execute query:" + part + " at row:" + to_string(i) + " error:" + e.what());
         }
 
@@ -165,6 +176,7 @@ bool database::create(const char creation_sql[])
     {
         close(); //throw exception
         rm(); //throw exception
+        unlock();
         throw runtime_error("Impossible execute query:" + part + " at row:" + to_string(i));
     }
 
@@ -172,6 +184,7 @@ bool database::create(const char creation_sql[])
 
     info(typeid(*this).name(), "Create database:" + file_db_path);
 
+    unlock();
     return true;
 }
 
@@ -204,18 +217,6 @@ void database::lock()
         throw runtime_error(msg);
     }
 
-//    err = nullptr;
-//    if (int rc = sqlite3_exec(db, "BEGIN EXCLUSIVE",nullptr, nullptr,&err); rc != SQLITE_OK)
-//    {
-//        string msg = "Database lock error";
-//        if(err)
-//        {
-//            msg += ":";
-//            msg += err;
-//            sqlite3_free(err);
-//        }
-//        throw runtime_error(msg);
-//    }
 }
 
 void database::unlock()
@@ -234,33 +235,49 @@ void database::unlock()
     }
 }
 
-optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters)
+optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters) try
 {
+    lock();
     auto rs = make_unique<result_set>(*this, query, parameters);
 
-    if(rs->get_statementstat() != SQLITE_OK)
+    if(rs->get_statement_stat() != SQLITE_OK)
     {
         return nullopt;
     }
 
+    unlock();
     return rs;
 }
-
-int64_t database::update(const string&& query, const parameters& parameters)
+catch (...)
 {
+    unlock();
+    throw;
+}
+
+
+int64_t database::update(const string&& query, const parameters& parameters) try
+{
+    lock();
     auto rs = make_unique<result_set>(*this, query, parameters);
 
-    if(rs->get_statementstat() != SQLITE_OK)
+    if(rs->get_statement_stat() != SQLITE_OK)
     {
         return -1;
     }
 
+    unlock();
     return rs->get_total_changes();
 }
-
-
-void database::disable_foreign_keys()
+catch (...)
 {
+    unlock();
+    throw;
+}
+
+void database::disable_foreign_keys() try
+{
+    lock();
+
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA foreign_keys = OFF;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -274,9 +291,16 @@ void database::disable_foreign_keys()
         throw runtime_error(msg);
     }
     info(typeid(*this).name(), "Disable foreign_keys");
+    unlock();
+}
+catch (...)
+{
+    unlock();
+    throw;
 }
 
-void database::enable_foreign_keys()
+
+void database::enable_foreign_keys() try
 {
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &err); rc != SQLITE_OK)
@@ -291,6 +315,12 @@ void database::enable_foreign_keys()
         throw runtime_error(msg);
     }
     info(typeid(*this).name(), "Enable foreign_keys");
+    unlock();
+}
+catch (...)
+{
+    unlock();
+    throw;
 }
 
 

@@ -26,15 +26,6 @@ namespace pocket::pods::inline v5
 using namespace std;
 
 
-vector<pods::group> response::get_groups_ref() noexcept
-{
-    std::vector<group*> ret;
-    vector_copy_ref(groups, ret);
-
-
-
-}
-
 
 }
 

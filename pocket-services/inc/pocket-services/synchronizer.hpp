@@ -56,39 +56,34 @@ public:
 
 private:
 
-    template<iface::require_pod T, typename V>
-    std::future<bool> update_database_table(const V& v)
+    template<iface::require_pod T>
+    std::future<bool> update_database_table(const std::vector<T*> vect)
     {
-
-        std::vector<typename T::ptr> tmp;
-        std::promise<bool> prom;
-        auto&& fut = prom.get_future();
-        pool.detach_task([this, &prom, vect = &v]
+        return pool.submit_task([this, vect]
          {
              try
              {
-                 daos::dao dao(database);
-//
-//                 for(auto&& it : *vect)
-//                 {
-//                     if(dao.persist<T>(it) == 0)
-//                     {
-//                         std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + "it->server_id:" + std::to_string(it->server_id);
-//                         error(typeid(this).name(),  msg);
-//                         prom.set_value(false);
-//                     }
-//                 }
 
-                 prom.set_value(true);
+                 daos::dao dao(database);
+                 for(auto&& it : vect)
+                 {
+                     if(dao.persist<T>(std::make_unique<T>(*it)) == 0)
+                     {
+                         std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + "it->server_id:" + std::to_string(it->server_id);
+                         error(typeid(this).name(),  msg);
+                         return false;
+                     }
+                 }
+                 return true;
              }
              catch (const std::runtime_error& e)
              {
                  error(typeid(this).name(), e.what());
-                 prom.set_value(false);
+                 return false;
              }
          });
 
-        return fut;
+
     }
 
 };

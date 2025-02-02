@@ -56,19 +56,22 @@ parameters dao_read_write<field>::write(const field::ptr& t)
         return {};
     }
     vector<pods::variant> ret;
-    ret.push_back(t->server_id);
-    ret.push_back(t->user_id);
-    ret.push_back(t->group_id);
-    ret.push_back(t->server_group_id);
-    ret.push_back(t->group_field_id);
-    ret.push_back(t->server_group_field_id);
-    ret.push_back(t->title);
-    ret.push_back(t->value);
-    ret.push_back(t->is_hidden);
-    ret.push_back(t->synchronized);
-    ret.push_back(t->deleted);
-    ret.push_back(t->timestamp_creation);
-    ret.push_back(t->id);
+    ret.emplace_back(t->server_id);
+    ret.emplace_back(t->user_id);
+    ret.emplace_back(t->group_id);
+    ret.emplace_back(t->server_group_id);
+    ret.emplace_back(t->group_field_id);
+    ret.emplace_back(t->server_group_field_id);
+    ret.emplace_back(t->title);
+    ret.emplace_back(t->value);
+    ret.emplace_back(t->is_hidden);
+    ret.emplace_back(t->synchronized);
+    ret.emplace_back(t->deleted);
+    ret.emplace_back(t->timestamp_creation);
+    if(t->id)
+    {
+        ret.emplace_back(t->id);
+    }
     return ret;
 }
 

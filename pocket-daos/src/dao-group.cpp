@@ -59,10 +59,8 @@ INSERT INTO groups
     _note,
     synchronized,
     deleted,
-    timestamp_creation,
-    id
+    timestamp_creation
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

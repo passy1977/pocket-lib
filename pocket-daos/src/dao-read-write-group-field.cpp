@@ -60,7 +60,10 @@ parameters dao_read_write<group_field>::write(const group_field::ptr& t)
     ret.push_back(t->synchronized);
     ret.push_back(t->deleted);
     ret.push_back(t->timestamp_creation);
-    ret.push_back(t->id);
+    if(t->id)
+    {
+        ret.emplace_back(t->id);
+    }
     return ret;
 }
 

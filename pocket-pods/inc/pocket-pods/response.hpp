@@ -24,8 +24,10 @@
 #include "pocket-pods/group.hpp"
 #include "pocket-pods/group_field.hpp"
 #include "pocket-pods/field.hpp"
+#include "pocket/globals.hpp"
 
 #include <vector>
+#include <type_traits>
 
 namespace pocket::pods::inline v5
 {
@@ -38,7 +40,26 @@ struct response
     std::vector<group_field::ptr> groups_fields;
     std::vector<field::ptr> fields;
 
-    std::vector<pods::group> get_groups_ref() noexcept;
+
+    template<iface::require_pod T>
+    constexpr std::vector<T*> get_vector_ref() noexcept
+    {
+        std::vector<T*> ret;
+        if constexpr(std::is_same_v<T, group>)
+        {
+            vector_copy_ref<group>(groups, ret);
+        }
+        else if constexpr(std::is_same_v<T, group_field>)
+        {
+            vector_copy_ref<group_field>(groups_fields, ret);
+        }
+        if constexpr(std::is_same_v<T, field>)
+        {
+            vector_copy_ref<field>(fields, ret);
+        }
+        return ret;
+    }
+
 };
 
 }

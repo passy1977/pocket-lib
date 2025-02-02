@@ -66,10 +66,8 @@ INSERT INTO fields
     is_hidden,
     synchronized,
     deleted,
-    timestamp_creation,
-    id
+    timestamp_creation
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

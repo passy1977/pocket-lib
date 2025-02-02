@@ -59,10 +59,8 @@ INSERT INTO groups_fields
     is_hidden,
     synchronized,
     deleted,
-    timestamp_creation,
-    id
+    timestamp_creation
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

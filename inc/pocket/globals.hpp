@@ -79,7 +79,7 @@ namespace pocket::inline v5
     void str_replace_all(std::string &s, const std::string_view &to_replace, const std::string_view &replacement) noexcept;
 
     template<typename T>
-    void vector_copy_unique_ptr(const std::vector<std::unique_ptr<T>>& src, std::vector<std::unique_ptr<T>>& dst) noexcept
+    void vector_copy_unique_ptr(const std::vector<typename T::ptr>& src, std::vector<std::unique_ptr<T>>& dst) noexcept
     {
         for (const auto&& ptr : src)
         {
@@ -91,13 +91,13 @@ namespace pocket::inline v5
     }
 
     template<typename T>
-    void vector_copy_ref(const std::vector<std::unique_ptr<T>>& src, std::vector<T*>& dst) noexcept
+    void vector_copy_ref(const std::vector<typename T::ptr>& src, std::vector<T*>& dst) noexcept
     {
-        for (const auto&& ptr : src)
+        for (auto& ptr : src)
         {
             if (ptr)
             {
-                dst.push_back(*ptr);
+                dst.push_back(ptr.get());
             }
         }
     }
