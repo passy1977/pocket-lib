@@ -84,6 +84,8 @@ public:
         return ret;
     }
 
+    void update_all_index();
+
     template<iface::require_pod T>
     inline int64_t del(uint64_t id) const
     {
@@ -91,9 +93,21 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t del(const T& t) const
+    inline int64_t del(const T::ptr& t) const
     {
-        return del(t.id);
+        return del(t->server_id);
+    }
+
+    template<iface::require_pod T>
+    inline int64_t rm(uint64_t server_id) const
+    {
+        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND server_id = ?", { {server_id} });
+    }
+
+    template<iface::require_pod T>
+    inline int64_t rm(const T::ptr& t) const
+    {
+        return rm(t->id);
     }
 
     template<iface::require_pod T>

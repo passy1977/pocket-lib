@@ -45,7 +45,6 @@ class session final
 
 
 public:
-
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
     POCKET_NO_COPY_NO_MOVE(session)
@@ -54,6 +53,12 @@ public:
 
     std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
 
+private:
+    void lock();
+
+    void unlock();
+
+    bool check_lock();
 };
 
 }

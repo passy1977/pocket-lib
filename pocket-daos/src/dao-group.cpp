@@ -18,6 +18,8 @@
  ***************************************************************************/
 
 #include "pocket-daos/dao-group.hpp"
+#include "pocket-daos/dao.hpp"
+
 
 namespace pocket::daos::inline v5
 {
@@ -75,4 +77,24 @@ INSERT INTO groups
     return count;
 }
 
+void dao::update_all_index()
+{
+    auto count = database->update(R"(
+UPDATE fields
+SET group_id = (SELECT id FROM groups WHERE server_id = fields.server_group_id)
+
+)");
+
+    count = database->update(R"(
+UPDATE groups_fields
+SET server_id = (SELECT server_id FROM groups WHERE id = groups_fields.server_group_id)
+WHERE EXISTS (
+    SELECT 1 FROM groups WHERE id = groups_fields.server_group_id AND groups.user_id = groups_fields.user_id AND groups.server_id = groups_fields.server_id
+);
+)");
+
+
 }
+
+}
+

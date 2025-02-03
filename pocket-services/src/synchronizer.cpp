@@ -21,7 +21,7 @@
 #include "pocket-services/network.hpp"
 #include "pocket-services/json.hpp"
 #include "pocket-services/crypto.hpp"
-
+#include "pocket-daos/dao.hpp"
 
 #include <stdexcept>
 #include <ranges>
@@ -90,28 +90,35 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
 
             //database->disable_foreign_keys();
             auto&& fut_group = update_database_table<group>(json_response.get_vector_ref<group>());
-            auto&& fut_group_field = update_database_table<group_field>(json_response.get_vector_ref<group_field>());
-            auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>());
-            //database->enable_foreign_keys();
-
-
             if(!fut_group.get())
             {
                 error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
 
-//            if(!fut_group_field.get())
-//            {
-//                error(typeid(this).name(), "Some error on populate groups_fields table");
-//                return nullopt;
-//            }
-//
-//            if(!fut_field.get())
-//            {
-//                error(typeid(this).name(), "Some error on populate fields table");
-//                return nullopt;
-//            }
+            auto&& fut_group_field = update_database_table<group_field>(json_response.get_vector_ref<group_field>());
+            if(!fut_group_field.get())
+            {
+                error(typeid(this).name(), "Some error on populate groups_fields table");
+                return nullopt;
+            }
+
+
+            auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>());
+            //database->enable_foreign_keys();
+
+            if(!fut_field.get())
+            {
+                error(typeid(this).name(), "Some error on populate fields table");
+                return nullopt;
+            }
+
+            class dao dao(database);
+
+            //todo: to finish
+            dao.update_all_index();
+
+
 
             if(json_response.device->id == device.id)
             {

@@ -78,9 +78,7 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
 
 
 
-    promise<pair<user::ptr, device::ptr>> prom_user_device;
-    auto&& fut_user_device = prom_user_device.get_future();
-    pool.detach_task([&prom_user_device, &json]
+    auto&& fut_user_device = pool.submit_task([&json]
     {
 
         try
@@ -91,20 +89,16 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
             u->timestamp_last_update = json["timestampLastUpdate"];
             d->user_id = u->id;
 
-            prom_user_device.set_value(std::move(
-                    pair{std::move(u), std::move(d)}
-            ));
+            return std::move(pair{std::move(u), std::move(d)});
         }
         catch (const runtime_error& e)
         {
             error(APP_TAG, e.what());
+            return pair<user::ptr, device::ptr>{nullptr, nullptr};
         }
-
     });
 
-    promise<vector<group::ptr>> prom_groups;
-    auto&& fut_groups = prom_groups.get_future();
-    pool.detach_task([&prom_groups, &json]
+    auto&& fut_groups = pool.submit_task([&json]
     {
         try
         {
@@ -114,17 +108,17 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
                 ret.push_back(make_unique<group>(json_to_group(it.value())));
             }
 
-            prom_groups.set_value(std::move(ret));
+            return std::move(ret);
         }
         catch (const runtime_error& e)
         {
             error(APP_TAG, e.what());
+            return  vector<group::ptr>{};
         }
     });
 
-    promise<vector<group_field::ptr>> prom_groups_fields;
-    auto&& fut_groups_fields = prom_groups_fields.get_future();
-    pool.detach_task([&prom_groups_fields, &json]
+
+    auto&& fut_groups_fields = pool.submit_task([&json]
      {
          try
          {
@@ -134,20 +128,19 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
                  ret.push_back(make_unique<group_field>(json_to_group_field(it.value())));
              }
 
-             prom_groups_fields.set_value(std::move(ret));
+             return std::move(ret);
          }
          catch (const runtime_error& e)
          {
              error(APP_TAG, e.what());
+             return vector<group_field::ptr>{};
          }
      });
 
 
-    promise<vector<field::ptr>> prom_fields;
-    auto&& fut_fields = prom_fields.get_future();
-    pool.detach_task([&prom_fields, &json]
+    auto&& fut_fields = pool.submit_task([&json]
     {
-     try
+        try
      {
          vector<field::ptr> ret;
          for (auto& it : json["fields"].items())
@@ -155,11 +148,12 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
              ret.push_back(make_unique<field>(json_to_field(it.value())));
          }
 
-         prom_fields.set_value(std::move(ret));
+         return std::move(ret);
      }
      catch (const runtime_error& e)
      {
          error(APP_TAG, e.what());
+         return vector<field::ptr>{};
      }
     });
 

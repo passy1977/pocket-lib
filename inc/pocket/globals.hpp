@@ -48,7 +48,7 @@ namespace pocket::inline v5
 
     constexpr auto debug(const std::string& app_tag, const std::string& log) noexcept
     {
-        std::printf(POCKET_ANSI_COLOR_BLUE "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
+       std::printf(POCKET_ANSI_COLOR_BLUE "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
     }
 
     constexpr inline auto debug(const std::string& app_tag, const std::string&& log) noexcept

@@ -31,9 +31,7 @@ struct group final : public iface::pod<group>
     std::string title;
     std::string icon;
     std::string note;
-    bool synchronized{true};
-    bool deleted{false};
-    uint64_t timestamp_creation = 0;
+
 
     ~group() override = default;
 

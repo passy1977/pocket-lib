@@ -53,7 +53,7 @@ WHERE
         count = database->update(R"(
 INSERT INTO groups_fields
 (
-    group_id
+    group_id,
     server_group_id,
     title,
     is_hidden,
@@ -61,7 +61,6 @@ INSERT INTO groups_fields
     deleted,
     timestamp_creation
 ) VALUES (
-    ?,
     ?,
     ?,
     ?,

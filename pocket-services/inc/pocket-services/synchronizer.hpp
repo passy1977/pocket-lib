@@ -63,11 +63,19 @@ private:
          {
              try
              {
-
                  daos::dao dao(database);
                  for(auto&& it : vect)
                  {
-                     if(dao.persist<T>(std::make_unique<T>(*it)) == 0)
+                     if(it->deleted)
+                     {
+                        if(dao.rm<T>(it->server_id) == 0)
+                        {
+                            std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + "it->server_id:" + std::to_string(it->server_id);
+                            error(typeid(this).name(),  msg);
+                            return false;
+                        }
+                     }
+                     else if(dao.persist<T>(std::make_unique<T>(*it)) == 0)
                      {
                          std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + "it->server_id:" + std::to_string(it->server_id);
                          error(typeid(this).name(),  msg);

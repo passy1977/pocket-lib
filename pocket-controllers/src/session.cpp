@@ -25,7 +25,7 @@
 
 #include <filesystem>
 #include <thread>
-
+#include <fstream>
 
 namespace pocket::controllers::inline v5
 {
@@ -57,16 +57,28 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
     device = std::move(config->parse(*config_json));
 
+    if(check_lock())
+    {
+        runtime_error("Another session handle:" + device->uuid);
+    }
+
+    lock();
+
     info(typeid(*this).name(), "Create new session:" + device->uuid);
 }
 
-session::~session()
+session::~session() try
 {
     database->close();
     for(auto& it : secret)
     {
         it = '\0';
     }
+    unlock();
+}
+catch (const runtime_error& e)
+{
+    error(typeid(*this).name(), e.what());
 }
 
 const device::opt& session::init()
@@ -156,6 +168,66 @@ catch(const exception& e)
 {
     error(typeid(this).name(), e.what());
     return nullopt;
+}
+
+void session::lock()
+{
+    if(config == nullptr)
+    {
+        return;
+    }
+
+    pid_t pid = getpid();
+
+    ofstream out(config->get_config_path() + LOCK_EXTENSION);
+
+    if (!out)
+    {
+        throw runtime_error("Error: Could not open file for writing.");
+    }
+
+    out << pid << endl;
+
+    out.close();
+}
+
+void session::unlock()
+{
+    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    {
+        filesystem::remove(config->get_config_path() + LOCK_EXTENSION);  //throw exception
+    }
+    else
+    {
+        throw runtime_error("File does not exist.");
+    }
+}
+
+bool session::check_lock()
+{
+#ifdef DISABLE_LOCK
+    return false;
+#else
+    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    {
+        ifstream file(config->get_config_path() + LOCK_EXTENSION);
+        if (!file.is_open())
+        {
+            throw runtime_error("Error opening file.");
+        }
+
+        string pid((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
+
+        file.close();
+
+        info(typeid(*this).name(), "DB locked: " + config->get_config_path() + LOCK_EXTENSION + " by pid:" + pid);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+#endif
 }
 
 }
