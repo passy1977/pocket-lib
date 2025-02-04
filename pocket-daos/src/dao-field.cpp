@@ -38,6 +38,8 @@ uint64_t dao::persist<field>(const field::ptr& t)
         count = database->update(R"(
 UPDATE fields
 SET
+    server_id = ?,
+    user_id = ?,
     group_id = ?,
     server_group_id = ?,
     group_field_id = ?,
@@ -57,6 +59,8 @@ WHERE
         count = database->update(R"(
 INSERT INTO fields
 (
+    server_id,
+    user_id,
     group_id,
     server_group_id,
     group_field_id,
@@ -68,6 +72,8 @@ INSERT INTO fields
     deleted,
     timestamp_creation
 ) VALUES (
+    ?,
+    ?,
     ?,
     ?,
     ?,

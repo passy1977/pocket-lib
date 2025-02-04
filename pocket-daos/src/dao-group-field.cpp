@@ -37,6 +37,8 @@ uint64_t dao::persist<pods::group_field>(const pods::group_field::ptr& t)
         count = database->update(R"(
 UPDATE groups_fields
 SET
+    server_id = ?,
+    user_id = ?,
     group_id = ?,
     server_group_id = ?,
     title = ?,
@@ -53,6 +55,8 @@ WHERE
         count = database->update(R"(
 INSERT INTO groups_fields
 (
+    server_id,
+    user_id,
     group_id,
     server_group_id,
     title,
@@ -61,6 +65,8 @@ INSERT INTO groups_fields
     deleted,
     timestamp_creation
 ) VALUES (
+    ?,
+    ?,
     ?,
     ?,
     ?,

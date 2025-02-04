@@ -88,7 +88,6 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                 return nullopt;
             }
 
-            //database->disable_foreign_keys();
             auto&& fut_group = update_database_table<group>(json_response.get_vector_ref<group>());
             if(!fut_group.get())
             {
@@ -103,9 +102,7 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                 return nullopt;
             }
 
-
             auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>());
-            //database->enable_foreign_keys();
 
             if(!fut_field.get())
             {
@@ -115,11 +112,9 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
 
             class dao dao(database);
 
-            //todo: to finish
             dao.update_all_index();
 
-
-
+            
             if(json_response.device->id == device.id)
             {
                 return {std::move(json_response.user) };
