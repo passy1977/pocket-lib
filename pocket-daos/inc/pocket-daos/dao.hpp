@@ -59,7 +59,7 @@ public:
                     dao_read_write<pods::group> dao;
                     if(auto&& it = dao.read(row); it.get())
                     {
-//                        ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::group_field>)
@@ -67,7 +67,7 @@ public:
                     dao_read_write<pods::group_field> dao;
                     if(auto&& it = dao.read(row); it.get())
                     {
-//                        ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::field>)
@@ -75,7 +75,7 @@ public:
                     dao_read_write<pods::field> dao;
                     if(auto&& it = dao.read(row); it.get())
                     {
-                        //ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
             }

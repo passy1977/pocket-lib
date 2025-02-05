@@ -45,9 +45,42 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
         throw runtime_error("Some parameter are empty");
     }
 
-    promise<string> prom;
-    auto&& fut = prom.get_future();
-    pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd)), &prom]
+    auto&& fut_data = pool.submit_task([this]
+   {
+       try
+       {
+           data_server_id data {
+                   .valid = true
+           };
+           dao dao(database);
+
+           auto&& g = dao.get_all<group>();
+           for_each(g.begin(), g.end(), [&data](auto &&it) mutable { data.groups_server_id[it->server_id] = it->id; });
+
+           auto&& gf = dao.get_all<group_field>();
+           for_each(gf.begin(), gf.end(), [&data](auto &&it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
+
+           auto&& f = dao.get_all<field>();
+           for_each(f.begin(), f.end(), [&data](auto &&it) mutable { data.fields_server_id[it->server_id] = it->id; });
+
+           return data;
+       }
+
+       catch (const runtime_error& e)
+       {
+           error(typeid(this).name(), e.what());
+           return data_server_id {
+               .groups_server_id = {},
+               .groups_fields_server_id = {},
+               .fields_server_id = {},
+               .valid = false
+           };
+       }
+
+   });
+
+
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd))]
      {
          network network;
          try
@@ -59,21 +92,31 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
 
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret);
 
-             prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
+             return network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd);
 
          }
          catch (const runtime_error& e)
          {
              secret = "";
-             prom.set_value(string(ERROR_HTTP_CODE) + e.what());
+             return string(ERROR_HTTP_CODE) + e.what();
          }
-     })
-    .wait();
+     });
 
-    auto&& response = fut.get();
+    string response;
+    data_server_id data;
+    try
+    {
+        response = std::move(fut_response.get());
+        data = std::move(fut_data.get());
+    }
+    catch (const runtime_error& e)
+    {
+        error(typeid(this).name(), e.what());
+        return nullopt;
+    }
+
     if(!response.starts_with(ERROR_HTTP_CODE))
     {
-
         try
         {
 
@@ -88,21 +131,21 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                 return nullopt;
             }
 
-            auto&& fut_group = update_database_table<group>(json_response.get_vector_ref<group>());
+            auto&& fut_group = update_database_table<group>(json_response.get_vector_ref<group>(), data);
             if(!fut_group.get())
             {
                 error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
 
-            auto&& fut_group_field = update_database_table<group_field>(json_response.get_vector_ref<group_field>());
+            auto&& fut_group_field = update_database_table<group_field>(json_response.get_vector_ref<group_field>(), data);
             if(!fut_group_field.get())
             {
                 error(typeid(this).name(), "Some error on populate groups_fields table");
                 return nullopt;
             }
 
-            auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>());
+            auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>(), data);
 
             if(!fut_field.get())
             {

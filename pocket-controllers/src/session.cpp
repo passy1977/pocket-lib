@@ -18,7 +18,6 @@
  ***************************************************************************/
 
 #include "pocket-controllers/session.hpp"
-#include "pocket-services/json.hpp"
 #include "pocket-services/network.hpp"
 #include "pocket-services/crypto.hpp"
 #include "pocket-daos/dao-user.hpp"
@@ -128,31 +127,44 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     dao_user dao(database);
 
     uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
-    auto&& user_from_db = dao.login(email, std::move(crypto_encode_sha512(passwd)));
+    auto&& user_from_db = dao.login(email, crypto_encode_sha512(passwd));
     if(user_from_db)
     {
         auto&& user = user_from_db.value();
         timestamp_last_update = user.timestamp_last_update;
     }
 
-    auto&& user_from_net = synchronizer->get_data(timestamp_last_update, email, passwd);
+    bool remote_connection_error = false;
+    optional<user::ptr> user_from_net = nullopt;
+    try
+    {
+        user_from_net = std::move(synchronizer->get_data(timestamp_last_update, email, passwd));
+    }
+    catch (const runtime_error& e)
+    {
+        remote_connection_error = true;
+        error(typeid(this).name(), e.what());
+    }
 
 
 
     if(user_from_net.has_value())
     {
         auto&& user = user_from_net.value();
+        if(user_from_db.has_value() && user->id != user_from_db->id)
+        {
+            return nullopt;
+        }
+
         user->timestamp_last_update = 0;
 
         user->passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);
         return std::move(user);
     }
-    else if(user_from_db.has_value())
+    else if(user_from_db.has_value() && remote_connection_error)
     {
         auto&& user = user_from_db.value();
-        user.timestamp_last_update = 0;
-
 
         user.passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);
