@@ -20,7 +20,7 @@
 #pragma once
 
 #include "pocket-daos/dao-read-write.hpp"
-#include "pocket-pods/group_field.hpp"
+#include "pocket-pods/group-field.hpp"
 
 #include <stdexcept>
 

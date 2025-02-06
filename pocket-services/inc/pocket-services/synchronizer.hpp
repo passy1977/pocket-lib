@@ -23,7 +23,7 @@
 #include "pocket-services/database.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/user.hpp"
-#include "pocket-pods/response.hpp"
+#include "pocket-pods/net-transport.hpp"
 #include "pocket-daos/dao.hpp"
 #include "BS_thread_pool.hpp"
 
@@ -52,8 +52,9 @@ public:
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    std::optional<pods::user::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
+    std::optional<pods::user::ptr> retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
+    void transmit_data(uint64_t timestamp_last_update);
 private:
     struct data_server_id
     {
@@ -94,6 +95,7 @@ private:
                              it->id = data.fields_server_id[it->server_id];
                          }
                      }
+                     it->synchronized = 1;
                      if(it->deleted)
                      {
                         if(dao.rm<T>(it->server_id) == 0)
@@ -118,6 +120,16 @@ private:
                  return false;
              }
          });
+    }
+
+
+    template<iface::require_pod T>
+    std::future<std::vector<typename T::ptr>> collect_data_table()
+    {
+        return pool.submit_task([this]
+        {
+                return daos::dao(database).get_all<T>(true);
+        });
     }
 
 };

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "pocket-daos/dao.hpp"
-#include "pocket-pods/group_field.hpp"
+#include "pocket-pods/group-field.hpp"
 
 namespace pocket::daos::inline v5
 {

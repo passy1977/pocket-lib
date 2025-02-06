@@ -138,7 +138,7 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     optional<user::ptr> user_from_net = nullopt;
     try
     {
-        user_from_net = std::move(synchronizer->get_data(timestamp_last_update, email, passwd));
+        user_from_net = std::move(synchronizer->retrieve_data(timestamp_last_update, email, passwd));
     }
     catch (const runtime_error& e)
     {
@@ -151,13 +151,15 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     if(user_from_net.has_value())
     {
         auto&& user = user_from_net.value();
-        if(user_from_db.has_value() && user->id != user_from_db->id)
+        if(
+            user_from_db.has_value() && user->id != user_from_db->id
+            || user_from_db->status != user::stat::ACTIVE
+        )
         {
             return nullopt;
         }
 
-        user->timestamp_last_update = 0;
-
+        device->user_id = user->id;
         user->passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);
         return std::move(user);
@@ -165,6 +167,14 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     else if(user_from_db.has_value() && remote_connection_error)
     {
         auto&& user = user_from_db.value();
+
+        if(
+            user.id != device->user_id
+            || user_from_db->status != user::stat::ACTIVE
+        )
+        {
+            return nullopt;
+        }
 
         user.passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);

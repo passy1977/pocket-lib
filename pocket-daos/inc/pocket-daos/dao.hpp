@@ -45,12 +45,12 @@ public:
 
 
     template<iface::require_pod T>
-    constexpr std::vector<typename iface::pod<T>::ptr> get_all() const
+    constexpr std::vector<typename iface::pod<T>::ptr> get_all(bool to_synch = false) const
     {
         std::vector<typename iface::pod<T>::ptr> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE deleted = 0"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY id"); opt_rs.has_value()) //throw exception
         {
             for(auto&& row : **opt_rs)
             {

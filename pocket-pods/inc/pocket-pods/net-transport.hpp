@@ -22,7 +22,7 @@
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/group.hpp"
-#include "pocket-pods/group_field.hpp"
+#include "pocket-pods/group-field.hpp"
 #include "pocket-pods/field.hpp"
 #include "pocket/globals.hpp"
 
@@ -32,7 +32,7 @@
 namespace pocket::pods::inline v5
 {
 
-struct response
+struct net_transport
 {
     pods::user::ptr user;
     pods::device::ptr device;

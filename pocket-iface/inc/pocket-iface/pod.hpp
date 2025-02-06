@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #pragma once
-#include "pocket-iface/has_name.hpp"
+#include "pocket-iface/has-name.hpp"
 #include "pocket-iface/synchronizable.hpp"
 
 #include <memory>

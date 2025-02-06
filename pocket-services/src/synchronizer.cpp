@@ -38,7 +38,7 @@ namespace
 constexpr char ERROR_HTTP_CODE[] = "http_code";
 }
 
-optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
+std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
     if(email.empty() || passwd.empty())
     {
@@ -120,10 +120,10 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
         try
         {
 
-            struct response json_response;
+            struct net_transport net_transport;
             try
             {
-                json_parse_response(pool, response, json_response);
+                json_parse_net_transport(pool, response, net_transport);
             }
             catch (const runtime_error& e)
             {
@@ -131,21 +131,21 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
                 return nullopt;
             }
 
-            auto&& fut_group = update_database_table<group>(json_response.get_vector_ref<group>(), data);
+            auto&& fut_group = update_database_table<group>(net_transport.get_vector_ref<group>(), data);
             if(!fut_group.get())
             {
                 error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
 
-            auto&& fut_group_field = update_database_table<group_field>(json_response.get_vector_ref<group_field>(), data);
+            auto&& fut_group_field = update_database_table<group_field>(net_transport.get_vector_ref<group_field>(), data);
             if(!fut_group_field.get())
             {
                 error(typeid(this).name(), "Some error on populate groups_fields table");
                 return nullopt;
             }
 
-            auto&& fut_field = update_database_table<field>(json_response.get_vector_ref<field>(), data);
+            auto&& fut_field = update_database_table<field>(net_transport.get_vector_ref<field>(), data);
 
             if(!fut_field.get())
             {
@@ -158,9 +158,9 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             dao.update_all_index();
 
             
-            if(json_response.device->id == device.id)
+            if(net_transport.device->id == device.id)
             {
-                return {std::move(json_response.user) };
+                return {std::move(net_transport.user) };
             }
             else
             {
@@ -192,6 +192,56 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             throw runtime_error(oor.what());
         }
     }
+}
+
+
+void synchronizer::transmit_data(uint64_t timestamp_last_update)
+{
+    if(device.id == 0 || secret.empty())
+    {
+        throw runtime_error("Seems no one has been logged");
+    }
+
+    net_transport net_transport;
+    try
+    {
+
+        auto&& fut_group = collect_data_table<group>();
+        net_transport.groups = fut_group.get();
+
+        auto&& fur_group_field = collect_data_table<group_field>();
+        net_transport.groups_fields = fur_group_field.get();
+
+        auto&& fut_field = collect_data_table<field>();
+        net_transport.fields = fut_field.get();
+    }
+    catch (const runtime_error& e)
+    {
+        error(typeid(this).name(), e.what());
+        return;
+    }
+
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, net_transport = std::move(net_transport)]() mutable
+    {
+        network network;
+        try
+        {
+           if(secret.empty())
+           {
+               secret = crypto_generate_random_string(10);
+           }
+            net_transport.groups;
+           auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + to_string(device.user_id) + DIVISOR + secret);
+
+           return network.perform(network::method::PUT, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/");
+        }
+        catch (const runtime_error& e)
+        {
+           secret = "";
+           return string(ERROR_HTTP_CODE) + e.what();
+        }
+    });
+
 }
 
 }

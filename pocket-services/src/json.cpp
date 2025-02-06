@@ -19,28 +19,43 @@
 
 #include "pocket-services/json.hpp"
 
-
 namespace pocket::services::inline v5
 {
+
+using namespace std;
+using namespace nlohmann;
+using namespace pods;
+using iface::synchronizable;
+using BS::thread_pool;
+
 
 namespace
 {
 constexpr char APP_TAG[] = "json";
 }
 
-using namespace std;
-using namespace nlohmann;
-using namespace pods;
-using iface::synchronizable;
+static device json_to_device(const string_view& str_json);
 
-void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct response& json_response) try
+static group json_to_group(const std::string_view& str_json);
+static group json_to_group(const json& json);
+static json serialize_json(const group::ptr& group);
+
+static group_field json_to_group_field(const std::string_view& str_json);
+static group_field json_to_group_field(const json& json);
+static json serialize_json(const group_field::ptr& group_field);
+
+static field json_to_field(const std::string_view& str_json);
+static field json_to_field(const json& json);
+static json serialize_json(const field::ptr& field);
+
+void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, net_transport& net_transport) try
 {
-    if(response.empty())
+    if(json_response.empty())
     {
         throw runtime_error("String response empty");
     }
 
-    auto&& json = json::parse(response);
+    auto&& json = json::parse(json_response);
     if (!json.is_object())
     {
         throw runtime_error("json is not a object");
@@ -80,7 +95,6 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
 
     auto&& fut_user_device = pool.submit_task([&json]
     {
-
         try
         {
             auto&& u =  make_unique<struct user>( json_to_user(json["user"]) );
@@ -159,11 +173,11 @@ void json_parse_response(BS::thread_pool<6>& pool, string_view response, struct 
 
 
     auto&& [user, device] = fut_user_device.get();
-    json_response.user = std::move(user);
-    json_response.device = std::move(device);
-    json_response.groups = std::move(fut_groups.get());
-    json_response.groups_fields = std::move(fut_groups_fields.get());
-    json_response.fields = std::move(fut_fields.get());
+    net_transport.user = std::move(user);
+    net_transport.device = std::move(device);
+    net_transport.groups = std::move(fut_groups.get());
+    net_transport.groups_fields = std::move(fut_groups_fields.get());
+    net_transport.fields = std::move(fut_fields.get());
 }
 catch (...)
 {
@@ -174,7 +188,43 @@ catch (...)
     }
 }
 
-device json_to_device(const nlohmann::basic_json<>& json)
+optional<string> net_transport_serialize_json(thread_pool<6>& pool, const net_transport& net_transport) try
+{
+    auto j = json({});
+
+    auto groups = json::array();
+    for(auto&& it : net_transport.groups)
+    {
+        groups.push_back(serialize_json(it));
+    }
+    j["groups"] = groups;
+
+    auto groups_fields = json::array();
+    for(auto&& it : net_transport.groups_fields)
+    {
+        groups_fields.push_back(serialize_json(it));
+    }
+    j["groups_fields"] = groups_fields;
+
+    auto fields = json::array();
+    for(auto&& it : net_transport.fields)
+    {
+        fields.push_back(serialize_json(it));
+    }
+    j["fields"] = fields;
+
+    return j;
+}
+catch (...)
+{
+    try {
+        rethrow_exception(current_exception());
+    } catch (const exception& e) {
+        throw runtime_error(e.what());
+    }
+}
+
+device json_to_device(const json& json)
 {
     if (!json.is_object())
     {
@@ -261,7 +311,7 @@ device json_to_device(const string_view& str_json)
     return json_to_device(json::parse(str_json));
 }
 
-user json_to_user(const nlohmann::basic_json<>& json)
+user json_to_user(const json& json)
 {
     if (!json.is_object())
     {
@@ -325,16 +375,6 @@ user json_to_user(const nlohmann::basic_json<>& json)
     return user;
 }
 
-user json_to_user(const string_view& str_json)
-{
-
-    if(str_json.empty())
-    {
-        throw runtime_error("String json empty");
-    }
-
-    return json_to_user(json::parse(str_json));
-}
 
 group json_to_group(const std::string_view& str_json)
 {
@@ -346,7 +386,7 @@ group json_to_group(const std::string_view& str_json)
     return json_to_group(json::parse(str_json));
 }
 
-group json_to_group(const nlohmann::basic_json<>& json)
+group json_to_group(const json& json)
 {
     if (!json.is_object())
     {
@@ -441,7 +481,28 @@ group json_to_group(const nlohmann::basic_json<>& json)
     return group;
 }
 
+json serialize_json(const group::ptr& group)
+{
+    if(group == nullptr)
+    {
+        throw runtime_error("group null");
+    }
 
+    json j;
+
+    j["id"] = group->id;
+    j["serverId"] = group->server_id;
+    j["groupId"] = group->group_id;
+    j["serverGroupId"] = group->server_group_id;
+    j["title"] = group->title;
+    j["icon"] = group->icon;
+    j["note"] = group->note;
+    j["synchronized"] = group->synchronized;
+    j["deleted"] = group->deleted;
+    j["timestampCreation"] = group->timestamp_creation;
+
+    return j;
+}
 
 group_field json_to_group_field(const std::string_view& str_json)
 {
@@ -453,7 +514,7 @@ group_field json_to_group_field(const std::string_view& str_json)
     return json_to_group_field(json::parse(str_json));
 }
 
-group_field json_to_group_field(const nlohmann::basic_json<>& json)
+group_field json_to_group_field(const json& json)
 {
     if (!json.is_object())
     {
@@ -537,19 +598,27 @@ group_field json_to_group_field(const nlohmann::basic_json<>& json)
     return group_field;
 }
 
+json serialize_json(const group_field::ptr& group_field)
+{
+    if(group_field == nullptr)
+    {
+        throw runtime_error("group_field null");
+    }
 
+    json j;
 
+    j["id"] = group_field->id;
+    j["serverId"] = group_field->server_id;
+    j["groupId"] = group_field->group_id;
+    j["serverGroupId"] = group_field->server_group_id;
+    j["title"] = group_field->title;
+    j["is_hidden"] = group_field->is_hidden;
+    j["synchronized"] = group_field->synchronized;
+    j["deleted"] = group_field->deleted;
+    j["timestampCreation"] = group_field->timestamp_creation;
 
-
-
-
-
-
-
-
-
-
-
+    return j;
+}
 
 field json_to_field(const std::string_view& str_json)
 {
@@ -561,7 +630,7 @@ field json_to_field(const std::string_view& str_json)
     return json_to_field(json::parse(str_json));
 }
 
-field json_to_field(const nlohmann::basic_json<>& json)
+field json_to_field(const json& json)
 {
     if (!json.is_object())
     {
@@ -672,6 +741,29 @@ field json_to_field(const nlohmann::basic_json<>& json)
 
 
     return field;
+}
+
+json serialize_json(const field::ptr& group)
+{
+    if(group == nullptr)
+    {
+        throw runtime_error("group null");
+    }
+
+    json j;
+
+    j["id"] = group->id;
+    j["serverId"] = group->server_id;
+    j["groupId"] = group->group_id;
+    j["serverGroupId"] = group->server_group_id;
+    j["title"] = group->title;
+    j["value"] = group->value;
+    j["isHidden"] = group->is_hidden;
+    j["synchronized"] = group->synchronized;
+    j["deleted"] = group->deleted;
+    j["timestampCreation"] = group->timestamp_creation;
+
+    return j;
 }
 
 }
