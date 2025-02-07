@@ -34,8 +34,6 @@ namespace
 constexpr char APP_TAG[] = "json";
 }
 
-static device json_to_device(const string_view& str_json);
-
 static group json_to_group(const std::string_view& str_json);
 static group json_to_group(const json& json);
 static json serialize_json(const group::ptr& group);
@@ -179,8 +177,14 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
     net_transport.groups_fields = std::move(fut_groups_fields.get());
     net_transport.fields = std::move(fut_fields.get());
 }
+catch (const runtime_error& e)
+{
+    throw;
+}
 catch (...)
 {
+    cerr << "Unhandled exception" << endl;
+
     try {
         rethrow_exception(current_exception());
     } catch (const exception& e) {
@@ -188,7 +192,7 @@ catch (...)
     }
 }
 
-optional<string> net_transport_serialize_json(thread_pool<6>& pool, const net_transport& net_transport) try
+string net_transport_serialize_json(const net_transport& net_transport) try
 {
     auto j = json({});
 
@@ -215,8 +219,14 @@ optional<string> net_transport_serialize_json(thread_pool<6>& pool, const net_tr
 
     return j;
 }
+catch (const runtime_error& e)
+{
+    throw;
+}
 catch (...)
 {
+    cerr << "Unhandled exception" << endl;
+
     try {
         rethrow_exception(current_exception());
     } catch (const exception& e) {

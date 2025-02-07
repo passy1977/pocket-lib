@@ -53,6 +53,7 @@ public:
 
     std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
 
+    bool synch(const std::optional<pods::user::ptr>& user);
 private:
     void lock();
 

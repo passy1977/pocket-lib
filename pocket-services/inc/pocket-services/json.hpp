@@ -33,7 +33,9 @@ namespace pocket::services::inline v5
 
 void json_parse_net_transport(BS::thread_pool<6>& pool, std::string_view json_response, pods::net_transport& net_transport);
 
-std::optional<std::string> net_transport_serialize_json(BS::thread_pool<6>& pool, const pods::net_transport& net_transport);
+std::string net_transport_serialize_json(const pods::net_transport& net_transport);
+
+pods::device json_to_device(const std::string_view& str_json);
 
 pods::device json_to_device(const nlohmann::json& json);
 

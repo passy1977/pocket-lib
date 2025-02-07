@@ -54,15 +54,17 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
-    void transmit_data(uint64_t timestamp_last_update);
+    bool transmit_data(const pods::user::ptr& user);
 private:
-    struct data_server_id
+struct data_server_id
     {
         std::map<uint64_t, uint64_t> groups_server_id;
         std::map<uint64_t, uint64_t> groups_fields_server_id;
         std::map<uint64_t, uint64_t> fields_server_id;
         bool valid;
     };
+
+    std::optional<pods::user::ptr> parse_data_from_net(const std::string_view& response, data_server_id& data);
 
     template<iface::require_pod T>
     std::future<bool> update_database_table(const std::vector<T*> vect, data_server_id& data)

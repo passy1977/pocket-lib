@@ -60,7 +60,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
     if(check_lock())
     {
-        runtime_error("Another session handle:" + device->uuid);
+        throw runtime_error("Another session handle:" + device->uuid);
     }
 
     lock();
@@ -145,7 +145,7 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     catch (const runtime_error& e)
     {
         remote_connection_error = true;
-        error(typeid(this).name(), e.what());
+        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
     }
 
 
@@ -153,15 +153,12 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     if(user_from_net.has_value())
     {
         auto&& user = user_from_net.value();
-        if(
-            user_from_db.has_value() && user->id != user_from_db->id
-            || user_from_db->status != user::stat::ACTIVE
-        )
+        if(user->id != device->user_id &&  user->status != user::stat::ACTIVE)
         {
             return nullopt;
         }
 
-        device->user_id = user->id;
+        user->timestamp_last_update = timestamp_last_update;
         user->passwd = std::move(crypto_encode_sha512(passwd));
         dao.persist(user);
         return std::move(user);
@@ -169,17 +166,11 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     else if(user_from_db.has_value() && remote_connection_error)
     {
         auto&& user = user_from_db.value();
-
-        if(
-            user.id != device->user_id
-            || user_from_db->status != user::stat::ACTIVE
-        )
+        if(user.status != user::stat::ACTIVE)
         {
             return nullopt;
         }
 
-        user.passwd = std::move(crypto_encode_sha512(passwd));
-        dao.persist(user);
         return make_unique<pods::user>(user);
     }
     else
@@ -202,8 +193,9 @@ void session::lock()
     }
 
     pid_t pid = getpid();
+    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
 
-    ofstream out(config->get_config_path() + LOCK_EXTENSION);
+    ofstream out(full_path);
 
     if (!out)
     {
@@ -217,9 +209,10 @@ void session::lock()
 
 void session::unlock()
 {
-    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
+    if (exists(full_path))
     {
-        filesystem::remove(config->get_config_path() + LOCK_EXTENSION);  //throw exception
+        filesystem::remove(full_path);  //throw exception
     }
     else
     {
@@ -232,9 +225,10 @@ bool session::check_lock()
 #ifdef DISABLE_LOCK
     return false;
 #else
-    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
+    if (exists(full_path))
     {
-        ifstream file(config->get_config_path() + LOCK_EXTENSION);
+        ifstream file(full_path);
         if (!file.is_open())
         {
             throw runtime_error("Error opening file.");
@@ -244,7 +238,7 @@ bool session::check_lock()
 
         file.close();
 
-        info(typeid(*this).name(), "DB locked: " + config->get_config_path() + LOCK_EXTENSION + " by pid:" + pid);
+        info(typeid(*this).name(), "Device locked: " + full_path + " by pid:" + pid);
         return true;
     }
     else
@@ -253,6 +247,22 @@ bool session::check_lock()
     }
 #endif
 }
+
+bool session::synch(const optional<user::ptr>& user) try
+{
+    if(!user.has_value())
+    {
+        return false;
+    }
+
+    return synchronizer->transmit_data(user.value());
+}
+catch (const runtime_error& e)
+{
+    error(typeid(this).name(), e.what());
+    return false;
+}
+
 
 }
 
