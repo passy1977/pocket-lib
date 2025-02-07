@@ -202,38 +202,34 @@ void synchronizer::transmit_data(uint64_t timestamp_last_update)
         throw runtime_error("Seems no one has been logged");
     }
 
-    net_transport net_transport;
-    try
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update]() mutable
     {
-
-        auto&& fut_group = collect_data_table<group>();
-        net_transport.groups = fut_group.get();
-
-        auto&& fur_group_field = collect_data_table<group_field>();
-        net_transport.groups_fields = fur_group_field.get();
-
-        auto&& fut_field = collect_data_table<field>();
-        net_transport.fields = fut_field.get();
-    }
-    catch (const runtime_error& e)
-    {
-        error(typeid(this).name(), e.what());
-        return;
-    }
-
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update, net_transport = std::move(net_transport)]() mutable
-    {
+        net_transport net_transport;
         network network;
         try
         {
-           if(secret.empty())
-           {
-               secret = crypto_generate_random_string(10);
-           }
-            net_transport.groups;
-           auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + to_string(device.user_id) + DIVISOR + secret);
+            auto&& fut_group = collect_data_table<group>();
+            net_transport.groups = fut_group.get();
 
-           return network.perform(network::method::PUT, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/");
+            auto&& fur_group_field = collect_data_table<group_field>();
+            net_transport.groups_fields = fur_group_field.get();
+
+            auto&& fut_field = collect_data_table<field>();
+            net_transport.fields = fut_field.get();
+
+            auto&& ret =  pool.submit_task([this]
+            {
+
+            });
+
+            if(secret.empty())
+            {
+                secret = crypto_generate_random_string(10);
+            }
+
+            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + to_string(device.user_id) + DIVISOR + secret);
+
+            return network.perform(network::method::PUT, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/");
         }
         catch (const runtime_error& e)
         {
