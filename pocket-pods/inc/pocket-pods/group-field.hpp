@@ -17,10 +17,29 @@
  *
  ***************************************************************************/
 
-#include "pocket-pods/device.hpp"
+#pragma once
+
+#include "pocket-iface/pod.hpp"
 
 namespace pocket::pods::inline v5
 {
 
+struct group_field final : public iface::pod<group_field>
+{
 
-}
+    uint64_t group_id{0};
+    uint64_t server_group_id{0};
+    std::string title;
+    bool is_hidden{false};
+
+    ~group_field() override = default;
+
+    static inline const std::string& get_name() noexcept
+    {
+        static std::string const ret = "groups_fields";
+        return ret;
+    }
+
+};
+
+} // pocket

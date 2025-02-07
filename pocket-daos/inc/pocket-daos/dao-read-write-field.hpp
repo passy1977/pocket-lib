@@ -35,7 +35,7 @@ public:
     ~dao_read_write() override = default;
     POCKET_NO_COPY_NO_MOVE(dao_read_write)
 
-    std::optional<pods::field> read(services::database::row& row) override;
+    pods::field::ptr read(services::database::row& row) override;
 
     services::database::parameters write(const pods::field::ptr& t) override;
 };

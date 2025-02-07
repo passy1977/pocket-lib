@@ -18,14 +18,13 @@
  ***************************************************************************/
 
 #include "pocket-controllers/session.hpp"
-#include "pocket-services/json.hpp"
 #include "pocket-services/network.hpp"
 #include "pocket-services/crypto.hpp"
 #include "pocket-daos/dao-user.hpp"
 
 #include <filesystem>
 #include <thread>
-
+#include <fstream>
 
 namespace pocket::controllers::inline v5
 {
@@ -57,16 +56,28 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
     device = std::move(config->parse(*config_json));
 
+    if(check_lock())
+    {
+        runtime_error("Another session handle:" + device->uuid);
+    }
+
+    lock();
+
     info(typeid(*this).name(), "Create new session:" + device->uuid);
 }
 
-session::~session()
+session::~session() try
 {
     database->close();
     for(auto& it : secret)
     {
         it = '\0';
     }
+    unlock();
+}
+catch (const runtime_error& e)
+{
+    error(typeid(*this).name(), e.what());
 }
 
 const device::opt& session::init()
@@ -116,27 +127,57 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     dao_user dao(database);
 
     uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
-    auto&& user_from_db = dao.login(email, std::move(crypto_encode_sha512(passwd)));
+    auto&& user_from_db = dao.login(email, crypto_encode_sha512(passwd));
     if(user_from_db)
     {
         auto&& user = user_from_db.value();
         timestamp_last_update = user.timestamp_last_update;
     }
 
-    auto&& user_from_net = synchronizer->get_data(timestamp_last_update, email, passwd);
+    bool remote_connection_error = false;
+    optional<user::ptr> user_from_net = nullopt;
+    try
+    {
+        user_from_net = std::move(synchronizer->retrieve_data(timestamp_last_update, email, passwd));
+    }
+    catch (const runtime_error& e)
+    {
+        remote_connection_error = true;
+        error(typeid(this).name(), e.what());
+    }
+
+
+
     if(user_from_net.has_value())
     {
         auto&& user = user_from_net.value();
+        if(
+            user_from_db.has_value() && user->id != user_from_db->id
+            || user_from_db->status != user::stat::ACTIVE
+        )
+        {
+            return nullopt;
+        }
+
+        device->user_id = user->id;
         user->passwd = std::move(crypto_encode_sha512(passwd));
-        dao.write(user);
+        dao.persist(user);
         return std::move(user);
     }
-    else if(user_from_db.has_value())
+    else if(user_from_db.has_value() && remote_connection_error)
     {
         auto&& user = user_from_db.value();
+
+        if(
+            user.id != device->user_id
+            || user_from_db->status != user::stat::ACTIVE
+        )
+        {
+            return nullopt;
+        }
+
         user.passwd = std::move(crypto_encode_sha512(passwd));
-        user.timestamp_last_update = timestamp_last_update;
-        dao.write(user);
+        dao.persist(user);
         return make_unique<pods::user>(user);
     }
     else
@@ -149,6 +190,66 @@ catch(const exception& e)
 {
     error(typeid(this).name(), e.what());
     return nullopt;
+}
+
+void session::lock()
+{
+    if(config == nullptr)
+    {
+        return;
+    }
+
+    pid_t pid = getpid();
+
+    ofstream out(config->get_config_path() + LOCK_EXTENSION);
+
+    if (!out)
+    {
+        throw runtime_error("Error: Could not open file for writing.");
+    }
+
+    out << pid << endl;
+
+    out.close();
+}
+
+void session::unlock()
+{
+    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    {
+        filesystem::remove(config->get_config_path() + LOCK_EXTENSION);  //throw exception
+    }
+    else
+    {
+        throw runtime_error("File does not exist.");
+    }
+}
+
+bool session::check_lock()
+{
+#ifdef DISABLE_LOCK
+    return false;
+#else
+    if (exists(config->get_config_path() + LOCK_EXTENSION))
+    {
+        ifstream file(config->get_config_path() + LOCK_EXTENSION);
+        if (!file.is_open())
+        {
+            throw runtime_error("Error opening file.");
+        }
+
+        string pid((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
+
+        file.close();
+
+        info(typeid(*this).name(), "DB locked: " + config->get_config_path() + LOCK_EXTENSION + " by pid:" + pid);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+#endif
 }
 
 }

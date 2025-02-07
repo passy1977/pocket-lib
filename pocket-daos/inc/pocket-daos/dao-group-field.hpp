@@ -20,12 +20,12 @@
 #pragma once
 
 #include "pocket-daos/dao.hpp"
-#include "pocket-pods/group_field.hpp"
+#include "pocket-pods/group-field.hpp"
 
 namespace pocket::daos::inline v5
 {
 
 template<>
-void dao::pippo<pods::group_field>();
+uint64_t dao::persist<pods::group_field>(const pods::group_field::ptr& t);
 
 }

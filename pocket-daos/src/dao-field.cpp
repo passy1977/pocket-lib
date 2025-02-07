@@ -26,9 +26,69 @@ namespace pocket::daos::inline v5
 using pods::field;
 
 template<>
-void dao::pippo<field>()
+uint64_t dao::persist<field>(const field::ptr& t)
 {
-    debug("--->", "pipo() field spec");
+
+    dao_read_write<field> dao_rw;
+
+    auto&& params = dao_rw.write(t);
+    int64_t count = 0;
+    if(t->id > 0)
+    {
+        count = database->update(R"(
+UPDATE fields
+SET
+    server_id = ?,
+    user_id = ?,
+    group_id = ?,
+    server_group_id = ?,
+    group_field_id = ?,
+    server_group_field_id = ?,
+    title = ?,
+    value = ?,
+    is_hidden = ?,
+    synchronized = ?,
+    deleted = ?,
+    timestamp_creation = ?
+WHERE
+    id = ?
+        )", params);
+    }
+    else
+    {
+        count = database->update(R"(
+INSERT INTO fields
+(
+    server_id,
+    user_id,
+    group_id,
+    server_group_id,
+    group_field_id,
+    server_group_field_id,
+    title,
+    value,
+    is_hidden,
+    synchronized,
+    deleted,
+    timestamp_creation
+) VALUES (
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?,
+    ?
+)
+        )", params);
+    }
+
+    return count;
 }
 
 }

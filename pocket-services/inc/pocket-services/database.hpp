@@ -39,21 +39,22 @@ class database final
     constexpr inline static char CREATION_SQL[] = R"sql(
 CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `name` text NOT NULL, `email` text NOT NULL, `passwd` text NOT NULL, status integer NOT NULL DEFAULT '0', `timestamp_last_update` INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE `properties` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `_key` TEXT NOT NULL DEFAULT '', `_value` TEXT NOT NULL DEFAULT '');
-CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_last_update` INTEGER NOT NULL DEFAULT 0, `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
-CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', is_temporary integer, `timestamp_last_update` INTEGER NOT NULL DEFAULT 0, `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
-CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_last_update` INTEGER NOT NULL DEFAULT 0, `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `server_group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE groups_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
 CREATE TABLE metadata (version INTEGER);
 CREATE INDEX `groups_title` ON `groups` (title);
-CREATE INDEX `group_fields_group_id` ON `group_fields` (`group_id`);
+CREATE INDEX `groups_fields_group_id` ON `groups_fields` (`group_id`);
 CREATE INDEX fields_group_field_id ON fields (group_field_id);
 CREATE INDEX groups_server_id ON groups (server_id);
-CREATE INDEX group_fields_server_id ON group_fields (server_id);
+CREATE INDEX groups_fields_server_id ON groups_fields (server_id);
 CREATE INDEX fields_server_id ON fields (server_id);
+
 CREATE INDEX groups_user_id ON groups (user_id);
-CREATE INDEX group_fields_user_id ON group_fields (user_id);
+CREATE INDEX groups_fields_user_id ON groups_fields (user_id);
 CREATE INDEX fields_user_id ON fields (user_id);
 CREATE INDEX groups_deleted ON groups (deleted);
-CREATE INDEX group_fields_deleted ON group_fields (deleted);
+CREATE INDEX groups_fields_deleted ON groups_fields (deleted);
 CREATE INDEX fields_deleted ON fields (deleted);
 INSERT INTO metadata VALUES (?);
     )sql";
@@ -78,6 +79,7 @@ public:
     std::optional<std::unique_ptr<result_set>> execute(const std::string&& query, const parameters& parameters = {});
 
     int64_t update(const std::string&& query, const parameters& parameters = {});
+
 private:
     friend result_set;
 
@@ -87,6 +89,8 @@ private:
 
     void lock();
     void unlock();
+
+
 };
 
 

@@ -23,11 +23,13 @@
 #include "pocket-services/database.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/user.hpp"
-#include "pocket-pods/response.hpp"
+#include "pocket-pods/net-transport.hpp"
+#include "pocket-daos/dao.hpp"
 #include "BS_thread_pool.hpp"
 
 #include <optional>
 #include <string_view>
+
 
 namespace pocket::services::inline v5
 {
@@ -44,14 +46,91 @@ public:
 
     static inline constexpr uint8_t FULL_SYNC = 0;
 
-
     explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
     : database(database)
     , secret(secret)
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    std::optional<pods::user::ptr> get_data(uint64_t timestamp_last_update, std::string_view email, std::string_view passwd);
+    std::optional<pods::user::ptr> retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
+
+    void transmit_data(uint64_t timestamp_last_update);
+private:
+    struct data_server_id
+    {
+        std::map<uint64_t, uint64_t> groups_server_id;
+        std::map<uint64_t, uint64_t> groups_fields_server_id;
+        std::map<uint64_t, uint64_t> fields_server_id;
+        bool valid;
+    };
+
+    template<iface::require_pod T>
+    std::future<bool> update_database_table(const std::vector<T*> vect, data_server_id& data)
+    {
+        return pool.submit_task([this, vect, data]() mutable
+         {
+             try
+             {
+                 daos::dao dao(database);
+                 for(auto&& it : vect)
+                 {
+                     if constexpr (std::is_same_v<T, pods::group>)
+                     {
+                        if(data.groups_server_id.contains(it->server_id))
+                        {
+                            it->id = data.groups_server_id[it->server_id];
+                        }
+                     }
+                     else if constexpr (std::is_same_v<T, pods::group_field>)
+                     {
+                         if(data.groups_fields_server_id.contains(it->server_id))
+                         {
+                             it->id = data.groups_fields_server_id[it->server_id];
+                         }
+                     }
+                     else if constexpr (std::is_same_v<T, pods::field>)
+                     {
+                         if(data.fields_server_id.contains(it->server_id))
+                         {
+                             it->id = data.fields_server_id[it->server_id];
+                         }
+                     }
+                     it->synchronized = 1;
+                     if(it->deleted)
+                     {
+                        if(dao.rm<T>(it->server_id) == 0)
+                        {
+                            std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
+                            error(typeid(this).name(),  msg);
+                            return false;
+                        }
+                     }
+                     else if(dao.persist<T>(std::make_unique<T>(*it)) == 0)
+                     {
+                         std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
+                         error(typeid(this).name(),  msg);
+                         return false;
+                     }
+                 }
+                 return true;
+             }
+             catch (const std::runtime_error& e)
+             {
+                 error(typeid(this).name(), e.what());
+                 return false;
+             }
+         });
+    }
+
+
+    template<iface::require_pod T>
+    std::future<std::vector<typename T::ptr>> collect_data_table()
+    {
+        return pool.submit_task([this]
+        {
+                return daos::dao(database).get_all<T>(true);
+        });
+    }
 
 };
 

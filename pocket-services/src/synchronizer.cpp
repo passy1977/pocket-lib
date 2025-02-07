@@ -36,26 +36,51 @@ using namespace daos;
 namespace
 {
 constexpr char ERROR_HTTP_CODE[] = "http_code";
-constexpr char APP_TAG[] = "synchronizer";
 }
 
-optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, string_view email, string_view passwd)
+std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
-    struct data_server_id
-    {
-        std::vector<uint64_t> groups_server_id;
-        std::vector<uint64_t> group_fields_server_id;
-        std::vector<uint64_t> fields_server_id;
-    };
-
     if(email.empty() || passwd.empty())
     {
         throw runtime_error("Some parameter are empty");
     }
 
-    promise<string> prom;
-    auto&& fut = prom.get_future();
-    pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd)), &prom]
+    auto&& fut_data = pool.submit_task([this]
+   {
+       try
+       {
+           data_server_id data {
+                   .valid = true
+           };
+           dao dao(database);
+
+           auto&& g = dao.get_all<group>();
+           for_each(g.begin(), g.end(), [&data](auto &&it) mutable { data.groups_server_id[it->server_id] = it->id; });
+
+           auto&& gf = dao.get_all<group_field>();
+           for_each(gf.begin(), gf.end(), [&data](auto &&it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
+
+           auto&& f = dao.get_all<field>();
+           for_each(f.begin(), f.end(), [&data](auto &&it) mutable { data.fields_server_id[it->server_id] = it->id; });
+
+           return data;
+       }
+
+       catch (const runtime_error& e)
+       {
+           error(typeid(this).name(), e.what());
+           return data_server_id {
+               .groups_server_id = {},
+               .groups_fields_server_id = {},
+               .fields_server_id = {},
+               .valid = false
+           };
+       }
+
+   });
+
+
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd))]
      {
          network network;
          try
@@ -67,124 +92,75 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
 
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret);
 
-             prom.set_value(network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd));
+             return network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/" + string(email) + "/" + passwd);
 
          }
          catch (const runtime_error& e)
          {
              secret = "";
-             prom.set_value(string(ERROR_HTTP_CODE) + e.what());
+             return string(ERROR_HTTP_CODE) + e.what();
          }
-     })
-    .wait();
+     });
 
-    auto&& response = fut.get();
+    string response;
+    data_server_id data;
+    try
+    {
+        response = std::move(fut_response.get());
+        data = std::move(fut_data.get());
+    }
+    catch (const runtime_error& e)
+    {
+        error(typeid(this).name(), e.what());
+        return nullopt;
+    }
+
     if(!response.starts_with(ERROR_HTTP_CODE))
     {
-
         try
         {
 
-            promise<data_server_id> prom_data;
-            auto&& fut_data = prom_data.get_future();
-            pool.detach_task([this, &prom_data]
-             {
-                 try
-                 {
-                     data_server_id data ;
-                     dao dao(database);
-
-                     auto&& g = dao.get_all<group>();
-                     transform(g.begin(), g.end(), data.groups_server_id.begin(), [](auto it) { return it.server_id; });
-
-                     auto&& gf = dao.get_all<group_field>();
-                     transform(gf.begin(), gf.end(), data.group_fields_server_id.begin(), [](auto it) { return it.server_id; });
-
-                     auto&& f = dao.get_all<field>();
-                     transform(f.begin(), f.end(), data.fields_server_id.begin(), [](auto it) { return it.server_id; });
-
-                     prom_data.set_value(data);
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            struct response json_response;
+            struct net_transport net_transport;
             try
             {
-                json_parse_response(pool, response, json_response);
+                json_parse_net_transport(pool, response, net_transport);
             }
             catch (const runtime_error& e)
             {
-                error(APP_TAG, e.what());
+                error(typeid(this).name(), e.what());
                 return nullopt;
             }
 
-            data_server_id data;
-            try
+            auto&& fut_group = update_database_table<group>(net_transport.get_vector_ref<group>(), data);
+            if(!fut_group.get())
             {
-                data = std::move(fut_data.get());
-            }
-            catch (const runtime_error& e)
-            {
-                error(APP_TAG, e.what());
+                error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
 
-            promise<void> prom_groups;
-            auto&& fut_groups = prom_groups.get_future();
-            pool.detach_task([&prom_groups, groups_server_id = &data.groups_server_id]
-             {
-                 try
-                 {
-
-                     prom_groups.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            promise<void> prom_groups_fields;
-            auto&& fut_groups_fields = prom_groups_fields.get_future();
-            pool.detach_task([&prom_groups_fields, group_fields_server_id = &data.group_fields_server_id]
-             {
-                 try
-                 {
-
-                     prom_groups_fields.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            promise<void> prom_fields;
-            auto&& fut_fields = prom_fields.get_future();
-            pool.detach_task([&prom_fields, fields_server_id = &data.fields_server_id]
-             {
-                 try
-                 {
-
-                     prom_fields.set_value();
-                 }
-                 catch (const runtime_error& e)
-                 {
-                     error(APP_TAG, e.what());
-                 }
-             });
-
-            fut_groups.get();
-            fut_groups_fields.get();
-            fut_fields.get();
-
-            if(json_response.device->id == device.id)
+            auto&& fut_group_field = update_database_table<group_field>(net_transport.get_vector_ref<group_field>(), data);
+            if(!fut_group_field.get())
             {
-                return {std::move(json_response.user) };
+                error(typeid(this).name(), "Some error on populate groups_fields table");
+                return nullopt;
+            }
+
+            auto&& fut_field = update_database_table<field>(net_transport.get_vector_ref<field>(), data);
+
+            if(!fut_field.get())
+            {
+                error(typeid(this).name(), "Some error on populate fields table");
+                return nullopt;
+            }
+
+            class dao dao(database);
+
+            dao.update_all_index();
+
+            
+            if(net_transport.device->id == device.id)
+            {
+                return {std::move(net_transport.user) };
             }
             else
             {
@@ -203,22 +179,66 @@ optional<user::ptr> synchronizer::get_data(uint64_t timestamp_last_update, strin
             int http_code = stoi(response.substr(strnlen(ERROR_HTTP_CODE, sizeof ERROR_HTTP_CODE)));
             if(http_code >= 600)
             {
-                error(APP_TAG, "Server error http_code:" + to_string(http_code));
+                error(typeid(this).name(), "Server error http_code:" + to_string(http_code));
                 return nullopt;
             }
             else
             {
                 throw runtime_error(response);
             }
-        } catch (const std::invalid_argument& ia) {
+        } catch (const invalid_argument& ia) {
             throw runtime_error(ia.what());
-        } catch (const std::out_of_range& oor) {
+        } catch (const out_of_range& oor) {
             throw runtime_error(oor.what());
         }
     }
 }
 
 
+void synchronizer::transmit_data(uint64_t timestamp_last_update)
+{
+    if(device.id == 0 || secret.empty())
+    {
+        throw runtime_error("Seems no one has been logged");
+    }
+
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update]() mutable
+    {
+        net_transport net_transport;
+        network network;
+        try
+        {
+            auto&& fut_group = collect_data_table<group>();
+            net_transport.groups = fut_group.get();
+
+            auto&& fur_group_field = collect_data_table<group_field>();
+            net_transport.groups_fields = fur_group_field.get();
+
+            auto&& fut_field = collect_data_table<field>();
+            net_transport.fields = fut_field.get();
+
+            auto&& ret =  pool.submit_task([this]
+            {
+
+            });
+
+            if(secret.empty())
+            {
+                secret = crypto_generate_random_string(10);
+            }
+
+            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + to_string(device.user_id) + DIVISOR + secret);
+
+            return network.perform(network::method::PUT, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + to_string(timestamp_last_update) + "/");
+        }
+        catch (const runtime_error& e)
+        {
+           secret = "";
+           return string(ERROR_HTTP_CODE) + e.what();
+        }
+    });
+
+}
 
 }
 

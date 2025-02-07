@@ -45,37 +45,37 @@ public:
 
 
     template<iface::require_pod T>
-    constexpr std::vector<iface::pod<T>> get_all() const
+    constexpr std::vector<typename iface::pod<T>::ptr> get_all(bool to_synch = false) const
     {
-        std::vector<iface::pod<T>> ret;
+        std::vector<typename iface::pod<T>::ptr> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE deleted = 0"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY id"); opt_rs.has_value()) //throw exception
         {
             for(auto&& row : **opt_rs)
             {
                 if constexpr (std::is_same_v<T, pods::group>)
                 {
                     dao_read_write<pods::group> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::group_field>)
                 {
                     dao_read_write<pods::group_field> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
                 else if constexpr (std::is_same_v<T, pods::field>)
                 {
                     dao_read_write<pods::field> dao;
-                    if(auto&& g = dao.read(row); g.has_value())
+                    if(auto&& it = dao.read(row); it.get())
                     {
-                        ret.push_back(*g);
+                        ret.push_back(std::move(it));
                     }
                 }
             }
@@ -84,6 +84,8 @@ public:
         return ret;
     }
 
+    void update_all_index();
+
     template<iface::require_pod T>
     inline int64_t del(uint64_t id) const
     {
@@ -91,16 +93,29 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t del(const T& t) const
+    inline int64_t del(const T::ptr& t) const
     {
-        return del(t.id);
+        return del(t->server_id);
     }
 
     template<iface::require_pod T>
-    constexpr void pippo()
+    inline int64_t rm(uint64_t server_id) const
     {
-        printf("--->pippo() %s\n", typeid(T).name());
+        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND server_id = ?", { {server_id} });
     }
+
+    template<iface::require_pod T>
+    inline int64_t rm(const T::ptr& t) const
+    {
+        return rm(t->id);
+    }
+
+    template<iface::require_pod T>
+    uint64_t persist(const T::ptr& t)
+    {
+        throw std::runtime_error("Not implemented");
+    }
+
 };
 
 

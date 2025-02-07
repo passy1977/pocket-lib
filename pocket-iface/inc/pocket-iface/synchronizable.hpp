@@ -32,6 +32,9 @@ struct synchronizable
     uint64_t id = 0;
     uint64_t server_id = 0;
     uint64_t user_id = 0;
+    bool synchronized{true};
+    bool deleted{false};
+    uint64_t timestamp_creation = 0;
 
     virtual ~synchronizable() = default;
 };

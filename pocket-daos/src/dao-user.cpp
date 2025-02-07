@@ -79,7 +79,7 @@ user::opt dao_user::login(const string& email, const string& passwd)
     return nullopt;
 }
 
-bool dao_user::write(const pods::user& user)
+bool dao_user::persist(const pods::user& user)
 {
     database::parameters params = {
             user.name,

@@ -19,30 +19,47 @@
 
 #pragma once
 
-#include "pocket-iface/pod.hpp"
+#include "pocket-pods/user.hpp"
+#include "pocket-pods/device.hpp"
+#include "pocket-pods/group.hpp"
+#include "pocket-pods/group-field.hpp"
+#include "pocket-pods/field.hpp"
+#include "pocket/globals.hpp"
+
+#include <vector>
+#include <type_traits>
 
 namespace pocket::pods::inline v5
 {
 
-struct group_field final : public iface::pod<group_field>
+struct net_transport
 {
+    pods::user::ptr user;
+    pods::device::ptr device;
+    std::vector<group::ptr> groups;
+    std::vector<group_field::ptr> groups_fields;
+    std::vector<field::ptr> fields;
 
-    uint64_t group_id{0};
-    uint64_t server_group_id{0};
-    std::string title;
-    bool is_hidden{false};
-    bool synchronized{true};
-    bool deleted{false};
-    uint64_t timestamp_creation = 0;
 
-    ~group_field() override;
-
-    static inline const std::string& get_name() noexcept
+    template<iface::require_pod T>
+    constexpr std::vector<T*> get_vector_ref() noexcept
     {
-        static std::string const ret = "group_fields";
+        std::vector<T*> ret;
+        if constexpr(std::is_same_v<T, group>)
+        {
+            vector_copy_ref<group>(groups, ret);
+        }
+        else if constexpr(std::is_same_v<T, group_field>)
+        {
+            vector_copy_ref<group_field>(groups_fields, ret);
+        }
+        if constexpr(std::is_same_v<T, field>)
+        {
+            vector_copy_ref<field>(fields, ret);
+        }
         return ret;
     }
 
 };
 
-} // pocket
+}

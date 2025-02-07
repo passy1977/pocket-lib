@@ -43,11 +43,11 @@ public:
 
     pods::user::opt login(const std::string& email, const std::string& passwd);
 
-    bool write(const pods::user& user);
+    bool persist(const pods::user& user);
 
-    inline bool write(const pods::user::ptr& user)
+    inline bool persist(const pods::user::ptr& user)
     {
-        return write(*user);
+        return persist(*user);
     }
 
 };

@@ -19,9 +19,33 @@
 
 #include "pocket-daos/dao.hpp"
 
+
 namespace pocket::daos::inline v5
 {
 
+void dao::update_all_index()
+{
+    auto count = database->update(R"(
+UPDATE fields
+SET group_id = (SELECT id FROM groups WHERE server_id = fields.server_group_id)
+WHERE EXISTS (SELECT 1 FROM groups WHERE server_id = fields.server_group_id);
+)");
+
+    count = database->update(R"(
+UPDATE fields
+SET group_field_id = (SELECT id FROM groups_fields WHERE server_id = fields.server_group_field_id)
+WHERE EXISTS (SELECT 1 FROM groups_fields WHERE server_id = fields.server_group_field_id);
+);
+)");
+
+    count = database->update(R"(
+UPDATE groups_fields
+SET group_id = (SELECT id FROM groups WHERE server_id = groups_fields.server_group_id)
+WHERE EXISTS (SELECT 1 FROM groups WHERE server_id = groups_fields.server_group_id);
+);
+)");
+
+}
 
 }
 

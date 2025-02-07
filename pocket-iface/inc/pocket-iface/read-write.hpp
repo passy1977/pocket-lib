@@ -32,7 +32,7 @@ struct read_write
 {
     virtual ~read_write() = default;
 
-    virtual std::optional<T> read(PR& row) = 0;
+    virtual T::ptr read(PR& row) = 0;
     virtual RW write(const T::ptr& t) = 0;
 
 };

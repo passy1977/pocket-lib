@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <iostream>
+#include <vector>
 
 #define POCKET_ANSI_COLOR_RED     "\x1b[31m"
 #define POCKET_ANSI_COLOR_GREEN   "\x1b[32m"
@@ -47,7 +48,7 @@ namespace pocket::inline v5
 
     constexpr auto debug(const std::string& app_tag, const std::string& log) noexcept
     {
-        std::printf(POCKET_ANSI_COLOR_BLUE "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
+       std::printf(POCKET_ANSI_COLOR_BLUE "[%s] %s" POCKET_ANSI_COLOR_RESET POCKET_NEW_LINE, app_tag.c_str(), log.c_str());
     }
 
     constexpr inline auto debug(const std::string& app_tag, const std::string&& log) noexcept
@@ -77,4 +78,27 @@ namespace pocket::inline v5
 
     void str_replace_all(std::string &s, const std::string_view &to_replace, const std::string_view &replacement) noexcept;
 
+    template<typename T>
+    void vector_copy_unique_ptr(const std::vector<typename T::ptr>& src, std::vector<std::unique_ptr<T>>& dst) noexcept
+    {
+        for (const auto&& ptr : src)
+        {
+            if (ptr)
+            {
+                dst.push_back(ptr->clone());
+            }
+        }
+    }
+
+    template<typename T>
+    void vector_copy_ref(const std::vector<typename T::ptr>& src, std::vector<T*>& dst) noexcept
+    {
+        for (auto& ptr : src)
+        {
+            if (ptr)
+            {
+                dst.push_back(ptr.get());
+            }
+        }
+    }
 }
