@@ -24,6 +24,10 @@
 #include "pocket-views/view-group.hpp"
 #include "pocket-views/view-group-field.hpp"
 #include "pocket-views/view-field.hpp"
+#include "pocket-pods/user.hpp"
+#include "pocket-services/crypto.hpp"
+#include "pocket-services/database.hpp"
+
 
 namespace pocket::views::inline v5
 {
@@ -32,8 +36,17 @@ template<iface::require_pod T>
 class view final
 {
 
+    services::aes aes;
+    services::database::ptr& database;
 public:
     using ptr = std::unique_ptr<view>;
+
+    explicit view(const pods::user::ptr &user, services::database::ptr& database) noexcept
+    : aes(POCKET_AES_CBC_IV, user->passwd)
+    , database(database)
+    {
+
+    }
 
     POCKET_NO_COPY_NO_MOVE(view)
     ~view() = default;

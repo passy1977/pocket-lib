@@ -23,6 +23,7 @@
 namespace pocket::views::inline v5
 {
 
+using pods::user;
 
 }
 

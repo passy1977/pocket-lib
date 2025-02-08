@@ -30,13 +30,14 @@
 
 namespace pocket::controllers::inline v5
 {
-using pods::device;
-using pods::user;
+
+using namespace pods;
 using services::database;
 using services::network;
 using services::synchronizer;
 using services::crypto_encode_sha512;
 using daos::dao_user;
+using views::view;
 using namespace std;
 using namespace std::filesystem;
 
@@ -120,7 +121,7 @@ const device::opt& session::init()
     return device;
 }
 
-std::optional<pods::user::ptr> session::login(const string& email, const string& passwd)
+std::optional<user::ptr> session::login(const string& email, const string& passwd)
 {
     if(email.empty() || passwd.empty())
     {
@@ -139,7 +140,7 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
     }
     else
     {
-        return synch_from_net(make_unique<struct user>(pods::user {
+        return synch_from_net(make_unique<struct user>(user {
             .email = email,
             .passwd = passwd
         }));
@@ -148,7 +149,7 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
 }
 
 
-std::optional<pods::user::ptr> session::synch_from_net(const std::optional<pods::user::ptr>& user_opt) try
+std::optional<user::ptr> session::synch_from_net(const std::optional<user::ptr>& user_opt) try
 {
     if(!user_opt.has_value())
     {
@@ -183,11 +184,17 @@ std::optional<pods::user::ptr> session::synch_from_net(const std::optional<pods:
         dao.persist(u);
         u->passwd = user->passwd;
 
+        view_group = make_unique<view<group>>(u, database);
+        view_group_field = make_unique<view<group_field>>(u, database);
+        view_field = make_unique<view<field>>(u, database);
 
         return std::move(u);
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
+        view_group = make_unique<view<group>>(user, database);
+        view_group_field = make_unique<view<group_field>>(user, database);
+        view_field = make_unique<view<field>>(user, database);
 
         return make_unique<struct user>(*user);
     }

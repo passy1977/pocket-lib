@@ -24,7 +24,6 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
-#include <openssl/evp.h>
 
 #include <iomanip>
 #include <iostream>
@@ -33,8 +32,6 @@
 #include <string>
 #include <random>
 #include <chrono>
-#include <memory>
-#include <utility>
 
 namespace pocket::services::inline v5
 {
@@ -375,14 +372,12 @@ std::string aes::decrypt(const string_view& encrypted) const
 
     for(uint32_t i = 0; i < plain_text_len; i++)
     {
-        ret.push_back(plain_text[i]);
+        ret.push_back(static_cast<char>(plain_text[i]));
     }
 
     delete[] plain_text;
 
-    //eturn ByteArray(const_cast<const uint8_t *>(plainText), plainTextLen);
     return ret;
-
 }
 
 }

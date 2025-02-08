@@ -61,6 +61,8 @@ public:
     std::optional<pods::user::ptr> synch_from_net(const std::optional<pods::user::ptr>& user_opt);
 
     bool synch_to_net(const std::optional<pods::user::ptr>& user);
+
+    
 private:
     void lock();
 
