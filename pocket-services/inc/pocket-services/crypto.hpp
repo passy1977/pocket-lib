@@ -22,12 +22,13 @@
 #include "pocket/globals.hpp"
 
 #include <string>
+#include <openssl/aes.h>
 
 #ifndef POCKET_AES_CBC_IV
 #error POCKET_AES_CBC_IV not defined
 #endif
 
-
+typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 namespace pocket::services::inline v5
 {
 
@@ -46,14 +47,32 @@ std::string crypto_generate_random_string(size_t length);
 
 class crypto final
 {
-    std::string const iv;
-    std::string const passwd;
+    static inline constexpr uint8_t KEY_SIZE = 32;
+    static inline constexpr char PADDING = '$';
+
+    uint8_t key[KEY_SIZE]{0};
+    uint8_t iv[AES_BLOCK_SIZE]{0};
+
+    EVP_CIPHER_CTX *ctx = nullptr;
 public:
     using ptr = std::unique_ptr<crypto>;
 
-    crypto(char const iv[], const std::string& passwd);
+    crypto(const std::string&& iv, const std::string& key);
     POCKET_NO_COPY_NO_MOVE(crypto)
     ~crypto();
+
+    std::string encrypt(const std::string_view &plain) const;
+    inline std::string encrypt(const std::string_view &&plain) const
+    {
+        return encrypt(plain);
+    }
+
+    std::string  decrypt(const std::string_view &encrypted) const;
+    inline std::string decrypt(const std::string_view &&encrypted) const
+    {
+        return decrypt(encrypted);
+    }
+
 
 };
 

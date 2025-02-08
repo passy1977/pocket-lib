@@ -71,10 +71,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
 session::~session() try
 {
     database->close();
-    for(auto& it : secret)
-    {
-        it = '\0';
-    }
+    fill(secret.begin(), secret.end(), 0x00);
     unlock();
 }
 catch (const runtime_error& e)
@@ -192,13 +189,6 @@ std::optional<pods::user::ptr> session::synch_from_net(const std::optional<pods:
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-//        auto&& user_from_db = dao.login(user->email, crypto_encode_sha512(user->passwd));
-//        if(!user_from_db.has_value())
-//        {
-//            return nullopt;
-//        }
-//        user_from_db->passwd = user->passwd;
-
         crypto = make_unique<services::crypto>(POCKET_AES_CBC_IV, user->passwd);
 
         return make_unique<struct user>(*user);

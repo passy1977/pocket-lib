@@ -24,6 +24,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
+#include <openssl/evp.h>
 
 #include <iomanip>
 #include <iostream>
@@ -33,6 +34,7 @@
 #include <random>
 #include <chrono>
 #include <memory>
+#include <utility>
 
 namespace pocket::services::inline v5
 {
@@ -49,6 +51,17 @@ void throw_rsa_error(const string& msg)
 
     throw runtime_error(msg + " err: " + err);
 }
+
+static string get_open_ssl_error() {
+    BIO *bio = BIO_new(BIO_s_mem());
+    ERR_print_errors(bio);
+    char *buf;
+    size_t len = BIO_get_mem_data(bio, &buf);
+    string ret(buf, len);
+    BIO_free(bio);
+    return ret;
+}
+
 
 }
 
@@ -184,14 +197,109 @@ string crypto_generate_random_string(size_t length)
 }
 
 
-crypto::crypto(char const iv[], const string& passwd)
-: iv(iv)
-, passwd(passwd)
+crypto::crypto(const string&& iv, const string& key)
 {
+    if (iv.length() != AES_BLOCK_SIZE)
+    {
+        throw runtime_error("iv size != " + to_string(AES_BLOCK_SIZE));
+    }
 
+    uint8_t i = 0;
+    string byte_key;
+    for (; i < key.size() && i < AES_BLOCK_SIZE; i++) {
+        byte_key.push_back(key[i]);
+    }
+    for (; i < AES_BLOCK_SIZE; i++) {
+        byte_key.push_back(PADDING);
+    }
+
+    memset(this->key, 0x00, KEY_SIZE);
+    memcpy(this->key, key.data(), KEY_SIZE);
+
+    memset(this->iv, 0x00, AES_BLOCK_SIZE);
+    memcpy(this->iv, iv.data(), AES_BLOCK_SIZE);
+
+    /* Create and initialise the context */
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+
+    /*
+     * Initialise the encryption operation. IMPORTANT - ensure you use a key
+     * and IV size appropriate for your cipher
+     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+     * IV size for *most* modes is the same as the block size. For AES this
+     * is 128 bits
+     */
+    if(EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, this->key, this->iv) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
 }
 
-crypto::~crypto() = default;
+crypto::~crypto()
+{
+    for(auto&& b : key)
+    {
+        b = 0;
+    }
+    for(auto&& b : iv)
+    {
+        b = 0;
+    }
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+}
+
+std::string crypto::encrypt(const string_view& plain) const
+{
+
+    auto cipher_text = new(nothrow) uint8_t[((plain.size() + AES_BLOCK_SIZE) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE];
+    if(cipher_text == nullptr)
+    {
+        throw runtime_error("No memory for cipher_text");
+    }
+
+    int len = 0;
+    int cipher_text_len = 0;
+
+    /*
+     * Provide the message to be encrypted, and obtain the encrypted output.
+     * EVP_EncryptUpdate can be called multiple times if necessary
+     */
+    if(EVP_EncryptUpdate(ctx, cipher_text, &len, reinterpret_cast<const uint8_t *>(plain.data()), static_cast<int>(plain.size()) ) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+    cipher_text_len = len;
+
+    /*
+     * Finalise the encryption. Further ciphertext bytes may be written at
+     * this stage.
+     */
+    if(EVP_EncryptFinal_ex(ctx, cipher_text + len, &len) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+    cipher_text_len += len;
+
+    stringstream ss;
+    for (uint32_t i = 0; i < cipher_text_len; i++)
+    {
+        ss << hex << setw(2) << setfill('0') << static_cast<uint32_t>(cipher_text[i]);
+    }
+
+    delete[] cipher_text;
+
+    return ss.str();
+}
+
+std::string crypto::decrypt(const string_view& encrypted) const
+{
+    return std::string();
+}
 
 }
 
