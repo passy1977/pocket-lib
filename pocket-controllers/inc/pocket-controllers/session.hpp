@@ -22,9 +22,11 @@
 #include "pocket-controllers/config.hpp"
 #include "pocket-services/database.hpp"
 #include "pocket-services/synchronizer.hpp"
+#include "pocket-services/crypto.hpp"
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
+#include "pocket-views/view.hpp"
 
 #include <optional>
 
@@ -38,7 +40,11 @@ class session final
     controllers::config::ptr config = nullptr;
     services::database::ptr database = nullptr;
     services::synchronizer::ptr synchronizer = nullptr;
+    services::crypto::ptr crypto = nullptr;
 
+    views::view<pods::group>::ptr view_group = nullptr;
+    views::view<pods::group_field>::ptr view_group_field = nullptr;
+    views::view<pods::field>::ptr view_field = nullptr;
 
     std::string secret;
     pods::device::opt device;
@@ -53,7 +59,9 @@ public:
 
     std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
 
-    bool synch(const std::optional<pods::user::ptr>& user);
+    std::optional<pods::user::ptr> synch_from_net(const std::optional<pods::user::ptr>& user_opt);
+
+    bool synch_to_net(const std::optional<pods::user::ptr>& user);
 private:
     void lock();
 

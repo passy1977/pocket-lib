@@ -1,2 +1,7 @@
+
+# Build forders
 cmake-build-*/
 build*/
+
+# Private information
+/secrets.cmake

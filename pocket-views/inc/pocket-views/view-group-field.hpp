@@ -19,42 +19,8 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <optional>
 
-namespace pocket::pods::inline v5
+namespace pocket::views::inline v5
 {
 
-struct user final
-{
-    using opt = std::optional<user>;
-    using ptr = std::unique_ptr<user>;
-
-    enum class stat {
-        NOT_ACTIVE = 1,
-        ACTIVE = 0,
-        DELETED = 2,
-        INVALIDATED = 3
-    };
-
-    uint64_t id = 0;
-    std::string name;
-    std::string email;
-    std::string passwd;
-    stat status = stat::NOT_ACTIVE;
-    uint64_t timestamp_last_update = 0;
-
-    ~user()
-    {
-        for(auto&& c : passwd)
-        {
-            c = '\0';
-        }
-    }
-
-
-
-};
-
-}
+} // pocket

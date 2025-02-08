@@ -164,11 +164,6 @@ string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compl
     return ret;
 }
 
-string crypto_base64_encode(const string_view& data, bool url_compliant)
-{
-    return crypto_base64_encode(reinterpret_cast<const uint8_t*>(data.data()), static_cast<int>(data.length()), url_compliant);
-}
-
 
 string crypto_generate_random_string(size_t length)
 {
@@ -189,4 +184,14 @@ string crypto_generate_random_string(size_t length)
 }
 
 
+crypto::crypto(char const iv[], const string& passwd)
+: iv(iv)
+, passwd(passwd)
+{
+
 }
+
+crypto::~crypto() = default;
+
+}
+

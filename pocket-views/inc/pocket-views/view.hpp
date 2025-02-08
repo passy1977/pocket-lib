@@ -20,43 +20,25 @@
 #pragma once
 
 #include "pocket/globals.hpp"
-#include "pocket-pods/variant.hpp"
+#include "pocket-iface/pod.hpp"
+#include "pocket-views/view-group.hpp"
+#include "pocket-views/view-group-field.hpp"
+#include "pocket-views/view-field.hpp"
 
-#include <curl/curl.h>
-#include <vector>
-#include <map>
-
-#ifndef MAX_BUFFER_RESPONSE_SIZE
-#error MAX_BUFFER_RESPONSE_SIZE not defined
-#endif
-
-namespace pocket::services::inline v5
+namespace pocket::views::inline v5
 {
 
-class network final
+template<iface::require_pod T>
+class view final
 {
 
-    using parameters = std::vector<pods::variant>;
-    using map_parameters = std::map<std::string, pods::variant>;
-
-    CURL* curl = nullptr;
-    curl_slist* headers = nullptr;
 public:
-    enum class method
-    {
-        GET, POST, PUT, DEL
-    };
+    using ptr = std::unique_ptr<view>;
 
-    static inline constexpr uint32_t MAX_BUFFER = MAX_BUFFER_RESPONSE_SIZE;
-
-    network();
-    ~network();
-    POCKET_NO_COPY_NO_MOVE(network)
-
-    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& data = {});
-private:
-    static size_t callback(char* buf, size_t size, size_t nmemb, std::string* ret_data);
+    POCKET_NO_COPY_NO_MOVE(view)
+    ~view() = default;
 
 };
 
-}
+
+} // pocket

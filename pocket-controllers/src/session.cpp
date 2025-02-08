@@ -123,24 +123,50 @@ const device::opt& session::init()
     return device;
 }
 
-std::optional<pods::user::ptr> session::login(const string& email, const string& passwd) try
+std::optional<pods::user::ptr> session::login(const string& email, const string& passwd)
 {
+    if(email.empty() || passwd.empty())
+    {
+        return nullopt;
+    }
 
     dao_user dao(database);
 
-    uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
+    //uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
     auto&& user_from_db = dao.login(email, crypto_encode_sha512(passwd));
     if(user_from_db)
     {
         auto&& user = user_from_db.value();
-        timestamp_last_update = user.timestamp_last_update;
+        user.passwd = passwd;
+        return synch_from_net(make_unique<struct user>(user));
     }
+    else
+    {
+        return synch_from_net(make_unique<struct user>(pods::user {
+            .email = email,
+            .passwd = passwd
+        }));
+    }
+
+}
+
+
+std::optional<pods::user::ptr> session::synch_from_net(const std::optional<pods::user::ptr>& user_opt) try
+{
+    if(!user_opt.has_value())
+    {
+        error(typeid(this).name(), "user empty");
+        return nullopt;
+    }
+
+    dao_user dao(database);
+    auto&& user = *user_opt;
 
     bool remote_connection_error = false;
     optional<user::ptr> user_from_net = nullopt;
     try
     {
-        user_from_net = std::move(synchronizer->retrieve_data(timestamp_last_update, email, passwd));
+        user_from_net = std::move(synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd));
     }
     catch (const runtime_error& e)
     {
@@ -148,30 +174,34 @@ std::optional<pods::user::ptr> session::login(const string& email, const string&
         error(typeid(this).name(), string("Probably no connection err: ") + e.what());
     }
 
-
-
     if(user_from_net.has_value())
     {
-        auto&& user = user_from_net.value();
-        if(user->id != device->user_id &&  user->status != user::stat::ACTIVE)
+        auto&& u = user_from_net.value();
+        if(u->id != device->user_id &&  u->status != user::stat::ACTIVE)
         {
             return nullopt;
         }
 
-        user->timestamp_last_update = timestamp_last_update;
-        user->passwd = std::move(crypto_encode_sha512(passwd));
-        dao.persist(user);
-        return std::move(user);
+        u->passwd = std::move(crypto_encode_sha512(user->passwd));
+        dao.persist(u);
+        u->passwd = user->passwd;
+
+        crypto = make_unique<services::crypto>(POCKET_AES_CBC_IV, user->passwd);
+
+        return std::move(u);
     }
-    else if(user_from_db.has_value() && remote_connection_error)
+    else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-        auto&& user = user_from_db.value();
-        if(user.status != user::stat::ACTIVE)
-        {
-            return nullopt;
-        }
+//        auto&& user_from_db = dao.login(user->email, crypto_encode_sha512(user->passwd));
+//        if(!user_from_db.has_value())
+//        {
+//            return nullopt;
+//        }
+//        user_from_db->passwd = user->passwd;
 
-        return make_unique<pods::user>(user);
+        crypto = make_unique<services::crypto>(POCKET_AES_CBC_IV, user->passwd);
+
+        return make_unique<struct user>(*user);
     }
     else
     {
@@ -184,6 +214,17 @@ catch(const exception& e)
     error(typeid(this).name(), e.what());
     return nullopt;
 }
+
+bool session::synch_to_net(const optional<user::ptr>& user)
+{
+    if(!user.has_value())
+    {
+        return false;
+    }
+
+    return synchronizer->transmit_data(user.value());
+}
+
 
 void session::lock()
 {
@@ -246,21 +287,6 @@ bool session::check_lock()
         return false;
     }
 #endif
-}
-
-bool session::synch(const optional<user::ptr>& user) try
-{
-    if(!user.has_value())
-    {
-        return false;
-    }
-
-    return synchronizer->transmit_data(user.value());
-}
-catch (const runtime_error& e)
-{
-    error(typeid(this).name(), e.what());
-    return false;
 }
 
 

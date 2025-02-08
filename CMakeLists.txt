@@ -7,11 +7,21 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-#add_definitions(-DDISABLE_LOCK)
+add_definitions(-DDISABLE_LOCK)
 add_definitions(-DMAX_BUFFER_RESPONSE_SIZE=10485760)
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
+
+# Include the secrets file if it exists
+if(EXISTS "${CMAKE_SOURCE_DIR}/secrets.cmake")
+    include(secrets.cmake)
+    message(STATUS "Found AES IV value")
+    add_definitions(-DPOCKET_AES_CBC_IV="${AES_CBC_IV}")
+else ()
+    message(FATAL_ERROR "NOT found AES IV value")
+endif()
+
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(CURL REQUIRED libcurl)
@@ -65,6 +75,8 @@ file(GLOB_RECURSE POCKET_PODS_SOURCES CONFIGURE_DEPENDS "pocket-pods/src/*.cpp")
 file(GLOB_RECURSE POCKET_SERVICES_INCLUDES CONFIGURE_DEPENDS "pocket-services/inc/pocket-services/*.hpp")
 file(GLOB_RECURSE POCKET_SERVICES_SOURCES CONFIGURE_DEPENDS "pocket-services/src/*.cpp")
 
+file(GLOB_RECURSE POCKET_VIEWS_INCLUDES CONFIGURE_DEPENDS "pocket-views/inc/pocket-views/*.hpp")
+file(GLOB_RECURSE POCKET_VIEWS_SOURCES CONFIGURE_DEPENDS "pocket-views/src/*.cpp")
 
 add_library(${PROJECT_NAME} STATIC
         ${POCKET_INCLUDES} ${POCKET_SOURCES}
@@ -73,6 +85,7 @@ add_library(${PROJECT_NAME} STATIC
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}
+        ${POCKET_VIEWS_INCLUDES} ${POCKET_VIEWS_SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -90,6 +103,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         pocket-iface/inc
         pocket-pods/inc
         pocket-services/inc
+        pocket-views/inc
         thread-pool/include
 )
 
@@ -100,6 +114,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${POCKET_IFACE_INCLUDES}
         ${POCKET_PODS_INCLUDES} ${POCKET_PODS_SOURCES}
         ${POCKET_SERVICES_INCLUDES} ${POCKET_SERVICES_SOURCES}
+        ${POCKET_VIEWS_INCLUDES} ${POCKET_VIEWS_SOURCES}
 )
 
 #Test

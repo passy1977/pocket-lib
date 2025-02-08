@@ -58,6 +58,8 @@ TEST_F(session_test, session_init) try
     auto user = session.login("passy.linux@zresa.it", "pwd");
     ASSERT_TRUE(user.has_value());
 
+    //ASSERT_TRUE(session.synch(user));
+
 }
 catch (const std::exception& e)
 {
