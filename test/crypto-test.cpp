@@ -27,16 +27,65 @@ using namespace std;
 
 struct crypto_test : public ::testing::Test {};
 
-TEST_F(crypto_test, base_encrypt) try
+TEST_F(crypto_test, base64) try
 {
-    using pocket::services::crypto;
+    using namespace pocket::services;
 
-    crypto crypto("123456789qwertyu", "123456789qwertyu123456789qwertyu");
+    uint8_t buff[] = "ciao";
 
-    auto enc = crypto.encrypt("ciao");
+    auto enc = crypto_base64_encode(buff, sizeof(buff));
 
-    ASSERT_TRUE(enc == "SPGUc3Sz2ftgNjm1Bz10rg==");
+    auto dec = crypto_base64_decode(enc);
 
+    ASSERT_TRUE(memcmp(buff, dec.data(), sizeof(buff)) == 0);
+
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
+
+TEST_F(crypto_test, base64_url) try
+{
+    using namespace pocket::services;
+
+    uint8_t buff[] = "ciao";
+
+    auto enc = crypto_base64_encode(buff, sizeof(buff), true);
+
+    auto dec = crypto_base64_decode(enc, true);
+
+    ASSERT_TRUE(memcmp(buff, dec.data(), sizeof(buff)) == 0);
+
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
+
+TEST_F(crypto_test, aes) try
+{
+    using pocket::services::aes;
+
+    aes crypto("zxcvbnmasdfghjkl", "123456789qwertyu123456789qwertyu");
+
+    auto&& enc = crypto.encrypt("ciao");
+
+    ASSERT_TRUE(enc == "eKIbCVIPzA+wkVJEkbsv6g==");
+
+    enc = crypto.encrypt("sono");
+
+    ASSERT_TRUE(enc == "CRaDt0WrN+7ybjum5680mA==");
+
+    auto&& dec = crypto.decrypt("eKIbCVIPzA+wkVJEkbsv6g==");
+
+    ASSERT_TRUE(dec == "ciao");
+
+    dec = crypto.decrypt("CRaDt0WrN+7ybjum5680mA==");
+
+    ASSERT_TRUE(dec == "sono");
 
 }
 catch (const std::exception& e)

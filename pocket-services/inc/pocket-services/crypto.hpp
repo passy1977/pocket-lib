@@ -38,14 +38,11 @@ std::string crypto_encrypt_rsa(const std::string_view& pub_key, const std::strin
 
 std::string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compliant = true);
 
-inline std::string crypto_base64_encode(const std::string_view& data, bool url_compliant = true)
-{
-    return crypto_base64_encode(reinterpret_cast<const uint8_t*>(data.data()), static_cast<int>(data.length()), url_compliant);
-}
+std::vector<uint8_t> crypto_base64_decode(std::string data, bool url_compliant = true);
 
 std::string crypto_generate_random_string(size_t length);
 
-class crypto final
+class aes final
 {
     static inline constexpr uint8_t KEY_SIZE = 32;
     static inline constexpr char PADDING = '$';
@@ -55,11 +52,11 @@ class crypto final
 
     EVP_CIPHER_CTX *ctx = nullptr;
 public:
-    using ptr = std::unique_ptr<crypto>;
+    using ptr = std::unique_ptr<aes>;
 
-    crypto(const std::string&& iv, const std::string& key);
-    POCKET_NO_COPY_NO_MOVE(crypto)
-    ~crypto();
+    aes(const std::string&& iv, const std::string& key);
+    POCKET_NO_COPY_NO_MOVE(aes)
+    ~aes();
 
     std::string encrypt(const std::string_view &plain) const;
     inline std::string encrypt(const std::string_view &&plain) const

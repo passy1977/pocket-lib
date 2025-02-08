@@ -40,7 +40,6 @@ class session final
     controllers::config::ptr config = nullptr;
     services::database::ptr database = nullptr;
     services::synchronizer::ptr synchronizer = nullptr;
-    services::crypto::ptr crypto = nullptr;
 
     views::view<pods::group>::ptr view_group = nullptr;
     views::view<pods::group_field>::ptr view_group_field = nullptr;

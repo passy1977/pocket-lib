@@ -52,7 +52,8 @@ void throw_rsa_error(const string& msg)
     throw runtime_error(msg + " err: " + err);
 }
 
-static string get_open_ssl_error() {
+string get_open_ssl_error() 
+{
     BIO *bio = BIO_new(BIO_s_mem());
     ERR_print_errors(bio);
     char *buf;
@@ -156,7 +157,7 @@ string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compl
     {
         throw_rsa_error("out impossible alloc");
     }
-    int num_encoded = EVP_EncodeBlock(out, data, data_len);
+    int num_encoded = EVP_EncodeBlock(out, data, static_cast<int>(data_len));
 
     if (num_encoded < out_len && ((data[0] & 0x80) == 0 || (data[1] & 0x80) == 0))
     {
@@ -177,6 +178,39 @@ string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compl
     return ret;
 }
 
+std::vector<uint8_t> crypto_base64_decode(std::string data, bool url_compliant)
+{
+    if(url_compliant)
+    {
+        str_replace_all(data, "_", "/");
+
+        str_replace_all(data, "-", "+");
+    }
+
+    auto buffer = new uint8_t[data.length()];
+    memset(buffer, 0x00, data.length());
+
+    auto b64 = BIO_new(BIO_f_base64());
+    auto bmem = BIO_new_mem_buf(data.data(), static_cast<int>(data.length()));
+    bmem = BIO_push(b64, bmem);
+
+    BIO_set_flags(bmem, BIO_FLAGS_BASE64_NO_NL);
+    BIO_set_close(bmem, BIO_CLOSE);
+    int buffer_length = BIO_read(bmem, buffer, static_cast<int>(data.length()));
+
+    BIO_free_all(bmem);
+
+    vector<uint8_t> ret;
+
+    for (uint32_t i = 0; i < buffer_length; i++)
+    {
+        ret.push_back(buffer[i]);
+    }
+
+    delete [] buffer;
+
+    return ret;
+}
 
 string crypto_generate_random_string(size_t length)
 {
@@ -197,7 +231,7 @@ string crypto_generate_random_string(size_t length)
 }
 
 
-crypto::crypto(const string&& iv, const string& key)
+aes::aes(const string&& iv, const string& key)
 {
     if (iv.length() != AES_BLOCK_SIZE)
     {
@@ -205,16 +239,14 @@ crypto::crypto(const string&& iv, const string& key)
     }
 
     uint8_t i = 0;
-    string byte_key;
-    for (; i < key.size() && i < AES_BLOCK_SIZE; i++) {
-        byte_key.push_back(key[i]);
+    for (; i < key.size() && i < KEY_SIZE; i++)
+    {
+        this->key[i] = key[i];
     }
-    for (; i < AES_BLOCK_SIZE; i++) {
-        byte_key.push_back(PADDING);
+    for (; i < KEY_SIZE; i++)
+    {
+        this->key[i] = PADDING;
     }
-
-    memset(this->key, 0x00, KEY_SIZE);
-    memcpy(this->key, key.data(), KEY_SIZE);
 
     memset(this->iv, 0x00, AES_BLOCK_SIZE);
     memcpy(this->iv, iv.data(), AES_BLOCK_SIZE);
@@ -225,20 +257,9 @@ crypto::crypto(const string&& iv, const string& key)
         throw runtime_error(get_open_ssl_error());
     }
 
-    /*
-     * Initialise the encryption operation. IMPORTANT - ensure you use a key
-     * and IV size appropriate for your cipher
-     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
-     * IV size for *most* modes is the same as the block size. For AES this
-     * is 128 bits
-     */
-    if(EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, this->key, this->iv) != 1)
-    {
-        throw runtime_error(get_open_ssl_error());
-    }
 }
 
-crypto::~crypto()
+aes::~aes()
 {
     for(auto&& b : key)
     {
@@ -253,7 +274,7 @@ crypto::~crypto()
     EVP_CIPHER_CTX_free(ctx);
 }
 
-std::string crypto::encrypt(const string_view& plain) const
+std::string aes::encrypt(const string_view& plain) const
 {
 
     auto cipher_text = new(nothrow) uint8_t[((plain.size() + AES_BLOCK_SIZE) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE];
@@ -264,6 +285,18 @@ std::string crypto::encrypt(const string_view& plain) const
 
     int len = 0;
     int cipher_text_len = 0;
+
+    /*
+     * Initialise the encryption operation. IMPORTANT - ensure you use a key
+     * and IV size appropriate for your cipher
+     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+     * IV size for *most* modes is the same as the block size. For AES this
+     * is 128 bits
+     */
+    if(EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, this->key, this->iv) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
 
     /*
      * Provide the message to be encrypted, and obtain the encrypted output.
@@ -284,21 +317,72 @@ std::string crypto::encrypt(const string_view& plain) const
         throw runtime_error(get_open_ssl_error());
     }
     cipher_text_len += len;
-
-    stringstream ss;
-    for (uint32_t i = 0; i < cipher_text_len; i++)
-    {
-        ss << hex << setw(2) << setfill('0') << static_cast<uint32_t>(cipher_text[i]);
-    }
+    
+    auto&& ret = crypto_base64_encode(cipher_text, cipher_text_len, false);
 
     delete[] cipher_text;
 
-    return ss.str();
+    return ret;
 }
 
-std::string crypto::decrypt(const string_view& encrypted) const
+std::string aes::decrypt(const string_view& encrypted) const
 {
-    return std::string();
+    auto&& cipher = crypto_base64_decode(encrypted.data());
+
+    auto plain_text = new(nothrow) uint8_t[encrypted.size()];
+    if(plain_text == nullptr)
+    {
+        throw runtime_error("No memory for plain_text");
+    }
+
+
+    int len = 0;
+    int plain_text_len = 0;
+
+    /*
+    * Initialise the decryption operation. IMPORTANT - ensure you use a key
+    * and IV size appropriate for your cipher
+    * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+    * IV size for *most* modes is the same as the block size. For AES this
+    * is 128 bits
+    */
+    if(EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key, iv) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+
+    /*
+    * Provide the message to be decrypted, and obtain the plaintext output.
+    * EVP_DecryptUpdate can be called multiple times if necessary.
+    */
+    if(EVP_DecryptUpdate(ctx, plain_text, &len, cipher.data(), static_cast<int>(cipher.size())) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+    plain_text_len = len;
+
+    /*
+    * Finalise the decryption. Further plaintext bytes may be written at
+    * this stage.
+    */
+    if(EVP_DecryptFinal_ex(ctx, plain_text + len, &len) != 1)
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
+    plain_text_len += len;
+
+    string ret;
+
+    for(uint32_t i = 0; i < plain_text_len; i++)
+    {
+        ret.push_back(plain_text[i]);
+    }
+
+    delete[] plain_text;
+
+    //eturn ByteArray(const_cast<const uint8_t *>(plainText), plainTextLen);
+    return ret;
+
 }
 
 }

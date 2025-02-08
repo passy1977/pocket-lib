@@ -183,13 +183,11 @@ std::optional<pods::user::ptr> session::synch_from_net(const std::optional<pods:
         dao.persist(u);
         u->passwd = user->passwd;
 
-        crypto = make_unique<services::crypto>(POCKET_AES_CBC_IV, user->passwd);
 
         return std::move(u);
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-        crypto = make_unique<services::crypto>(POCKET_AES_CBC_IV, user->passwd);
 
         return make_unique<struct user>(*user);
     }
