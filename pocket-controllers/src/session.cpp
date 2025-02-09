@@ -27,6 +27,9 @@
 #include <fstream>
 #include <unistd.h>
 
+#ifdef FORCE_TIMESTAMP_LAST_UPDATE
+#warning You force user.timestamp_last_update
+#endif
 
 namespace pocket::controllers::inline v5
 {
@@ -180,7 +183,12 @@ std::optional<user::ptr> session::synch_from_net(const std::optional<user::ptr>&
             return nullopt;
         }
 
+
+#ifdef FORCE_TIMESTAMP_LAST_UPDATE
+        u->timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
         u->passwd = std::move(crypto_encode_sha512(user->passwd));
+
         dao.persist(u);
         u->passwd = user->passwd;
 

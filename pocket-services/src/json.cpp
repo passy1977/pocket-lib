@@ -185,16 +185,24 @@ catch (...)
 {
     cerr << "Unhandled exception" << endl;
 
-    try {
-        rethrow_exception(current_exception());
-    } catch (const exception& e) {
-        throw runtime_error(e.what());
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
     }
 }
 
 string net_transport_serialize_json(const net_transport& net_transport) try
 {
-    auto j = json({});
+    json j;
 
     auto groups = json::array();
     for(auto&& it : net_transport.groups)
@@ -217,21 +225,31 @@ string net_transport_serialize_json(const net_transport& net_transport) try
     }
     j["fields"] = fields;
 
-    return j;
+    return j.dump();
 }
 catch (const runtime_error& e)
 {
     throw;
 }
-catch (...)
+catch (const exception& e)
 {
     cerr << "Unhandled exception" << endl;
 
-    try {
-        rethrow_exception(current_exception());
-    } catch (const exception& e) {
-        throw runtime_error(e.what());
+    auto eptr = current_exception();
+
+    if (eptr)
+    {
+        try
+        {
+            rethrow_exception(eptr);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
     }
+
+    return "700";
 }
 
 device json_to_device(const json& json)

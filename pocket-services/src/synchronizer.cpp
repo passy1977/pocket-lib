@@ -190,7 +190,9 @@ bool synchronizer::transmit_data(const pods::user::ptr& user)
 
             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
 
-            return network.perform(network::method::PUT, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt, {}, net_transport_serialize_json(ret.get()));
+            auto&& data = net_transport_serialize_json(ret.get());
+
+            return network.perform(network::method::POST, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt, {}, data);
         }
         catch (const runtime_error& e)
         {
@@ -294,9 +296,24 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
         }
         catch (...)
         {
-            throw runtime_error("Unhandled exception");
+            cerr << "Unhandled exception" << endl;
+
+            auto eptr = current_exception();
+
+            if (eptr)
+            {
+                try
+                {
+                    rethrow_exception(eptr);
+                }
+                catch (const runtime_error& e)
+                {
+                    throw ;
+                }
+            }
         }
     }
+    return nullopt;
 }
 
 }

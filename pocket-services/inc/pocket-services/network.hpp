@@ -53,7 +53,7 @@ public:
     ~network();
     POCKET_NO_COPY_NO_MOVE(network)
 
-    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& data = {});
+    std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& json_data = {});
 private:
     static size_t callback(char* buf, size_t size, size_t nmemb, std::string* ret_data);
 

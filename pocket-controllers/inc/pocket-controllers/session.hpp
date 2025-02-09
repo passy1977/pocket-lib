@@ -62,7 +62,20 @@ public:
 
     bool synch_to_net(const std::optional<pods::user::ptr>& user);
 
-    
+    inline const views::view<pods::group>::ptr& get_view_group() const noexcept
+    {
+        return view_group;
+    }
+
+    inline const views::view<pods::group_field>::ptr& get_view_group_field() const noexcept
+    {
+        return view_group_field;
+    }
+
+    inline const views::view<pods::field>::ptr& get_view_field() const noexcept
+    {
+        return view_field;
+    }
 private:
     void lock();
 

@@ -20,7 +20,7 @@
 #include "pocket-services/network.hpp"
 
 #include <gtest/gtest.h>
-
+#include <nlohmann/json.hpp>
 
 using namespace pocket::services;
 using namespace std;
@@ -34,6 +34,27 @@ TEST_F(network_test, base_connection) try
     auto&& ret = n.perform(network::method::GET, "https://www.google.it");
 
     ASSERT_FALSE(ret.empty());
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
+
+TEST_F(network_test, json) try
+{
+    using namespace nlohmann;
+
+    json j;
+
+    auto a = json::array({1,2,3,4});
+
+    j["a"] = a;
+
+
+    std::string s = j.dump();
+
+    ASSERT_TRUE(s == "{\"a\":[1,2,3,4]}");
 }
 catch (const std::exception& e)
 {

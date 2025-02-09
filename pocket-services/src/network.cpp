@@ -57,32 +57,41 @@ size_t network::callback(char* buf, size_t size, size_t nmemb, string* ret_data)
     return size * nmemb;
 }
 
-std::string network::perform(network::method method, const std::string_view& url, const map_parameters& params, const std::string_view& data)
+std::string network::perform(network::method method, const std::string_view& url, const map_parameters& params, const std::string_view& json_data)
 {
     if (headers)
     {
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     }
 
-    string full_url = "";
-    if (url.rfind("http://", 0) == 0) {
+    string full_url;
+    if (url.rfind("http://", 0) == 0)
+    {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "http");
         full_url = url;
-    } else if (url.rfind("https://", 0) == 0) {
+    }
+    else if (url.rfind("https://", 0) == 0)
+    {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
         full_url = url;
-    } else {
+    }
+    else
+    {
         full_url = "http://";
         full_url += url;
     }
 
     parameters rows;
     string query;
-    for (auto&& it = params.begin(); it!=params.end(); ++it) {
-        if (it == params.begin()) {
+    for (auto&& it = params.begin(); it!=params.end(); ++it)
+    {
+        if (it == params.begin())
+        {
             query += "?";
-        } else {
+        }
+        else
+        {
             query += "&";
         }
         char* key = curl_easy_escape(curl, it->first.c_str(), static_cast<int>(it->first.size()));
@@ -106,7 +115,8 @@ std::string network::perform(network::method method, const std::string_view& url
         curl_free(value);
     }
 
-    switch (method) {
+    switch (method)
+    {
         case method::GET:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
             info(typeid(*this).name(), full_url);
@@ -133,8 +143,12 @@ std::string network::perform(network::method method, const std::string_view& url
 
     curl_easy_setopt(curl, CURLOPT_URL, full_url.c_str());
 
-    if (!data.empty()) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.data());
+    if (!json_data.empty())
+    {
+        char response[10240];
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.data());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_data.size());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, "Content-Type: application/json"));
     }
 
 
