@@ -58,9 +58,9 @@ public:
 
     std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
 
-    std::optional<pods::user::ptr> synch_from_net(const std::optional<pods::user::ptr>& user_opt);
+    std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt);
 
-    bool synch_to_net(const std::optional<pods::user::ptr>& user);
+    bool send_data(const std::optional<pods::user::ptr>& user);
 
     inline const views::view<pods::group>::ptr& get_view_group() const noexcept
     {

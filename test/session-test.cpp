@@ -24,13 +24,13 @@ using namespace pocket::controllers;
 
 constexpr char data[] = R"json(
 {
-  "id": 58,
-  "uuid": "8ed5b7e7-2a14-4fe6-989a-4950af217770",
-  "status": "ACTIVE",
-  "timestampCreation": 1738271290,
-  "userId": 3,
-  "host": "http://127.0.0.1:8081",
-  "hostPublicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnIQU+mqVljqUpnxV22OyzKo8gEesdw/YTcTzVQHY+PbaZR38yHaDBTMRZ+zMK8BpzneyqsQyqCSk+s1Yy8q1DPHA48RpzItGAcINMbiDDOKqHkqc9nL0JB68rxd09v8TsZ605dW7AsuU5SePE+mFGserOPjE7HHof01oZ7a/GtSvrYmqEBoxIPSKZN6ZdvqU91pDvzry5bZswYbqRsemkjQaQIdEPG16J92FovcYhZa+N/vc+ebkGsWL+5qgZ1NFwDan8xRR/wSDV0/JlCzwl9GkT35gqKsEZXFTZ8Wy7uQMP+binkG0MCxtQ8lwJ8vCQ0gWb4JN5nilAfSMR9w7pwIDAQAB\n-----END PUBLIC KEY-----\n"
+   "id":59,
+   "uuid":"727fd661-ed0a-4393-a8dc-c4a488a91719",
+   "status":"ACTIVE",
+   "timestampCreation":1739139440,
+   "userId":5,
+   "host":"http://127.0.0.1:8081",
+   "hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy1JALwTL/IkKT01sWz4ICGvookAKImKZe/5qYE6dslmm5jh5hT71T20GEKghW/BuT4d/WyMkPEkCTOzX9KX30t1Hy/ZdkTsh6Ps5gUwxRTEvLbiG9pOO8hqK2t+LNvs4BvKHrMyHVJj77jYRfaMXiq3p2YkfbPYsz8erbcj5Fu4FffdSURxmGw/cK1wagWJRHn4jUpOeLyIty421CGHhYQ1UgIPgneqZ6aEP3WUYeGlfagq7ZpJbdjFnqeYhkXOaraA4CeWGEUBfILMwKZoKOyiCXaiUF+/Abw7l+sjIxaLf+MPUgPQFnjSJ0V4l0+gDfKdXUzwYi5AbqsDsrCxinwIDAQAB\n-----END PUBLIC KEY-----\n"
 }
 )json";
 
@@ -55,10 +55,10 @@ TEST_F(session_test, session_init) try
 
     session.init();
 
-    auto user = session.login("passy.linux@zresa.it", "pwd");
+    auto user = session.login("test@test.it", "pwd");
     ASSERT_TRUE(user.has_value());
 
-    ASSERT_TRUE(session.synch_to_net(user));
+    ASSERT_TRUE(session.send_data(user));
 
 }
 catch (const std::exception& e)

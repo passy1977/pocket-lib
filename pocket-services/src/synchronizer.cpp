@@ -115,7 +115,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
 }
 
 
-bool synchronizer::transmit_data(const pods::user::ptr& user)
+bool synchronizer::send_data(const pods::user::ptr& user)
 {
     if(device.id == 0 || secret.empty())
     {
@@ -232,6 +232,11 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
+            if(net_transport.device->id != device.id)
+            {
+                return nullopt;
+            }
+
             auto&& fut_group = update_database_table<group>(net_transport.get_vector_ref<group>(), data);
             if(!fut_group.get())
             {
@@ -255,16 +260,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
 
             dao{database}.update_all_index();
 
-
-            if(net_transport.device->id == device.id)
-            {
-                return {std::move(net_transport.user) };
-            }
-            else
-            {
-                return nullopt;
-            }
-
+            return {std::move(net_transport.user) };
         }
         catch (const runtime_error& e)
         {

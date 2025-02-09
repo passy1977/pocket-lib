@@ -86,7 +86,7 @@ string crypto_encrypt_rsa(const string_view& pub_key, const string_view& plain_t
     size_t out_len = 0;
 
 
-    BIO *bio = BIO_new_mem_buf(pub_key.data(), pub_key.length());
+    auto bio = BIO_new_mem_buf(pub_key.data(), pub_key.length());
     if (bio == nullptr)
     {
         throw_rsa_error("Error on alloc BIO");

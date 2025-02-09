@@ -139,20 +139,19 @@ std::optional<user::ptr> session::login(const string& email, const string& passw
     {
         auto&& user = user_from_db.value();
         user.passwd = passwd;
-        return synch_from_net(make_unique<struct user>(user));
+        return retrieve_data(make_unique<struct user>(user));
     }
     else
     {
-        return synch_from_net(make_unique<struct user>(user {
-            .email = email,
-            .passwd = passwd
+        return retrieve_data(make_unique<struct user>(user{
+                .email = email, .passwd = passwd
         }));
     }
 
 }
 
 
-std::optional<user::ptr> session::synch_from_net(const std::optional<user::ptr>& user_opt) try
+std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::ptr>& user_opt) try
 {
     if(!user_opt.has_value())
     {
@@ -218,14 +217,14 @@ catch(const exception& e)
     return nullopt;
 }
 
-bool session::synch_to_net(const optional<user::ptr>& user)
+bool session::send_data(const std::optional<pods::user::ptr>& user)
 {
     if(!user.has_value())
     {
         return false;
     }
 
-    return synchronizer->transmit_data(user.value());
+    return synchronizer->send_data(user.value());
 }
 
 

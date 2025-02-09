@@ -54,7 +54,7 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
-    bool transmit_data(const pods::user::ptr& user);
+    bool send_data(const pods::user::ptr& user);
 private:
 struct data_server_id
     {
