@@ -39,12 +39,15 @@ class synchronizer final
     services::database::ptr& database;
     std::string& secret;
     pods::device& device;
+    bool network_login = false;
 
     BS::thread_pool<6> pool;
 public:
     using ptr = std::unique_ptr<synchronizer>;
 
     static inline constexpr uint8_t FULL_SYNC = 0;
+    static inline constexpr uint8_t EMAIL_MAX_SIZE = 32;
+    static inline constexpr uint8_t PASSWD_MAX_SIZE = 32;
 
     explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
     : database(database)

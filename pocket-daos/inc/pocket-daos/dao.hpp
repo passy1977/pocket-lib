@@ -50,7 +50,7 @@ public:
         std::vector<typename iface::pod<T>::ptr> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY id"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
         {
             for(auto&& row : **opt_rs)
             {

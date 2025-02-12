@@ -22,6 +22,7 @@
 #include "pocket-services/json.hpp"
 #include "pocket-services/crypto.hpp"
 #include "pocket-daos/dao.hpp"
+#include "pocket/globals.hpp"
 
 #include <stdexcept>
 #include <ranges>
@@ -68,6 +69,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
 
        catch (const runtime_error& e)
        {
+           network_login = false;
            error(typeid(this).name(), e.what());
            return data_server_id{
                    .groups_server_id = {},
@@ -80,7 +82,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
     });
 
 
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email, passwd = std::move(crypto_encode_sha512(passwd))]
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()]
      {
          network network;
          try
@@ -90,13 +92,14 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
                  secret = crypto_generate_random_string(10);
              }
 
-             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update));
+             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
-             return network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt + "/" + string(email) + "/" + passwd);
+             return network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt);
 
          }
          catch (const runtime_error& e)
          {
+             network_login = false;
              secret = "";
              return string(ERROR_HTTP_CODE) + e.what();
          }
@@ -104,11 +107,13 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
 
     try
     {
+        network_login = true;
         data_server_id data = std::move(fut_data.get());
         return parse_data_from_net(fut_response.get(), data);
     }
     catch (const runtime_error& e)
     {
+        network_login = false;
         throw;
     }
 
@@ -117,11 +122,16 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
 
 bool synchronizer::send_data(const pods::user::ptr& user)
 {
-    if(device.id == 0 || secret.empty())
+//    if(device.id == 0 || secret.empty())
+//    {
+//        throw runtime_error("Seems no one has been logged");
+//    }
+//
+    if(!network_login)
     {
-        throw runtime_error("Seems no one has been logged");
+        error(typeid(this).name(), "No network login impossible send data");
+        return false;
     }
-
 
     auto&& fut_data = pool.submit_task([this]
     {
@@ -158,7 +168,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
     });
 
 
-    auto&& fut_response = pool.submit_task([this, id = user->id, timestamp_last_update = user->timestamp_last_update]() mutable
+    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
     {
 
         network network;
@@ -188,7 +198,8 @@ bool synchronizer::send_data(const pods::user::ptr& user)
             });
 
 
-            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
+            //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
+            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
 
             auto&& data = net_transport_serialize_json(ret.get());
 

@@ -144,7 +144,8 @@ std::optional<user::ptr> session::login(const string& email, const string& passw
     else
     {
         return retrieve_data(make_unique<struct user>(user{
-                .email = email, .passwd = passwd
+                .email = email,
+                .passwd = passwd
         }));
     }
 
