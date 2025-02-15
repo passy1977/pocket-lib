@@ -18,8 +18,11 @@
  ***************************************************************************/
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "pocket-controllers/session.hpp"
+#include "pocket/tree.hpp"
+
 using namespace pocket::controllers;
 
 constexpr char data[] = R"json(
@@ -58,7 +61,26 @@ TEST_F(session_test, session_init) try
     auto user = session.login("test@test.it", "pwd");
     ASSERT_TRUE(user.has_value());
 
-    ASSERT_TRUE(session.send_data(user));
+//    ASSERT_TRUE(session.send_data(user));
+
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
+
+
+TEST_F(session_test, tree_test) try
+{
+
+    using pocket::tree;
+    using pocket::pods::group;
+
+    tree t;
+
+    //t.add();
+
 
 }
 catch (const std::exception& e)

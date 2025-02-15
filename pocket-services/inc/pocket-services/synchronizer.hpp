@@ -79,6 +79,8 @@ struct data_server_id
                  daos::dao dao(database);
                  for(auto&& it : vect)
                  {
+                     it->user_id = device.user_id;
+                     it->synchronized = 1;
                      if constexpr (std::is_same_v<T, pods::group>)
                      {
                         if(data.groups_server_id.contains(it->server_id))
@@ -100,7 +102,7 @@ struct data_server_id
                              it->id = data.fields_server_id[it->server_id];
                          }
                      }
-                     it->synchronized = 1;
+
                      if(it->deleted)
                      {
                         if(dao.rm<T>(it->server_id) == 0)

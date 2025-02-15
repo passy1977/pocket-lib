@@ -94,12 +94,12 @@ std::string network::perform(network::method method, const std::string_view& url
         {
             query += "&";
         }
-        char* key = curl_easy_escape(curl, it->first.c_str(), static_cast<int>(it->first.size()));
+        auto key = curl_easy_escape(curl, it->first.c_str(), static_cast<int>(it->first.size()));
         if(key == nullptr)
         {
             throw runtime_error("key nullptr");
         }
-        char* value = curl_easy_escape(curl, it->second.to_text().c_str(), static_cast<int>(it->second.to_text().size()));
+        auto value = curl_easy_escape(curl, it->second.to_text().c_str(), static_cast<int>(it->second.to_text().size()));
         if(value == nullptr)
         {
             throw runtime_error("key nullptr");
@@ -156,7 +156,7 @@ std::string network::perform(network::method method, const std::string_view& url
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret_data);
 
-    CURLcode res = curl_easy_perform(curl);
+    auto res = curl_easy_perform(curl);
     if(res != CURLE_OK)
     {
         if (headers)

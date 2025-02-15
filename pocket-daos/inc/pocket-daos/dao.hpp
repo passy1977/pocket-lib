@@ -26,6 +26,7 @@
 #include "pocket-daos/dao-read-write-group.hpp"
 #include "pocket-daos/dao-read-write-group-field.hpp"
 #include "pocket-daos/dao-read-write-field.hpp"
+#include "pocket-pods/net-transport.hpp"
 
 #include <vector>
 
@@ -84,7 +85,7 @@ public:
         return ret;
     }
 
-    void update_all_index();
+    void update_all_index(const pods::net_transport& net_transport);
 
     template<iface::require_pod T>
     inline int64_t del(uint64_t id) const
