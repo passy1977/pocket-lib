@@ -19,12 +19,37 @@
 
 #include "pocket-daos/dao-group.hpp"
 #include "pocket-daos/dao.hpp"
+#include "pocket/tree.hpp"
 
 
 namespace pocket::daos::inline v5
 {
 
 using pods::group;
+using namespace std;
+
+template<>
+vector<group::ptr> dao::get_all<group>(bool to_synch) const
+{
+    //vector<group::ptr> ret;
+    tree ret;
+
+
+    if(auto&& opt_rs = database->execute("SELECT * FROM " + group::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
+    {
+        for(auto&& row : **opt_rs)
+        {
+            dao_read_write<group> dao;
+            if(auto&& it = dao.read(row); it.get())
+            {
+                //ret.push_back(move(it));
+                ret + it;
+            }
+        }
+    }
+
+    return ret.get();
+}
 
 template<>
 uint64_t dao::persist<group>(const group::ptr& t)

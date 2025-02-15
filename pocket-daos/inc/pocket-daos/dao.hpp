@@ -45,7 +45,7 @@ public:
 
 
     template<iface::require_pod T>
-    constexpr std::vector<typename iface::pod<T>::ptr> get_all(bool to_synch = false) const
+    std::vector<typename iface::pod<T>::ptr> get_all(bool to_synch = false) const
     {
         std::vector<typename iface::pod<T>::ptr> ret;
 

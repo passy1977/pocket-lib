@@ -94,7 +94,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
 
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
-             return network.perform(network::method::GET, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt);
+             return network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
 
          }
          catch (const runtime_error& e)
@@ -203,7 +203,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
             auto&& data = net_transport_serialize_json(ret.get());
 
-            return network.perform(network::method::POST, device.host + API_VERSION + "/session/" + device.uuid + "/" + crypt, {}, data);
+            return network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
         }
         catch (const runtime_error& e)
         {

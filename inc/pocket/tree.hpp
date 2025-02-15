@@ -19,18 +19,33 @@
 
 #pragma once
 
-#include "pocket-daos/dao.hpp"
+#include "pocket/globals.hpp"
 #include "pocket-pods/group.hpp"
 
-namespace pocket::daos::inline v5
+#include <vector>
+#include <map>
+
+
+
+namespace pocket::inline v5
 {
 
-template<>
-std::vector<pods::group::ptr> dao::get_all<pods::group>(bool to_synch) const;
+class tree final
+{
 
-template<>
-uint64_t dao::persist<pods::group>(const pods::group::ptr& t);
+    int16_t level = -1;
+    mutable std::map<uint64_t, std::pair<uint8_t, pods::group::ptr>> container; //id <level, group>
+    mutable std::vector<std::vector<uint64_t>> idx; //[level] -> idx of level
+public:
+    tree() = default;
+    POCKET_NO_COPY_NO_MOVE(tree)
 
 
+    bool operator+(pods::group::ptr& group) noexcept;
+
+    std::vector<pods::group::ptr> get() const noexcept;
+
+
+};
 
 }
