@@ -34,17 +34,17 @@ namespace
 constexpr char APP_TAG[] = "json";
 }
 
-static group json_to_group(const std::string_view& str_json);
+//static group json_to_group(const std::string_view& str_json);
 static group json_to_group(const json& json);
 static json serialize_json(const group::ptr& group);
 
-static group_field json_to_group_field(const std::string_view& str_json);
+//static group_field json_to_group_field(const std::string_view& str_json);
 static group_field json_to_group_field(const json& json);
-static json serialize_json(const group_field::ptr& group_field);
+static json serialize_json(const group_field::ptr& group);
 
-static field json_to_field(const std::string_view& str_json);
+//static field json_to_field(const std::string_view& str_json);
 static field json_to_field(const json& json);
-static json serialize_json(const field::ptr& field);
+static json serialize_json(const field::ptr& group);
 
 void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, net_transport& net_transport) try
 {
@@ -216,7 +216,7 @@ string net_transport_serialize_json(const net_transport& net_transport) try
     {
         groups_fields.push_back(serialize_json(it));
     }
-    j["groups_fields"] = groups_fields;
+    j["groupsFields"] = groups_fields;
 
     auto fields = json::array();
     for(auto&& it : net_transport.fields)
@@ -404,15 +404,15 @@ user json_to_user(const json& json)
 }
 
 
-group json_to_group(const std::string_view& str_json)
-{
-    if(str_json.empty())
-    {
-        throw runtime_error("String json empty");
-    }
-
-    return json_to_group(json::parse(str_json));
-}
+//group json_to_group(const std::string_view& str_json)
+//{
+//    if(str_json.empty())
+//    {
+//        throw runtime_error("String json empty");
+//    }
+//
+//    return json_to_group(json::parse(str_json));
+//}
 
 group json_to_group(const json& json)
 {
@@ -532,15 +532,15 @@ json serialize_json(const group::ptr& group)
     return j;
 }
 
-group_field json_to_group_field(const std::string_view& str_json)
-{
-    if(str_json.empty())
-    {
-        throw runtime_error("String json empty");
-    }
-
-    return json_to_group_field(json::parse(str_json));
-}
+//group_field json_to_group_field(const std::string_view& str_json)
+//{
+//    if(str_json.empty())
+//    {
+//        throw runtime_error("String json empty");
+//    }
+//
+//    return json_to_group_field(json::parse(str_json));
+//}
 
 group_field json_to_group_field(const json& json)
 {
@@ -640,7 +640,7 @@ json serialize_json(const group_field::ptr& group_field)
     j["groupId"] = group_field->group_id;
     j["serverGroupId"] = group_field->server_group_id;
     j["title"] = group_field->title;
-    j["is_hidden"] = group_field->is_hidden;
+    j["isHidden"] = group_field->is_hidden;
     j["synchronized"] = group_field->synchronized;
     j["deleted"] = group_field->deleted;
     j["timestampCreation"] = group_field->timestamp_creation;
@@ -648,15 +648,15 @@ json serialize_json(const group_field::ptr& group_field)
     return j;
 }
 
-field json_to_field(const std::string_view& str_json)
-{
-    if(str_json.empty())
-    {
-        throw runtime_error("String json empty");
-    }
-
-    return json_to_field(json::parse(str_json));
-}
+//field json_to_field(const std::string_view& str_json)
+//{
+//    if(str_json.empty())
+//    {
+//        throw runtime_error("String json empty");
+//    }
+//
+//    return json_to_field(json::parse(str_json));
+//}
 
 field json_to_field(const json& json)
 {
@@ -771,25 +771,27 @@ field json_to_field(const json& json)
     return field;
 }
 
-json serialize_json(const field::ptr& group)
+json serialize_json(const field::ptr& field)
 {
-    if(group == nullptr)
+    if(field == nullptr)
     {
         throw runtime_error("group null");
     }
 
     json j;
 
-    j["id"] = group->id;
-    j["serverId"] = group->server_id;
-    j["groupId"] = group->group_id;
-    j["serverGroupId"] = group->server_group_id;
-    j["title"] = group->title;
-    j["value"] = group->value;
-    j["isHidden"] = group->is_hidden;
-    j["synchronized"] = group->synchronized;
-    j["deleted"] = group->deleted;
-    j["timestampCreation"] = group->timestamp_creation;
+    j["id"] = field->id;
+    j["serverId"] = field->server_id;
+    j["groupId"] = field->group_id;
+    j["serverGroupId"] = field->server_group_id;
+    j["groupFieldId"] = field->group_id;
+    j["serverGroupFieldId"] = field->server_group_id;
+    j["title"] = field->title;
+    j["value"] = field->value;
+    j["isHidden"] = field->is_hidden;
+    j["synchronized"] = field->synchronized;
+    j["deleted"] = field->deleted;
+    j["timestampCreation"] = field->timestamp_creation;
 
     return j;
 }
