@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_definitions(-DDISABLE_LOCK)
 add_definitions(-DMAX_BUFFER_RESPONSE_SIZE=10485760)
-#add_definitions(-DFORCE_TIMESTAMP_LAST_UPDATE=0)
+#add_definitions(-DFORCE_TIMESTAMP_LAST_UPDATE=1739741159)
 option(FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")

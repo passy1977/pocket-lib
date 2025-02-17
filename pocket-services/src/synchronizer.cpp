@@ -82,7 +82,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
     });
 
 
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()]
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()] () mutable
      {
          network network;
          try
@@ -91,7 +91,9 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
              {
                  secret = crypto_generate_random_string(10);
              }
-
+#ifdef FORCE_TIMESTAMP_LAST_UPDATE
+             timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
              return network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
@@ -197,6 +199,9 @@ bool synchronizer::send_data(const pods::user::ptr& user)
                 }
             });
 
+#ifdef FORCE_TIMESTAMP_LAST_UPDATE
+            timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
 
             //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
