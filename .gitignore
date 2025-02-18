@@ -5,3 +5,5 @@ build*/
 
 # Private information
 /secrets.cmake
+
+.DS_Store
