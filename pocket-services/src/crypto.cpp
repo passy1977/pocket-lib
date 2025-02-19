@@ -86,7 +86,7 @@ string crypto_encrypt_rsa(const string_view& pub_key, const string_view& plain_t
     size_t out_len = 0;
 
 
-    auto bio = BIO_new_mem_buf(pub_key.data(), pub_key.length());
+    auto bio = BIO_new_mem_buf(pub_key.data(), static_cast<int>(pub_key.length()));
     if (bio == nullptr)
     {
         throw_rsa_error("Error on alloc BIO");
@@ -215,7 +215,7 @@ string crypto_generate_random_string(size_t length)
 
     random_device random_device;
     mt19937 generator(random_device());
-    uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+    uniform_int_distribution<> distribution(0, static_cast<int>(CHARACTERS.size() - 1));
 
     string random_string;
 

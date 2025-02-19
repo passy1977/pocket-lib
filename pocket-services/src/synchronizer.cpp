@@ -110,7 +110,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(uint64_t timestamp_la
     try
     {
         network_login = true;
-        data_server_id data = std::move(fut_data.get());
+        data_server_id data = fut_data.get();
         return parse_data_from_net(fut_response.get(), data);
     }
     catch (const runtime_error& e)
@@ -220,7 +220,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
     try
     {
-        data_server_id data = std::move(fut_data.get());
+        data_server_id data = fut_data.get();
         return parse_data_from_net(fut_response.get(), data).has_value();
     }
     catch (const runtime_error& e)

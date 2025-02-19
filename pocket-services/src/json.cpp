@@ -101,7 +101,7 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
             u->timestamp_last_update = json["timestampLastUpdate"];
             d->user_id = u->id;
 
-            return std::move(pair{std::move(u), std::move(d)});
+            return pair{std::move(u), std::move(d)};
         }
         catch (const runtime_error& e)
         {
@@ -120,7 +120,7 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
                 ret.push_back(make_unique<group>(json_to_group(it.value())));
             }
 
-            return std::move(ret);
+            return ret;
         }
         catch (const runtime_error& e)
         {
@@ -140,7 +140,7 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
                  ret.push_back(make_unique<group_field>(json_to_group_field(it.value())));
              }
 
-             return std::move(ret);
+             return ret;
          }
          catch (const runtime_error& e)
          {
@@ -160,7 +160,7 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
              ret.push_back(make_unique<field>(json_to_field(it.value())));
          }
 
-         return std::move(ret);
+         return ret;
      }
      catch (const runtime_error& e)
      {
@@ -173,9 +173,9 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
     auto&& [user, device] = fut_user_device.get();
     net_transport.user = std::move(user);
     net_transport.device = std::move(device);
-    net_transport.groups = std::move(fut_groups.get());
-    net_transport.groups_fields = std::move(fut_groups_fields.get());
-    net_transport.fields = std::move(fut_fields.get());
+    net_transport.groups = fut_groups.get();
+    net_transport.groups_fields = fut_groups_fields.get();
+    net_transport.fields = fut_fields.get();
 }
 catch (const runtime_error& e)
 {

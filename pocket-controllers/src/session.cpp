@@ -60,7 +60,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
     this->config = make_unique<class config>(config_path);
 
-    device = std::move(config->parse(*config_json));
+    device = config->parse(*config_json);
 
     if(check_lock())
     {
@@ -167,7 +167,7 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
     optional<user::ptr> user_from_net = nullopt;
     try
     {
-        user_from_net = std::move(synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd));
+        user_from_net = synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd);
     }
     catch (const runtime_error& e)
     {
@@ -187,7 +187,7 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
 #ifdef FORCE_TIMESTAMP_LAST_UPDATE
         u->timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
-        u->passwd = std::move(crypto_encode_sha512(user->passwd));
+        u->passwd = crypto_encode_sha512(user->passwd);
 
         dao.persist(u);
         u->passwd = user->passwd;

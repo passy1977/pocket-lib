@@ -145,7 +145,6 @@ std::string network::perform(network::method method, const std::string_view& url
 
     if (!json_data.empty())
     {
-        char response[10240];
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_data.size());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, "Content-Type: application/json"));
