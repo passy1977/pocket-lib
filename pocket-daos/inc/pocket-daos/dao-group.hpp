@@ -29,7 +29,7 @@ template<>
 std::vector<pods::group::ptr> dao::get_all<pods::group>(bool to_synch) const;
 
 template<>
-uint64_t dao::persist<pods::group>(const pods::group::ptr& t);
+int64_t dao::persist<pods::group>(const pods::group::ptr& t);
 
 
 

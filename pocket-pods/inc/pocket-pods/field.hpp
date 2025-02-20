@@ -27,10 +27,10 @@ namespace pocket::pods::inline v5
 struct field final : public iface::pod<field>
 {
 
-    uint64_t group_id{0};
-    uint64_t server_group_id{0};
-    uint64_t group_field_id{0};
-    uint64_t server_group_field_id{0};
+    int64_t group_id{0};
+    int64_t server_group_id{0};
+    int64_t group_field_id{0};
+    int64_t server_group_field_id{0};
     std::string title;
     std::string value;
     bool is_hidden{false};

@@ -88,7 +88,7 @@ public:
     void update_all_index(const pods::net_transport& net_transport);
 
     template<iface::require_pod T>
-    inline int64_t del(uint64_t id) const
+    inline int64_t del(int64_t id) const
     {
         return database->update("UPDATE " + T::get_name() + " SET deleted = 1 WHERE id = ?", { {id} });
     }
@@ -100,7 +100,7 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t rm(uint64_t server_id) const
+    inline int64_t rm(int64_t server_id) const
     {
         return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND server_id = ?", { {server_id} });
     }
@@ -112,7 +112,7 @@ public:
     }
 
     template<iface::require_pod T>
-    uint64_t persist(const T::ptr& t)
+    int64_t persist(const T::ptr& t)
     {
         throw std::runtime_error("Not implemented");
     }

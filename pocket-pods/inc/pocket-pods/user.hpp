@@ -38,12 +38,12 @@ struct user final
         INVALIDATED = 3
     };
 
-    uint64_t id = 0;
+    int64_t id = 0;
     std::string name;
     std::string email;
     std::string passwd;
     stat status = stat::NOT_ACTIVE;
-    uint64_t timestamp_last_update = 0;
+    int64_t timestamp_last_update = 0;
 
     ~user()
     {

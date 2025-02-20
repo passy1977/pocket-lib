@@ -52,7 +52,7 @@ vector<group::ptr> dao::get_all<group>(bool to_synch) const
 }
 
 template<>
-uint64_t dao::persist<group>(const group::ptr& t)
+int64_t dao::persist<group>(const group::ptr& t)
 {
 
     dao_read_write<group> dao_rw;

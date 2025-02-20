@@ -55,15 +55,15 @@ public:
     , device(device) {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    std::optional<pods::user::ptr> retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
+    std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     bool send_data(const pods::user::ptr& user);
 private:
 struct data_server_id
     {
-        std::map<uint64_t, uint64_t> groups_server_id;
-        std::map<uint64_t, uint64_t> groups_fields_server_id;
-        std::map<uint64_t, uint64_t> fields_server_id;
+        std::map<int64_t, int64_t> groups_server_id;
+        std::map<int64_t, int64_t> groups_fields_server_id;
+        std::map<int64_t, int64_t> fields_server_id;
         bool valid;
     };
 

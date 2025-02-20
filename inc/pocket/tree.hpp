@@ -34,8 +34,8 @@ class tree final
 {
 
     int16_t level = -1;
-    mutable std::map<uint64_t, std::pair<uint8_t, pods::group::ptr>> container; //id <level, group>
-    mutable std::vector<std::vector<uint64_t>> idx; //[level] -> idx of level
+    mutable std::map<int64_t, std::pair<uint8_t, pods::group::ptr>> container; //id <level, group>
+    mutable std::vector<std::vector<int64_t>> idx; //[level] -> idx of level
 public:
     tree() = default;
     POCKET_NO_COPY_NO_MOVE(tree)

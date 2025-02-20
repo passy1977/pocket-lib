@@ -29,9 +29,9 @@ struct synchronizable
 {
     using ptr = std::unique_ptr<T>;
 
-    uint64_t id = 0;
-    uint64_t server_id = 0;
-    uint64_t user_id = 0;
+    int64_t id = 0;
+    int64_t server_id = 0;
+    int64_t user_id = 0;
     bool synchronized{true};
     bool deleted{false};
     uint64_t timestamp_creation = 0;

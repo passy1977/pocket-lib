@@ -26,7 +26,7 @@ namespace pocket::daos::inline v5
 {
 
 template<>
-uint64_t dao::persist<pods::field>(const pods::field::ptr& t);
+int64_t dao::persist<pods::field>(const pods::field::ptr& t);
 
 
 }

@@ -26,8 +26,8 @@ namespace pocket::pods::inline v5
 
 struct group final : public iface::pod<group>
 {
-    uint64_t group_id{0};
-    uint64_t server_group_id{0};
+    int64_t group_id{0};
+    int64_t server_group_id{0};
     std::string title;
     std::string icon;
     std::string note;

@@ -25,7 +25,7 @@ namespace pocket::daos::inline v5
 using pods::group_field;
 
 template<>
-uint64_t dao::persist<pods::group_field>(const pods::group_field::ptr& t)
+int64_t dao::persist<pods::group_field>(const pods::group_field::ptr& t)
 {
 
     dao_read_write<group_field> dao_rw;

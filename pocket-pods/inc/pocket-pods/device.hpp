@@ -41,14 +41,14 @@ struct device final
         INVALIDATED = 3
     };
 
-    uint64_t id = 0;
-    uint64_t user_id = 0;
+    int64_t id = 0;
+    int64_t user_id = 0;
     std::string uuid;
     std::string version;
     std::string token;
     std::string host;
     std::string host_pub_key;
-    uint64_t timestamp_creation = 0;
+    int64_t timestamp_creation = 0;
     stat status = stat::NOT_ACTIVE;
 
 };
