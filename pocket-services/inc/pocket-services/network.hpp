@@ -41,6 +41,8 @@ class network final
 
     CURL* curl = nullptr;
     curl_slist* headers = nullptr;
+    
+    uint64_t http_code = 0;
 public:
     enum class method
     {
@@ -54,6 +56,11 @@ public:
     POCKET_NO_COPY_NO_MOVE(network)
 
     std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& json_data = {});
+    
+    inline uint64_t get_http_code() const noexcept
+    {
+        return http_code;
+    }
 private:
     static size_t callback(char* buf, size_t size, size_t nmemb, std::string* ret_data);
 

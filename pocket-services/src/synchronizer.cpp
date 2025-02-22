@@ -96,11 +96,14 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 #endif
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
-             return network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+             auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+             http_code = network.get_http_code();
+             return content;
 
          }
          catch (const runtime_error& e)
          {
+             http_code = network.get_http_code();
              network_login = false;
              secret = "";
              return string(ERROR_HTTP_CODE) + e.what();
@@ -208,12 +211,15 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
             auto&& data = net_transport_serialize_json(ret.get());
 
-            return network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
+            auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
+            http_code = network.get_http_code();
+            return content;
         }
         catch (const runtime_error& e)
         {
-           secret = "";
-           return string(ERROR_HTTP_CODE) + e.what();
+            http_code = network.get_http_code();
+            secret = "";
+            return string(ERROR_HTTP_CODE) + e.what();
         }
     });
 

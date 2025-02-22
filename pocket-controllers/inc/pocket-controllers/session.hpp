@@ -48,7 +48,7 @@ class session final
     std::string secret;
     pods::device::opt device;
 
-
+    uint64_t http_code = 0;
 public:
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
@@ -62,6 +62,11 @@ public:
 
     bool send_data(const std::optional<pods::user::ptr>& user);
 
+    inline uint64_t get_http_code() const noexcept
+    {
+        return http_code;
+    }
+    
     inline const views::view<pods::group>::ptr& get_view_group() const noexcept
     {
         return view_group;
@@ -76,6 +81,8 @@ public:
     {
         return view_field;
     }
+    
+    
 private:
     void lock();
 

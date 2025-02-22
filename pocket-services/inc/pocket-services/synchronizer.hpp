@@ -40,7 +40,8 @@ class synchronizer final
     std::string& secret;
     pods::device& device;
     bool network_login = false;
-
+    uint64_t http_code = 0;
+    
     BS::thread_pool<6> pool;
 public:
     using ptr = std::unique_ptr<synchronizer>;
@@ -58,6 +59,11 @@ public:
     std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     bool send_data(const pods::user::ptr& user);
+    
+    inline uint64_t get_http_code() const noexcept
+    {
+        return http_code;
+    }
 private:
 struct data_server_id
     {

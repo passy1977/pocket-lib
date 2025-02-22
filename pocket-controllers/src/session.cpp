@@ -36,7 +36,6 @@ namespace pocket::controllers::inline v5
 
 using namespace pods;
 using services::database;
-using services::network;
 using services::synchronizer;
 using services::crypto_encode_sha512;
 using daos::dao_user;
@@ -168,6 +167,7 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
     try
     {
         user_from_net = synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd);
+        
     }
     catch (const runtime_error& e)
     {
