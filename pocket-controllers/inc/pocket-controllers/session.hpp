@@ -48,7 +48,7 @@ class session final
     std::string secret;
     pods::device::opt device;
 
-    const services::synchronizer::stat* synchronizer_status = nullptr;
+    const services::synchronizer::stat* status = nullptr;
 public:
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
@@ -62,9 +62,9 @@ public:
 
     bool send_data(const std::optional<pods::user::ptr>& user);
 
-    inline services::synchronizer::stat get_synchronizer_status() const noexcept
+    inline services::synchronizer::stat get_status() const noexcept
     {
-        return *synchronizer_status;
+        return *status;
     }
     
     inline const views::view<pods::group>::ptr& get_view_group() const noexcept

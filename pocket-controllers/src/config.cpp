@@ -35,7 +35,7 @@ using namespace std;
 using namespace std::filesystem;
 
 
-config::config(const optional<string>& config_path)
+config::config(const optional<string>& config_path) try
 {
     string&& absolute_path = config_path.value_or(getenv("HOME"));
     if(absolute_path.empty())
@@ -43,32 +43,44 @@ config::config(const optional<string>& config_path)
         throw runtime_error("Impossible get HOME env");
     }
 
-    if(!absolute_path.ends_with(path::preferred_separator))
+    if(absolute_path.starts_with("file://"))
     {
-        absolute_path += path::preferred_separator;
+        absolute_path = &absolute_path[7];
     }
-
-    absolute_path += DATA_FOLDER;
-
-    if(!is_directory(absolute_path))
+    
+    if(absolute_path.empty())
     {
-        try
+        if(!absolute_path.ends_with(path::preferred_separator))
         {
-            if(create_directories(absolute_path))
-            {
-                info(typeid(*this).name(), "Create new folder:" + absolute_path);
-            }
+            absolute_path += path::preferred_separator;
         }
-        catch (const exception& e)
+
+        absolute_path += DATA_FOLDER;
+
+        if(!is_directory(absolute_path))
         {
-            throw runtime_error(e.what());
+            try
+            {
+                if(create_directories(absolute_path))
+                {
+                    info(typeid(*this).name(), "Create new folder:" + absolute_path);
+                }
+            }
+            catch (const exception& e)
+            {
+                throw runtime_error(e.what());
+            }
         }
     }
 
     this->config_path = absolute_path;
 }
-
-device config::parse(string_view config_json)
+catch (const nlohmann::detail::parse_error& e)
+{
+    throw runtime_error(e.what());
+}
+    
+device config::parse(string_view config_json) try
 {
     auto&& device = json_to_device(config_json);
 
@@ -91,7 +103,14 @@ device config::parse(string_view config_json)
 
     return device;
 }
-
+catch (const runtime_error& e)
+{
+    throw;
+}
+catch (const nlohmann::detail::parse_error& e)
+{
+    throw runtime_error(e.what());
+}
 
 
 }

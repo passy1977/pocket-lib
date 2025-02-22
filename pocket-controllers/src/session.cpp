@@ -56,7 +56,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
     {
         throw runtime_error("config_json empty mandatory");
     }
-
+    
     this->config = make_unique<class config>(config_path);
 
     device = config->parse(*config_json);
@@ -119,7 +119,7 @@ const device::opt& session::init()
     }
 
     synchronizer = make_unique<class synchronizer>(database, secret, *device);
-    synchronizer_status = synchronizer->get_status();
+    status = synchronizer->get_status();
     
     return device;
 }
@@ -237,8 +237,8 @@ void session::lock()
     }
 
     pid_t pid = getpid();
-    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
-
+    string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;
+    
     ofstream out(full_path);
 
     if (!out)
