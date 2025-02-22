@@ -119,7 +119,8 @@ const device::opt& session::init()
     }
 
     synchronizer = make_unique<class synchronizer>(database, secret, *device);
-
+    synchronizer_status = synchronizer->get_status();
+    
     return device;
 }
 
@@ -167,7 +168,6 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
     try
     {
         user_from_net = synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd);
-        
     }
     catch (const runtime_error& e)
     {

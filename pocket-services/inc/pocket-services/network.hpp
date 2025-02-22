@@ -43,7 +43,7 @@ class network final
     curl_slist* headers = nullptr;
     
     uint64_t http_code = 0;
-public:
+public:    
     enum class method
     {
         GET, POST, PUT, DEL

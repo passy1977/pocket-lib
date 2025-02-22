@@ -39,11 +39,35 @@ class synchronizer final
     services::database::ptr& database;
     std::string& secret;
     pods::device& device;
-    bool network_login = false;
-    uint64_t http_code = 0;
     
     BS::thread_pool<6> pool;
 public:
+    enum class stat : uint64_t
+    {
+        READY = 0,
+        BUSY,
+        USER_NOT_FOUND = 600,
+        WRONG_SIZE_TOKEN = 601,
+        DEVICE_ID_NOT_MATCH = 602,
+        DEVICE_NOT_FOUND = 603,
+        SECRET_NOT_MATCH = 604,
+        USER_ID_NOT_MATCH = 605,
+        TIMESTAMP_LAST_UPDATE_NOT_MATCH = 606,
+        CACHE_NOT_FOND = 607,
+        SECRET_EMPTY = 608,
+        TIMESTAMP_LAST_NOT_PARSABLE = 609,
+        ERROR = USER_NOT_FOUND + 100,
+        JSON_PARSING_ERROR = USER_NOT_FOUND + 100 + 1,
+        DB_GROUP_ERROR = USER_NOT_FOUND + 100 + 2,
+        DB_GROUP_FIELD_ERROR = USER_NOT_FOUND + 100 + 3,
+        DB_FIELD_ERROR = USER_NOT_FOUND + 100 + 4,
+        DB_GENERIC_ERROR = USER_NOT_FOUND + 100 + 5,
+        NO_NETWORK = USER_NOT_FOUND + 100 + 6,
+        MAP_ID_ERROR = USER_NOT_FOUND + 100 + 7,
+        LOCAL_DEVICE_ID_NOT_MATCH = DEVICE_ID_NOT_MATCH + 200,
+        OK = 200
+    };
+    
     using ptr = std::unique_ptr<synchronizer>;
 
     static inline constexpr uint8_t FULL_SYNC = 0;
@@ -60,11 +84,12 @@ public:
 
     bool send_data(const pods::user::ptr& user);
     
-    inline uint64_t get_http_code() const noexcept
+    inline const stat* get_status() const noexcept
     {
-        return http_code;
+        return &status;
     }
 private:
+stat status = stat::READY;
 struct data_server_id
     {
         std::map<int64_t, int64_t> groups_server_id;
