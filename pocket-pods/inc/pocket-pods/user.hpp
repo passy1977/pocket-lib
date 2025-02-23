@@ -31,7 +31,8 @@ struct user final
     using opt = std::optional<user>;
     using ptr = std::unique_ptr<user>;
 
-    enum class stat {
+    enum class stat
+    {
         NOT_ACTIVE = 1,
         ACTIVE = 0,
         DELETED = 2,

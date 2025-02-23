@@ -48,13 +48,14 @@ config::config(const optional<string>& config_path) try
         absolute_path = &absolute_path[7];
     }
     
+    
+    if(!absolute_path.ends_with(path::preferred_separator))
+    {
+        absolute_path += path::preferred_separator;
+    }
+    
     if(absolute_path.empty())
     {
-        if(!absolute_path.ends_with(path::preferred_separator))
-        {
-            absolute_path += path::preferred_separator;
-        }
-
         absolute_path += DATA_FOLDER;
 
         if(!is_directory(absolute_path))

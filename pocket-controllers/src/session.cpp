@@ -73,7 +73,10 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
 session::~session() try
 {
-    database->close();
+    if(database)
+    {
+        database->close();
+    }
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
 }
@@ -253,7 +256,7 @@ void session::lock()
 
 void session::unlock()
 {
-    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
+    string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;
     if (exists(full_path))
     {
         filesystem::remove(full_path);  //throw exception
@@ -269,7 +272,7 @@ bool session::check_lock()
 #ifdef DISABLE_LOCK
     return false;
 #else
-    string&& full_path = config->get_config_path() + path::preferred_separator + device->uuid + LOCK_EXTENSION;
+    string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;
     if (exists(full_path))
     {
         ifstream file(full_path);
