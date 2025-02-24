@@ -101,4 +101,14 @@ namespace pocket::inline v5
             }
         }
     }
+    
+    // Trim leading whitespaces
+    std::string& ltrim(std::string &s) noexcept;
+
+    // Trim trailing whitespaces
+    std::string& rtrim(std::string &s) noexcept;
+
+    // Trim both leading and trailing whitespaces
+    std::string& trim(std::string &s) noexcept;
+    
 }

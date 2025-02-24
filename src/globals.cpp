@@ -22,14 +22,33 @@
 namespace pocket::inline v5
 {
 
-void str_replace_all(std::string &s, const std::string_view &to_replace, const std::string_view &replacement) noexcept
+using namespace std;
+    
+void str_replace_all(string &s, const string_view &to_replace, const string_view &replacement) noexcept
 {
     size_t pos = 0;
-    while ((pos = s.find(to_replace, pos)) != std::string_view::npos)
+    while ((pos = s.find(to_replace, pos)) != string_view::npos)
     {
         s.replace(pos, to_replace.length(), replacement);
         pos += replacement.length();
     }
 }
 
+string& ltrim(string &s) noexcept
+{
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [](unsigned char ch){ return !isspace(ch); }));
+    return s;
+}
+
+string& rtrim(string &s) noexcept
+{
+    s.erase(find_if(s.rbegin(), s.rend(), [](unsigned char ch){ return !isspace(ch); }).base(), s.end());
+    return s;
+}
+
+string& trim(string &s) noexcept
+{
+    return ltrim(rtrim(s));
+}
+    
 }

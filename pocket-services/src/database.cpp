@@ -57,6 +57,7 @@ CREATE INDEX groups_deleted ON groups (deleted);
 CREATE INDEX groups_fields_deleted ON groups_fields (deleted);
 CREATE INDEX fields_deleted ON fields (deleted);
 INSERT INTO metadata VALUES (?);
+
 )sql";
 
 
@@ -92,8 +93,6 @@ bool database::open(const string& file_db_path)
 
     database::file_db_path = file_db_path;
 
-    //lock();
-
     uint8_t version = 0;
     if(is_created(version)) //throw exception
     {
@@ -109,10 +108,10 @@ bool database::open(const string& file_db_path)
     }
     else
     {
-        create(CREATION_SQL); //throw exception
+        return create(CREATION_SQL); //throw exception
     }
 
-    return true;
+    return false;
 }
 
 
@@ -174,6 +173,10 @@ bool database::create(const char creation_sql[])
     while(getline(ss, part, ';'))
     {
         i++;
+        if(trim(part).empty())
+        {
+            continue;
+        }
         try
         {
 
@@ -226,6 +229,8 @@ bool database::rm()
 
 void database::lock()
 {
+    cout << "---->lock" << endl;
+    
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -243,6 +248,8 @@ void database::lock()
 
 void database::unlock()
 {
+    cout << "---->unlock" << endl;
+    
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {

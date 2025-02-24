@@ -234,6 +234,7 @@ bool session::send_data(const std::optional<pods::user::ptr>& user)
 
 void session::lock()
 {
+#ifndef DISABLE_LOCK
     if(config == nullptr)
     {
         return;
@@ -252,10 +253,12 @@ void session::lock()
     out << pid << endl;
 
     out.close();
+#endif
 }
 
 void session::unlock()
 {
+#ifndef DISABLE_LOCK
     string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;
     if (exists(full_path))
     {
@@ -265,6 +268,7 @@ void session::unlock()
     {
         throw runtime_error("File does not exist.");
     }
+#endif
 }
 
 bool session::check_lock()
