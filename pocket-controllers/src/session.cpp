@@ -27,7 +27,7 @@
 #include <fstream>
 #include <unistd.h>
 
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
 #warning You force user.timestamp_last_update
 #endif
 
@@ -234,7 +234,7 @@ bool session::send_data(const std::optional<pods::user::ptr>& user)
 
 void session::lock()
 {
-#ifndef DISABLE_LOCK
+#ifndef POCKET_DISABLE_LOCK
     if(config == nullptr)
     {
         return;
@@ -258,7 +258,7 @@ void session::lock()
 
 void session::unlock()
 {
-#ifndef DISABLE_LOCK
+#ifndef POCKET_DISABLE_LOCK
     string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;
     if (exists(full_path))
     {
@@ -273,7 +273,7 @@ void session::unlock()
 
 bool session::check_lock()
 {
-#ifdef DISABLE_LOCK
+#ifdef POCKET_DISABLE_LOCK
     return false;
 #else
     string&& full_path = config->get_config_path() + device->uuid + LOCK_EXTENSION;

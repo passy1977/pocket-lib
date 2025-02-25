@@ -229,8 +229,6 @@ bool database::rm()
 
 void database::lock()
 {
-    cout << "---->lock" << endl;
-    
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -248,8 +246,6 @@ void database::lock()
 
 void database::unlock()
 {
-    cout << "---->unlock" << endl;
-    
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {

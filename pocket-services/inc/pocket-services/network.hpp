@@ -26,8 +26,8 @@
 #include <vector>
 #include <map>
 
-#ifndef MAX_BUFFER_RESPONSE_SIZE
-#error MAX_BUFFER_RESPONSE_SIZE not defined
+#ifndef POCKET_MAX_BUFFER_RESPONSE_SIZE
+#error POCKET_MAX_BUFFER_RESPONSE_SIZE not defined
 #endif
 
 namespace pocket::services::inline v5
@@ -49,7 +49,7 @@ public:
         GET, POST, PUT, DEL
     };
 
-    static inline constexpr uint32_t MAX_BUFFER = MAX_BUFFER_RESPONSE_SIZE;
+    static inline constexpr uint32_t MAX_BUFFER = POCKET_MAX_BUFFER_RESPONSE_SIZE;
 
     network();
     ~network();
