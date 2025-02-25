@@ -111,7 +111,7 @@ bool database::open(const string& file_db_path)
         return create(CREATION_SQL); //throw exception
     }
 
-    return false;
+    return true;
 }
 
 
