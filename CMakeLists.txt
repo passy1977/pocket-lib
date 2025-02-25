@@ -99,14 +99,14 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-        inc
-        pocket-controllers/inc
-        pocket-daos/inc
-        pocket-iface/inc
-        pocket-pods/inc
-        pocket-services/inc
-        pocket-views/inc
-        thread-pool/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-controllers/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-daos/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-iface/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-pods/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-services/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-views/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/thread-pool/include
 )
 
 target_sources(${PROJECT_NAME} PUBLIC
