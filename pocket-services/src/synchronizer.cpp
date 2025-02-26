@@ -93,8 +93,8 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
              {
                  secret = crypto_generate_random_string(10);
              }
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
-             timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+             timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
@@ -205,8 +205,8 @@ bool synchronizer::send_data(const pods::user::ptr& user)
                 }
             });
 
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
-            timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+            timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
 
             //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));

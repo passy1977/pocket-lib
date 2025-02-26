@@ -27,7 +27,7 @@
 #include <fstream>
 #include <unistd.h>
 
-#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+#ifdef POCKET_POCKET_POCKET_FORCE_TIMESTAMP_LAST_UPDATE
 #warning You force user.timestamp_last_update
 #endif
 
@@ -187,8 +187,8 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
         }
 
 
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
-        u->timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+        u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
         u->passwd = crypto_encode_sha512(user->passwd);
 

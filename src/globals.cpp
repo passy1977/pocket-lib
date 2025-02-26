@@ -19,6 +19,8 @@
 
 #include "pocket/globals.hpp"
 
+#include <algorithm>
+
 namespace pocket::inline v5
 {
 
