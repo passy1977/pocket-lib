@@ -77,20 +77,31 @@ public:
     explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
     : database(database)
     , secret(secret)
-    , device(device) {}
+    , device(device)
+    //, referenced_status(referenced_status)
+    {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
     std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     bool send_data(const pods::user::ptr& user);
     
-    inline const stat* get_status() const noexcept
+    inline void set_status(stat status) noexcept
     {
+        //referenced_status = status;
+        synchronizer::status = status;
+    }
+
+    inline const stat* set_status() const noexcept
+    {
+        //referenced_status = status;
         return &status;
     }
+
 private:
-stat status = stat::READY;
-struct data_server_id
+    stat status = stat::READY;
+    //stat& referenced_status;
+    struct data_server_id
     {
         std::map<int64_t, int64_t> groups_server_id;
         std::map<int64_t, int64_t> groups_fields_server_id;

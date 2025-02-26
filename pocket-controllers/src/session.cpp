@@ -122,8 +122,7 @@ const device::opt& session::init()
     }
 
     synchronizer = make_unique<class synchronizer>(database, secret, *device);
-    status = synchronizer->get_status();
-    
+    status = synchronizer->set_status();
     return device;
 }
 

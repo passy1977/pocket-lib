@@ -111,7 +111,7 @@ bool database::open(const string& file_db_path)
         return create(CREATION_SQL); //throw exception
     }
 
-    return false;
+    return true;
 }
 
 
@@ -162,6 +162,11 @@ catch (...)
 
 bool database::create(const char creation_sql[])
 {
+    if(strlen(creation_sql) == 0)
+    {
+        return false;
+    }
+
     vector<string> result;
     stringstream ss(creation_sql);
     string part;
