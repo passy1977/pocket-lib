@@ -157,6 +157,7 @@ std::string network::perform(network::method method, const std::string_view& url
     
     // timeout in seconds
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    
     // response from server
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
     

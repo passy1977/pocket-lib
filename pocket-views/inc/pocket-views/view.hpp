@@ -41,16 +41,17 @@ class view final
 public:
     using ptr = std::unique_ptr<view>;
 
-    explicit view(const pods::user::ptr &user, services::database::ptr& database) noexcept
+    explicit view(const pods::user::ptr &user, services::database::ptr& database, bool encrypt_decrypt = true) noexcept
     : aes(POCKET_AES_CBC_IV, user->passwd)
     , database(database)
     {
 
-    }
+    } 
 
     POCKET_NO_COPY_NO_MOVE(view)
     ~view() = default;
 
+    
 };
 
 
