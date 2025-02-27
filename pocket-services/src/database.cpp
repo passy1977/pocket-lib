@@ -162,6 +162,11 @@ catch (...)
 
 bool database::create(const char creation_sql[])
 {
+    if(strlen(creation_sql) == 0)
+    {
+        return false;
+    }
+
     vector<string> result;
     stringstream ss(creation_sql);
     string part;

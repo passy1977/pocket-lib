@@ -46,7 +46,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
         throw runtime_error("Some parameter are empty");
     }
 
-    status = stat::BUSY;
+    set_status(stat::BUSY);
     
     auto&& fut_data = pool.submit_task([this]
     {
@@ -71,7 +71,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 
        catch (const runtime_error& e)
        {
-           status = stat::MAP_ID_ERROR;
+           set_status(stat::MAP_ID_ERROR);
            error(typeid(this).name(), e.what());
            return data_server_id{
                    .groups_server_id = {},
@@ -93,19 +93,19 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
              {
                  secret = crypto_generate_random_string(10);
              }
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
-             timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+             timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
              auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
-             status = stat{network.get_http_code()};
+             set_status(stat{network.get_http_code()});
              return content;
 
          }
          catch (const runtime_error& e)
          {
-             status = stat{network.get_http_code()};
+             set_status(stat{network.get_http_code()});
              secret = "";
              return string(ERROR_HTTP_CODE) + e.what();
          }
@@ -114,12 +114,16 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
     try
     {
         data_server_id data = fut_data.get();
-        status = stat::READY;
-        return parse_data_from_net(fut_response.get(), data);
+
+        auto&& ret = parse_data_from_net(fut_response.get(), data);
+
+        set_status(stat::READY);
+
+        return ret;
     }
     catch (const runtime_error& e)
     {
-        status = stat::NO_NETWORK;
+        set_status(stat::NO_NETWORK);
         throw;
     }
 
@@ -128,11 +132,6 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 
 bool synchronizer::send_data(const pods::user::ptr& user)
 {
-//    if(device.id == 0 || secret.empty())
-//    {
-//        throw runtime_error("Seems no one has been logged");
-//    }
-//
     if(status != stat::READY)
     {
         error(typeid(this).name(), "No network login impossible send data");
@@ -162,7 +161,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
         catch (const runtime_error& e)
         {
-           status = stat::MAP_ID_ERROR;
+            set_status(stat::MAP_ID_ERROR);
            error(typeid(this).name(), e.what());
            return data_server_id{
                    .groups_server_id = {},
@@ -200,13 +199,13 @@ bool synchronizer::send_data(const pods::user::ptr& user)
                 }
                 catch (const runtime_error& e)
                 {
-                    status = stat::DB_GENERIC_ERROR;
+                    set_status(stat::DB_GENERIC_ERROR);
                     return net_transport{};
                 }
             });
 
-#ifdef FORCE_TIMESTAMP_LAST_UPDATE
-            timestamp_last_update = FORCE_TIMESTAMP_LAST_UPDATE;
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+            timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
 
             //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
@@ -215,12 +214,12 @@ bool synchronizer::send_data(const pods::user::ptr& user)
             auto&& data = net_transport_serialize_json(ret.get());
 
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
-            status = stat{network.get_http_code()};
+            set_status(stat{network.get_http_code()});
             return content;
         }
         catch (const runtime_error& e)
         {
-            status = stat{network.get_http_code()};
+            set_status(stat{network.get_http_code()});
             secret = "";
             return string(ERROR_HTTP_CODE) + e.what();
         }
@@ -243,7 +242,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
 {
     if(!response.starts_with(ERROR_HTTP_CODE))
     {
-        status = stat::BUSY;
+        set_status(stat::BUSY);
         try
         {
 
@@ -254,21 +253,21 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             }
             catch (const runtime_error& e)
             {
-                status = stat::JSON_PARSING_ERROR;
+                set_status(stat::JSON_PARSING_ERROR);
                 error(typeid(this).name(), e.what());
                 return nullopt;
             }
 
             if(net_transport.device->id != device.id)
             {
-                status = stat::LOCAL_DEVICE_ID_NOT_MATCH;
+                set_status(stat::LOCAL_DEVICE_ID_NOT_MATCH);
                 return nullopt;
             }
 
             auto&& fut_group = update_database_table<group>(net_transport.get_vector_ref<group>(), data);
             if(!fut_group.get())
             {
-                status = stat::DB_GROUP_ERROR;
+                set_status(stat::DB_GROUP_ERROR);
                 error(typeid(this).name(), "Some error on populate groups table");
                 return nullopt;
             }
@@ -276,7 +275,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             auto&& fut_group_field = update_database_table<group_field>(net_transport.get_vector_ref<group_field>(), data);
             if(!fut_group_field.get())
             {
-                status = stat::DB_GROUP_FIELD_ERROR;
+                set_status(stat::DB_GROUP_FIELD_ERROR);
                 error(typeid(this).name(), "Some error on populate groups_fields table");
                 return nullopt;
             }
@@ -284,7 +283,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             auto&& fut_field = update_database_table<field>(net_transport.get_vector_ref<field>(), data);
             if(!fut_field.get())
             {
-                status = stat::DB_FIELD_ERROR;
+                set_status(stat::DB_FIELD_ERROR);
                 error(typeid(this).name(), "Some error on populate fields table");
                 return nullopt;
             }
@@ -295,7 +294,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
         }
         catch (const runtime_error& e)
         {
-            status = stat::ERROR;
+            set_status(stat::ERROR);
             throw;
         }
     }

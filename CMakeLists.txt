@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION  3.30)
-project(pocket VERSION "5.01.0" LANGUAGES CXX C)
+project(pocket VERSION "5.0.0" LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,10 +7,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_definitions(-DDISABLE_LOCK)
-add_definitions(-DMAX_BUFFER_RESPONSE_SIZE=10485760)
-#add_definitions(-DFORCE_TIMESTAMP_LAST_UPDATE=1739741159)
-option(FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)
+add_definitions(-DPOCKET_DISABLE_LOCK)
+add_definitions(-DPOCKET_MAX_BUFFER_RESPONSE_SIZE=10485760)
+#add_definitions(-DPOCKET_FORCE_TIMESTAMP_LAST_UPDATE=1739741159)
+option(POCKET_FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
@@ -99,14 +99,14 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-        inc
-        pocket-controllers/inc
-        pocket-daos/inc
-        pocket-iface/inc
-        pocket-pods/inc
-        pocket-services/inc
-        pocket-views/inc
-        thread-pool/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-controllers/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-daos/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-iface/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-pods/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-services/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocket-views/inc
+        ${CMAKE_CURRENT_SOURCE_DIR}/thread-pool/include
 )
 
 target_sources(${PROJECT_NAME} PUBLIC
