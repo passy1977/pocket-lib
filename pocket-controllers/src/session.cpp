@@ -27,8 +27,13 @@
 #include <fstream>
 #include <unistd.h>
 
-#ifdef POCKET_POCKET_POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
 #warning You force user.timestamp_last_update
+#endif
+
+#ifndef POCKET_ENABLE_AES
+#warning AES disabled, data stored non safe
+#define POCKET_ENABLE_AES (0)
 #endif
 
 namespace pocket::controllers::inline v5
@@ -68,7 +73,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
     lock();
 
-    info(typeid(*this).name(), "Create new session:" + device->uuid);
+    info(typeid(*this).name(), "Create new session:" + device->uuid + " at:" + config->get_config_path() );
 }
 
 session::~session() try
@@ -194,17 +199,17 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
         dao.persist(u);
         u->passwd = user->passwd;
 
-        view_group = make_unique<view<group>>(u, database);
-        view_group_field = make_unique<view<group_field>>(u, database);
-        view_field = make_unique<view<field>>(u, database);
+        view_group = make_unique<view<group>>(u, database, POCKET_ENABLE_AES);
+        view_group_field = make_unique<view<group_field>>(u, database, POCKET_ENABLE_AES);
+        view_field = make_unique<view<field>>(u, database, POCKET_ENABLE_AES);
 
         return std::move(u);
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-        view_group = make_unique<view<group>>(user, database);
-        view_group_field = make_unique<view<group_field>>(user, database);
-        view_field = make_unique<view<field>>(user, database);
+        view_group = make_unique<view<group>>(user, database, POCKET_ENABLE_AES);
+        view_group_field = make_unique<view<group_field>>(user, database, POCKET_ENABLE_AES);
+        view_field = make_unique<view<field>>(user, database, POCKET_ENABLE_AES);
 
         return make_unique<struct user>(*user);
     }

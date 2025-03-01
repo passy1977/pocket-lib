@@ -58,10 +58,10 @@ int64_t dao::persist<group>(const group::ptr& t)
     dao_read_write<group> dao_rw;
 
     auto&& params = dao_rw.write(t);
-    int64_t count = 0;
+    int64_t last_insert_id = 0;
     if(t->id > 0)
     {
-        count = database->update(R"(
+        auto count = database->update(R"(
 UPDATE groups
 SET
     server_id = ?,
@@ -77,10 +77,19 @@ SET
 WHERE
     id = ?
         )", params);
+        
+        if(count > 0)
+        {
+            last_insert_id = t->id;
+        }
+        else
+        {
+            last_insert_id = -1;
+        }
     }
     else
     {
-        count = database->update(R"(
+        auto count = database->update(R"(
 INSERT INTO groups
 (
     server_id,
@@ -106,9 +115,19 @@ INSERT INTO groups
     ?
 )
         )", params);
+        
+        if(count > 0)
+        {
+            last_insert_id = database->update(" SELECT last_insert_rowid()");
+        }
+        else
+        {
+            last_insert_id = -1;
+        }
+       
     }
 
-    return count;
+    return last_insert_id;
 }
 
 

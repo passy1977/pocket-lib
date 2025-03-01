@@ -61,7 +61,7 @@ public:
         this->enable_aes = enable_aes;
     }
 
-    daos::dao::list<T> get_list(int64_t group_id) const
+    daos::dao::list<T> get_list(int64_t group_id, const std::string_view& search = "") const
     {
         auto&& ret = dao.get_all<T>(group_id, false);
         for(auto&& it : ret)
@@ -71,12 +71,13 @@ public:
                 decode(it);
             }
         }
+        
         return ret;
     }
 
-    inline daos::dao::list<T> get_list(const T::ptr it) const
+    inline daos::dao::list<T> get_list(const T::ptr it, const std::string_view& search = "") const
     {
-        return get_list(it->group_id);
+        return get_list(it->group_id, search);
     }
 
     inline int64_t del(int64_t group_id) const
