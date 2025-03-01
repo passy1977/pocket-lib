@@ -28,6 +28,7 @@
 #include "pocket-services/database.hpp"
 #include "pocket-daos/dao.hpp"
 
+#include <algorithm>
 
 namespace pocket::views::inline v5
 {
@@ -61,21 +62,44 @@ public:
         this->enable_aes = enable_aes;
     }
 
-    daos::dao::list<T> get_list(int64_t group_id, const std::string_view& search = "") const
+    daos::dao::list<T> get_list(int64_t group_id, std::string search = "") const
     {
         auto&& ret = dao.get_all<T>(group_id, false);
-        for(auto&& it : ret)
+        if(enable_aes)
         {
-            if(enable_aes)
+            for(auto&& it : ret)
             {
                 decode(it);
             }
         }
+    
+        if(!search.empty())
+        {
+            daos::dao::list<T> ret_filtered;
+            for(auto&& it : ret)
+            {
+                std::transform(search.cbegin(), search.cend(), search.begin(), [](char c){ return std::tolower(c); });
+
+                std::string title_low = it->title;
+                std::transform(title_low.cbegin(), title_low.cend(), title_low.begin(), [](char c){ return std::tolower(c); });
+
+                if(title_low.find(search) != std::string::npos)
+                {
+                    ret_filtered.push_back(std::move(it));
+                }
+            }
+            ret = std::move(ret_filtered);
+        }
+        
+        sort(ret.begin(), ret.end(), [](auto &v1, auto &v2)
+        {
+            return v1->title < v2->title;
+        });
         
         return ret;
     }
 
-    inline daos::dao::list<T> get_list(const T::ptr it, const std::string_view& search = "") const
+    inline daos::dao::list<T> get_list(const T::ptr it, std::string search = "") const
     {
         return get_list(it->group_id, search);
     }

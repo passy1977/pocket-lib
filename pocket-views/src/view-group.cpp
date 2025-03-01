@@ -24,7 +24,7 @@ namespace pocket::views::inline v5
 {
 
 template<>
-inline daos::dao::list<group> view<group>::get_list(const group::ptr it, const std::string_view& search) const
+inline daos::dao::list<group> view<group>::get_list(const group::ptr it, std::string search) const
 {
     if(it == nullptr)
     {
