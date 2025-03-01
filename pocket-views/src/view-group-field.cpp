@@ -23,6 +23,12 @@
 namespace pocket::views::inline v5
 {
 
+template<>
+void view<group_field>::test() const noexcept
+{
+
+}
+
 
 }
 

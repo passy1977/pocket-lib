@@ -19,10 +19,19 @@
 
 #pragma once
 
+#include "pocket-views/view.hpp"
 
 
 namespace pocket::views::inline v5
 {
 
+
+using pods::group;
+
+template<>
+inline daos::dao::list<group> view<group>::get_list(const group::ptr it) const;
+
+template<>
+void view<group>::test() const noexcept;
 
 } // pocket

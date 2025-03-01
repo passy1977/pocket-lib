@@ -177,7 +177,7 @@ private:
     {
         return pool.submit_task([this]
         {
-                return daos::dao(database).get_all<T>(true);
+                return daos::dao(database).get_all<T>(daos::dao::NO_ID, true);
         });
     }
 

@@ -19,10 +19,14 @@
 
 #pragma once
 
-
+#include "pocket-views/view.hpp"
 
 namespace pocket::views::inline v5
 {
 
+using pods::field;
+
+template<>
+void view<field>::test() const noexcept;
 
 } // pocket

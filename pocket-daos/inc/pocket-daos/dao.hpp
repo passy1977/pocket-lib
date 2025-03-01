@@ -33,11 +33,15 @@
 namespace pocket::daos::inline v5
 {
 
-
 class dao final
 {
     services::database::ptr&database;
 public:
+    template<iface::require_pod T>
+    using list = std::vector<typename iface::pod<T>::ptr>;
+
+    static constexpr int64_t NO_ID = -1;
+
     explicit dao(services::database::ptr& database) noexcept
     : database(database)
     {}
@@ -46,12 +50,12 @@ public:
 
 
     template<iface::require_pod T>
-    std::vector<typename iface::pod<T>::ptr> get_all(bool to_synch = false) const
+    list<T> get_all(int64_t group_id = -1, bool to_synch = false) const
     {
         std::vector<typename iface::pod<T>::ptr> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : " WHERE deleted = 0") + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : (group_id < 0 ? " WHERE deleted = 0" : " WHERE deleted = 0 AND group_id = " + std::to_string(group_id))) + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
         {
             for(auto&& row : **opt_rs)
             {
@@ -112,13 +116,23 @@ public:
     }
 
     template<iface::require_pod T>
-    int64_t persist(const T::ptr& t)
+    inline int64_t persist(const T::ptr& t)
     {
-        throw std::runtime_error("Not implemented");
+        if constexpr (std::is_same_v<T, pods::group>)
+        {
+            return persist<pods::group>(t);
+        }
+        else if constexpr (std::is_same_v<T, pods::group_field>)
+        {
+            return persist<pods::group_field>(t);
+        }
+        else if constexpr (std::is_same_v<T, pods::field>)
+        {
+            return persist<pods::field>(t);
+        }
     }
 
 };
-
 
 
 } // pocket

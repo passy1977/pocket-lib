@@ -19,8 +19,15 @@
 
 #pragma once
 
+#include "pocket-views/view.hpp"
+#include "pocket-pods/group-field.hpp"
 
 namespace pocket::views::inline v5
 {
+
+using pods::group_field;
+
+template<>
+void view<group_field>::test() const noexcept;
 
 } // pocket

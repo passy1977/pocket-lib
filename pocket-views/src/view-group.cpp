@@ -23,6 +23,22 @@
 namespace pocket::views::inline v5
 {
 
+template<>
+inline daos::dao::list<group> view<group>::get_list(const group::ptr it) const
+{
+    if(it == nullptr)
+    {
+        return {};
+    }
+    return get_list(it->id);
+}
+
+template<>
+void view<group>::test() const noexcept
+{
+
+}
+
 
 }
 

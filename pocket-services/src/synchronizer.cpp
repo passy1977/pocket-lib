@@ -147,13 +147,13 @@ bool synchronizer::send_data(const pods::user::ptr& user)
            };
            dao dao(database);
 
-           auto&& g = dao.get_all<group>(true);
+           auto&& g = dao.get_all<group>(daos::dao::NO_ID, true);
            for_each(g.begin(), g.end(), [&data](auto&& it) mutable { data.groups_server_id[it->server_id] = it->id; });
 
-           auto&& gf = dao.get_all<group_field>(true);
+           auto&& gf = dao.get_all<group_field>(daos::dao::NO_ID, true);
            for_each(gf.begin(), gf.end(), [&data](auto&& it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
 
-           auto&& f = dao.get_all<field>(true);
+           auto&& f = dao.get_all<field>(daos::dao::NO_ID, true);
            for_each(f.begin(), f.end(), [&data](auto&& it) mutable { data.fields_server_id[it->server_id] = it->id; });
 
            return data;

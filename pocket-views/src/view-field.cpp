@@ -17,11 +17,17 @@
  *
  ***************************************************************************/
 
-#include "pocket-views/view-group.hpp"
+#include "pocket-views/view-field.hpp"
 
 
 namespace pocket::views::inline v5
 {
+
+template<>
+void view<field>::test() const noexcept
+{
+
+}
 
 
 }
