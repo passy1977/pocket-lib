@@ -116,7 +116,7 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t persist(const T::ptr& t)
+    inline int64_t persist(const T::ptr& t, bool return_rows_modified = true)
     {
         if constexpr (std::is_same_v<T, pods::group>)
         {
@@ -132,6 +132,19 @@ public:
         }
     }
 
+private:
+    int64_t get_last_id() const
+    {
+        if(auto&& opt_rs = database->execute("SELECT last_insert_rowid() AS id"); opt_rs.has_value()) //throw exception
+        {
+            if(auto&& it = *opt_rs; !it->empty())
+            {
+                return (*it->begin())["id"].to_integer();
+            }
+        }
+        return daos::dao::NO_ID;
+    }
+    
 };
 
 

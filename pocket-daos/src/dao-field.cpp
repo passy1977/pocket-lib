@@ -26,16 +26,16 @@ namespace pocket::daos::inline v5
 using pods::field;
 
 template<>
-int64_t dao::persist<field>(const field::ptr& t)
+int64_t dao::persist<field>(const field::ptr& t, bool return_rows_modified)
 {
 
     dao_read_write<field> dao_rw;
 
     auto&& params = dao_rw.write(t);
-    int64_t count = 0;
+    int64_t last_insert_id = daos::dao::NO_ID;
     if(t->id > 0)
     {
-        count = database->update(R"(
+        auto count = database->update(R"(
 UPDATE fields
 SET
     server_id = ?,
@@ -53,10 +53,25 @@ SET
 WHERE
     id = ?
         )", params);
+        
+        if(return_rows_modified)
+        {
+            return count;
+        }
+        
+        if(count > 0)
+        {
+            last_insert_id = t->id;
+        }
+        else
+        {
+            last_insert_id = daos::dao::NO_ID;
+        }
+        
     }
     else
     {
-        count = database->update(R"(
+        auto count = database->update(R"(
 INSERT INTO fields
 (
     server_id,
@@ -86,9 +101,24 @@ INSERT INTO fields
     ?
 )
         )", params);
+        
+        if(return_rows_modified)
+        {
+            return count;
+        }
+        
+        if(count > 0)
+        {
+            last_insert_id = get_last_id();
+        }
+        else
+        {
+            last_insert_id = daos::dao::NO_ID;
+        }
+        
     }
 
-    return count;
+    return last_insert_id;
 }
 
 }

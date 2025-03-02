@@ -52,13 +52,13 @@ vector<group::ptr> dao::get_all<group>(int64_t group_id, bool to_synch) const
 }
 
 template<>
-int64_t dao::persist<group>(const group::ptr& t)
+int64_t dao::persist<group>(const group::ptr& t, bool return_rows_modified)
 {
 
     dao_read_write<group> dao_rw;
 
     auto&& params = dao_rw.write(t);
-    int64_t last_insert_id = 0;
+    int64_t last_insert_id = daos::dao::NO_ID;
     if(t->id > 0)
     {
         auto count = database->update(R"(
@@ -84,7 +84,7 @@ WHERE
         }
         else
         {
-            last_insert_id = -1;
+            last_insert_id = daos::dao::NO_ID;
         }
     }
     else
@@ -118,11 +118,11 @@ INSERT INTO groups
         
         if(count > 0)
         {
-            last_insert_id = database->update(" SELECT last_insert_rowid()");
+            last_insert_id = get_last_id();
         }
         else
         {
-            last_insert_id = -1;
+            last_insert_id = daos::dao::NO_ID;
         }
        
     }
