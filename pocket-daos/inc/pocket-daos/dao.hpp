@@ -116,19 +116,19 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t persist(const T::ptr& t, bool return_rows_modified = true)
+    constexpr int64_t persist(const T::ptr& t, bool return_rows_modified = true) const
     {
         if constexpr (std::is_same_v<T, pods::group>)
         {
-            return persist<pods::group>(t);
+            return persist<pods::group>(t, return_rows_modified);
         }
         else if constexpr (std::is_same_v<T, pods::group_field>)
         {
-            return persist<pods::group_field>(t);
+            return persist<pods::group_field>(t, return_rows_modified);
         }
         else if constexpr (std::is_same_v<T, pods::field>)
         {
-            return persist<pods::field>(t);
+            return persist<pods::field>(t, return_rows_modified);
         }
     }
 

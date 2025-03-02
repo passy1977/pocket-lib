@@ -118,9 +118,9 @@ public:
         return dao.del<T>(it->it);
     }
 
-    int64_t store(const T::ptr& it) const
+    inline int64_t persist(const T::ptr& it) const
     {
-        return dao.persist<T>(it);
+        return dao.persist<T>(it, false);
     }
 
 

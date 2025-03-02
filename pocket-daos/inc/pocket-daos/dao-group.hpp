@@ -29,7 +29,7 @@ template<>
 dao::list<pods::group> dao::get_all<pods::group>(int64_t group_id, bool to_synch) const;
 
 template<>
-int64_t dao::persist<pods::group>(const pods::group::ptr& t, bool return_rows_modified);
+int64_t dao::persist<pods::group>(const pods::group::ptr& t, bool return_rows_modified) const;
 
 
 

@@ -42,7 +42,7 @@ struct net_transport
 
 
     template<iface::require_pod T>
-    constexpr std::vector<T*> get_vector_ref() noexcept
+    constexpr inline std::vector<T*> get_vector_ref() noexcept
     {
         std::vector<T*> ret;
         if constexpr(std::is_same_v<T, group>)
