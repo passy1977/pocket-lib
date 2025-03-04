@@ -69,7 +69,7 @@ public:
         {
             for(auto&& it : ret)
             {
-                decode(it);
+                decrypt(it);
             }
         }
     
@@ -118,8 +118,12 @@ public:
         return dao.del<T>(it->it);
     }
 
-    inline int64_t persist(const T::ptr& it) const
+    inline int64_t persist(T::ptr& it) const
     {
+        if(enable_aes)
+        {
+            encrypt(it);
+        }
         return dao.persist<T>(it, false);
     }
 
@@ -127,7 +131,34 @@ public:
 private:
     void test() const noexcept = delete;
 
-    constexpr void decode(T::ptr& it) const
+    constexpr void encrypt(T::ptr& it) const
+    {
+        if(!it->title.empty())
+        {
+            it->title = aes.encrypt(it->title);
+        }
+        
+        if constexpr(std::is_same_v<T, pods::group>)
+        {
+            if(!it->icon.empty())
+            {
+                it->icon = aes.encrypt(it->icon);
+            }
+            if(!it->note.empty())
+            {
+                it->note = aes.encrypt(it->note);
+            }
+        }
+        if constexpr(std::is_same_v<T, pods::field>)
+        {
+            if(!it->value.empty())
+            {
+                it->value = aes.encrypt(it->value);
+            }
+        }
+    }
+    
+    constexpr void decrypt(T::ptr& it) const
     {
         if(!it->title.empty())
         {
