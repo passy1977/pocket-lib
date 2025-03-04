@@ -123,7 +123,7 @@ public:
         return dao.persist<T>(it, false);
     }
 
-
+    int64_t get_last_id() const = delete;
 private:
     void test() const noexcept = delete;
 

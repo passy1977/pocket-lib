@@ -132,8 +132,10 @@ public:
         }
     }
 
+    template<iface::require_pod T>
+    int64_t get_last_id() const { return NO_ID; };
 private:
-    int64_t get_last_id() const
+    int64_t get_last_inserted_id() const
     {
         if(auto&& opt_rs = database->execute("SELECT last_insert_rowid() AS id"); opt_rs.has_value()) //throw exception
         {

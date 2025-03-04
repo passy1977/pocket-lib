@@ -118,7 +118,7 @@ INSERT INTO groups
         
         if(count > 0)
         {
-            last_insert_id = get_last_id();
+            last_insert_id = get_last_inserted_id();
         }
         else
         {
