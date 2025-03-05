@@ -101,12 +101,13 @@ public:
 
     inline daos::dao::list<T> get_list(const T::ptr it, std::string search = "") const
     {
-        return get_list(it->group_id, search);
+        throw "NOOOO it->server_id";
+        return get_list(it->id, search);
     }
-
-    inline int64_t del(int64_t group_id) const
+    
+    inline int64_t del(int64_t id) const
     {
-        return dao.del<T>(group_id);
+        return dao.del<T>(id);
     }
 
     inline int64_t del(const T::ptr& it) const
@@ -118,6 +119,17 @@ public:
         return dao.del<T>(it->it);
     }
 
+    inline int64_t del_by_group_id(const T::ptr& it) const
+    {
+        return del_by_group_id<T>(it->group_id);
+    }
+    
+    inline int64_t del_by_group_id(int64_t group_id) const
+    {
+        throw dao.del_by_group_id<T>(group_id);
+    }
+    
+    
     inline int64_t persist(T::ptr& it) const
     {
         if(enable_aes)

@@ -94,7 +94,7 @@ public:
     template<iface::require_pod T>
     inline int64_t del(int64_t id) const
     {
-        return database->update("UPDATE " + T::get_name() + " SET deleted = 1 WHERE id = ?", { {id} });
+        return database->update("UPDATE " + T::get_name() + " SET deleted = 1, synchronized = 0 WHERE id = ?", { {id} });
     }
 
     template<iface::require_pod T>
@@ -102,11 +102,23 @@ public:
     {
         return del(t->server_id);
     }
+    
+    template<iface::require_pod T>
+    inline int64_t del_by_group_id(int64_t id) const
+    {
+        return database->update("UPDATE " + T::get_name() + " SET deleted = 1, synchronized = 0 WHERE group_id = ?", { {id} });
+    }
 
     template<iface::require_pod T>
-    inline int64_t rm(int64_t server_id) const
+    inline int64_t del_by_group_id(const T::ptr& t) const
     {
-        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND server_id = ?", { {server_id} });
+        return del_by_group_id(t->server_id);
+    }
+
+    template<iface::require_pod T>
+    inline int64_t rm(int64_t id) const
+    {
+        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND id = ?", { {id} });
     }
 
     template<iface::require_pod T>
@@ -115,6 +127,18 @@ public:
         return rm(t->id);
     }
 
+    template<iface::require_pod T>
+    inline int64_t rm_by_group_id(const T::ptr& t) const
+    {
+        return rm_by_group_id(t->id);
+    }
+
+    template<iface::require_pod T>
+    inline int64_t rm_by_group_id(int64_t group_id) const
+    {
+        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND group_id = ?", { {group_id} });
+    }
+    
     template<iface::require_pod T>
     constexpr int64_t persist(const T::ptr& t, bool return_rows_modified = true) const
     {

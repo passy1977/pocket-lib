@@ -30,7 +30,7 @@ using pods::group;
 
 template<>
 inline daos::dao::list<group> view<group>::get_list(const group::ptr it, std::string search) const;
-
+    
 template<>
 void view<group>::test() const noexcept;
 
