@@ -25,6 +25,7 @@
 
 using namespace pocket::controllers;
 
+
 constexpr char data[] = R"json(
 {
    "id":59,
@@ -54,6 +55,7 @@ catch (const std::exception& e)
 
 TEST_F(session_test, session_init) try
 {
+    using namespace pocket::pods;
     session session(data);
 
     session.init();
@@ -61,7 +63,71 @@ TEST_F(session_test, session_init) try
     auto user = session.login("test@test.it", "pwd");
     ASSERT_TRUE(user.has_value());
 
+    auto&& g1 = std::make_unique<group>();
+    g1->title = "g1";
+    g1->synchronized = false;
+    g1->id = session.get_view_group()->persist(g1);
+
+    auto&& gf1_1 = std::make_unique<group_field>();
+    gf1_1->title = "g1 1";
+    gf1_1->synchronized = false;
+    gf1_1->group_id = g1->id;
+    gf1_1->id = session.get_view_group_field()->persist(gf1_1);
+
+    auto&& gf1_2 = std::make_unique<group_field>();
+    gf1_2->title = "g1 2";
+    gf1_2->synchronized = false;
+    gf1_2->group_id = g1->id;
+    gf1_2->id = session.get_view_group_field()->persist(gf1_2);
+
+    auto&& g2 = std::make_unique<group>();
+    g2->title = "g2";
+    g2->group_id = g1->id;
+    g2->synchronized = false;
+    g2->id = session.get_view_group()->persist(g2);
+
+    auto&& gf2_1 = std::make_unique<group_field>();
+    gf2_1->title = "g2 1";
+    gf2_1->synchronized = false;
+    gf2_1->group_id = g2->id;
+    gf2_1->id = session.get_view_group_field()->persist(gf2_1);
+
+    auto&& gf2_2 = std::make_unique<group_field>();
+    gf2_2->title = "g2 2";
+    gf2_2->synchronized = false;
+    gf2_2->group_id = g2->id;
+    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
+
     ASSERT_TRUE(session.send_data(user));
+
+    auto&& gf2_3 = std::make_unique<group_field>();
+    gf2_3->title = "g2 3";
+    gf2_3->synchronized = false;
+    gf2_3->group_id = g2->id;
+    gf2_3->id = session.get_view_group_field()->persist(gf2_3);
+
+    ASSERT_TRUE(session.send_data(user));
+
+//
+//    gf2_2->title = "g2 2 - mod";
+//    gf2_2->synchronized = false;
+//    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
+//
+//    g1->title = "g1 - mod";
+//    g1->synchronized = false;
+//    g1->id = session.get_view_group()->persist(g1);
+//
+//    ASSERT_TRUE(session.send_data(user));
+//
+//    g1->deleted = true;
+//    g1->synchronized = false;
+//    g1->id = session.get_view_group()->del(g1);
+//
+//    gf2_2->synchronized = false;
+//    gf2_2->synchronized = false;
+//    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
+//
+//    ASSERT_TRUE(session.send_data(user));
 
 }
 catch (const std::exception& e)

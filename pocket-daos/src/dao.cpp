@@ -18,49 +18,72 @@
  ***************************************************************************/
 
 #include "pocket-daos/dao.hpp"
+#include "pocket-pods/helpers.hpp"
 
+#include <sstream>
+#include <string>
 
 namespace pocket::daos::inline v5
 {
 
-void dao::update_all_index(const pods::net_transport& net_transport)
+using namespace pods;
+using namespace std;
+
+
+void dao::update_all_index(const pods::net_helper& net_helper) const
 {
-    if(!net_transport.groups.empty())
+
+    for(auto&& it: net_helper.groups)
     {
-        database->update(R"(
-UPDATE groups AS g
-SET group_id = (SELECT id FROM groups WHERE server_id = g.server_group_id), synchronized = 0
-WHERE EXISTS (SELECT 1 FROM groups WHERE server_id = g.server_group_id) AND synchronized = 0;
-)");
+        if(it->group_id > 0 && it->server_group_id == 0)
+        {
+            if(auto&& g = get<group>(it->group_id); g.has_value())
+            {
+                it->server_group_id = g.value()->server_id;
+                persist<group>(it);
+            }
+        }
     }
 
-    if(!net_transport.groups_fields.empty())
+    for(auto&& it: net_helper.groups_fields)
     {
-        database->update(R"(
-UPDATE groups_fields
-SET group_id = (SELECT id FROM groups WHERE server_id = groups_fields.server_group_id), synchronized = 0
-WHERE EXISTS (SELECT 1 FROM groups WHERE server_id = groups_fields.server_group_id) AND synchronized = 0;
-);
-)");
+        if(it->group_id > 0 && it->server_group_id == 0)
+        {
+            if(auto&& g = get<group>(it->group_id); g.has_value())
+            {
+                it->server_group_id = g.value()->server_id;
+                persist<group_field>(it);
+            }
+        }
     }
 
-    if(!net_transport.fields.empty())
+    for(auto&& it: net_helper.fields)
     {
-        database->update(R"(
-UPDATE fields
-SET group_field_id = (SELECT id FROM groups_fields WHERE server_id = fields.server_group_field_id), synchronized = 0
-WHERE EXISTS (SELECT 1 FROM groups_fields WHERE server_id = fields.server_group_field_id) AND synchronized = 0;
-);
-)");
+        bool perform_persist = false;
+        if(it->group_id > 0 && it->server_group_id == 0)
+        {
+            if(auto&& g = get<group>(it->group_id); g.has_value())
+            {
+                it->server_group_id = g.value()->server_id;
+                perform_persist = true;
+            }
+        }
 
-        database->update(R"(
-UPDATE fields
-SET group_id = (SELECT id FROM groups WHERE server_id = fields.server_group_id)
-WHERE EXISTS (SELECT 1 FROM groups WHERE server_id = fields.server_group_id);
-);
-)");
+        if(it->group_field_id > 0 && it->server_group_field_id == 0)
+        {
+            if(auto&& g = get<group_field>(it->group_field_id); g.has_value())
+            {
+                it->server_group_field_id = g.value()->server_id;
+                perform_persist = true;
+            }
+        }
+
+        if(perform_persist)
+        {
+            persist<field>(it);
+        }
+
     }
-
 
 }
 

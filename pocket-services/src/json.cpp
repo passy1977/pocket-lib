@@ -46,7 +46,7 @@ static json serialize_json(const group_field::ptr& group);
 static field json_to_field(const json& json);
 static json serialize_json(const field::ptr& group);
 
-void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, net_transport& net_transport) try
+void json_parse_net_helper(BS::thread_pool<6>& pool, string_view json_response, pods::net_helper& net_helper) try
 {
     if(json_response.empty())
     {
@@ -171,11 +171,11 @@ void json_parse_net_transport(thread_pool<6>& pool, string_view json_response, n
 
 
     auto&& [user, device] = fut_user_device.get();
-    net_transport.user = std::move(user);
-    net_transport.device = std::move(device);
-    net_transport.groups = fut_groups.get();
-    net_transport.groups_fields = fut_groups_fields.get();
-    net_transport.fields = fut_fields.get();
+    net_helper.user = std::move(user);
+    net_helper.device = std::move(device);
+    net_helper.groups = fut_groups.get();
+    net_helper.groups_fields = fut_groups_fields.get();
+    net_helper.fields = fut_fields.get();
 }
 catch (const runtime_error& e)
 {
@@ -200,26 +200,26 @@ catch (...)
     }
 }
 
-string net_transport_serialize_json(const net_transport& net_transport) try
+string net_helper_serialize_json(const pods::net_helper& net_helper) try
 {
     json j;
 
     auto groups = json::array();
-    for(auto&& it : net_transport.groups)
+    for(auto&& it : net_helper.groups)
     {
         groups.push_back(serialize_json(it));
     }
     j["groups"] = groups;
 
     auto groups_fields = json::array();
-    for(auto&& it : net_transport.groups_fields)
+    for(auto&& it : net_helper.groups_fields)
     {
         groups_fields.push_back(serialize_json(it));
     }
     j["groupsFields"] = groups_fields;
 
     auto fields = json::array();
-    for(auto&& it : net_transport.fields)
+    for(auto&& it : net_helper.fields)
     {
         fields.push_back(serialize_json(it));
     }

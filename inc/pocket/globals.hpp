@@ -99,18 +99,6 @@ namespace pocket::inline v5
             }
         }
     }
-
-    template<typename T>
-    void vector_copy_ref(const std::vector<typename T::ptr>& src, std::vector<T*>& dst) noexcept
-    {
-        for (auto& ptr : src)
-        {
-            if (ptr)
-            {
-                dst.push_back(ptr.get());
-            }
-        }
-    }
     
     // Trim leading whitespaces
     std::string& ltrim(std::string &s) noexcept;

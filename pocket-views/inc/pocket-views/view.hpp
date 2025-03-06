@@ -98,10 +98,14 @@ public:
         return ret;
     }
 
-    inline daos::dao::list<T> get_list(const T::ptr it, std::string search = "") const
+    inline daos::dao::list<T> get_list(const T::ptr t, std::string search = "") const
     {
         throw "NOOOO it->server_id";
-        return get_list(it->id, search);
+        if(t == nullptr)
+        {
+            return daos::dao::NO_ID;
+        }
+        return get_list(t->id, search);
     }
     
     inline int64_t del(int64_t id) const
@@ -109,18 +113,22 @@ public:
         return dao.del<T>(id);
     }
 
-    inline int64_t del(const T::ptr& it) const
+    inline int64_t del(const T::ptr& t) const
     {
-        if(it == nullptr)
+        if(t == nullptr)
         {
             return daos::dao::NO_ID;
         }
-        return dao.del<T>(it->it);
+        return dao.del<T>(t->id);
     }
 
-    inline int64_t del_by_group_id(const T::ptr& it) const
+    inline int64_t del_by_group_id(const T::ptr& t) const
     {
-        return del_by_group_id<T>(it->group_id);
+        if(t == nullptr)
+        {
+            return daos::dao::NO_ID;
+        }
+        return del_by_group_id<T>(t->group_id);
     }
     
     inline int64_t del_by_group_id(int64_t group_id) const
@@ -129,13 +137,13 @@ public:
     }
     
     
-    inline int64_t persist(T::ptr& it) const
+    inline int64_t persist(T::ptr& t) const
     {
         if(enable_aes)
         {
-            encrypt(it);
+            encrypt(t);
         }
-        return dao.persist<T>(it, false);
+        return dao.persist<T>(t, false);
     }
 
     int64_t get_last_id() const = delete;

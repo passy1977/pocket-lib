@@ -53,26 +53,26 @@ config::config(const optional<string>& config_path) try
     {
         absolute_path += path::preferred_separator;
     }
-    
-    if(absolute_path.empty())
-    {
-        absolute_path += DATA_FOLDER;
 
-        if(!is_directory(absolute_path))
+    absolute_path += DATA_FOLDER;
+
+//    if(absolute_path.empty())
+//    {
+    if(!exists(absolute_path))
+    {
+        try
         {
-            try
+            if(create_directories(absolute_path))
             {
-                if(create_directories(absolute_path))
-                {
-                    info(typeid(*this).name(), "Create new folder:" + absolute_path);
-                }
-            }
-            catch (const exception& e)
-            {
-                throw runtime_error(e.what());
+                info(typeid(*this).name(), "Create new folder:" + absolute_path);
             }
         }
+        catch (const exception& e)
+        {
+            throw runtime_error(e.what());
+        }
     }
+//    }
 
     this->config_path = absolute_path;
 }

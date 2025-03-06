@@ -28,18 +28,30 @@
 
 #include <vector>
 #include <type_traits>
+#include <map>
 
 namespace pocket::pods::inline v5
 {
 
-struct net_transport
+template<typename T>
+void vector_copy_ref(const std::vector<typename T::ptr>& src, std::vector<T*>& dst) noexcept
+{
+    for (auto& ptr : src)
+    {
+        if (ptr)
+        {
+            dst.push_back(ptr.get());
+        }
+    }
+}
+
+struct net_helper
 {
     pods::user::ptr user;
     pods::device::ptr device;
     std::vector<group::ptr> groups;
     std::vector<group_field::ptr> groups_fields;
     std::vector<field::ptr> fields;
-
 
     template<iface::require_pod T>
     constexpr inline std::vector<T*> get_vector_ref() noexcept
@@ -60,6 +72,14 @@ struct net_transport
         return ret;
     }
 
+};
+
+struct server_id_helper
+{
+    std::map<int64_t, int64_t> groups_server_id;
+    std::map<int64_t, int64_t> groups_fields_server_id;
+    std::map<int64_t, int64_t> fields_server_id;
+    bool valid;
 };
 
 }

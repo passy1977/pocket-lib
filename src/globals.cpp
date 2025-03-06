@@ -20,6 +20,7 @@
 #include "pocket/globals.hpp"
 
 #include <algorithm>
+#include <chrono>
 
 namespace pocket::inline v5
 {

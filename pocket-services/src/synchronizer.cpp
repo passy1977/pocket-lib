@@ -52,7 +52,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
     {
        try
        {
-           data_server_id data{
+           server_id_helper data{
                    .valid = true
            };
            dao dao(database);
@@ -73,7 +73,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
        {
            set_status(stat::MAP_ID_ERROR);
            error(typeid(this).name(), e.what());
-           return data_server_id{
+           return server_id_helper{
                    .groups_server_id = {},
                    .groups_fields_server_id = {},
                    .fields_server_id = {},
@@ -113,7 +113,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 
     try
     {
-        data_server_id data = fut_data.get();
+        server_id_helper data = fut_data.get();
 
         auto&& ret = parse_data_from_net(fut_response.get(), data);
 
@@ -142,7 +142,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
     {
         try
         {
-           data_server_id data{
+           server_id_helper data{
                    .valid = true
            };
            dao dao(database);
@@ -163,7 +163,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
         {
             set_status(stat::MAP_ID_ERROR);
            error(typeid(this).name(), e.what());
-           return data_server_id{
+           return server_id_helper{
                    .groups_server_id = {},
                    .groups_fields_server_id = {},
                    .fields_server_id = {},
@@ -184,23 +184,23 @@ bool synchronizer::send_data(const pods::user::ptr& user)
             {
                 try
                 {
-                    net_transport net_transport;
+                    net_helper net_helper;
 
                     auto&& fut_group = collect_data_table<group>();
-                    net_transport.groups = fut_group.get();
+                    net_helper.groups = fut_group.get();
 
                     auto&& fur_group_field = collect_data_table<group_field>();
-                    net_transport.groups_fields = fur_group_field.get();
+                    net_helper.groups_fields = fur_group_field.get();
 
                     auto&& fut_field = collect_data_table<field>();
-                    net_transport.fields = fut_field.get();
+                    net_helper.fields = fut_field.get();
 
-                    return net_transport;
+                    return net_helper;
                 }
                 catch (const runtime_error& e)
                 {
                     set_status(stat::DB_GENERIC_ERROR);
-                    return net_transport{};
+                    return net_helper{};
                 }
             });
 
@@ -211,7 +211,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
             //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
 
-            auto&& data = net_transport_serialize_json(ret.get());
+            auto&& data = net_helper_serialize_json(ret.get());
 
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
             set_status(stat{network.get_http_code()});
@@ -228,7 +228,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
     try
     {
-        data_server_id data = fut_data.get();
+        server_id_helper data = fut_data.get();
         return parse_data_from_net(fut_response.get(), data).has_value();
     }
     catch (const runtime_error& e)
@@ -238,7 +238,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
 }
 
-std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::string_view& response, data_server_id& data)
+std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::string_view& response, server_id_helper& data)
 {
     if(!response.starts_with(ERROR_HTTP_CODE))
     {
@@ -246,10 +246,10 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
         try
         {
 
-            struct net_transport net_transport;
+            struct net_helper net_helper;
             try
             {
-                json_parse_net_transport(pool, response, net_transport);
+                json_parse_net_helper(pool, response, net_helper);
             }
             catch (const runtime_error& e)
             {
@@ -258,13 +258,13 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
-            if(net_transport.device->id != device.id)
+            if(net_helper.device->id != device.id)
             {
                 set_status(stat::LOCAL_DEVICE_ID_NOT_MATCH);
                 return nullopt;
             }
 
-            auto&& fut_group = update_database_table<group>(net_transport.get_vector_ref<group>(), data);
+            auto&& fut_group = update_database_table<group>(net_helper.get_vector_ref<group>(), data);
             if(!fut_group.get())
             {
                 set_status(stat::DB_GROUP_ERROR);
@@ -272,7 +272,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
-            auto&& fut_group_field = update_database_table<group_field>(net_transport.get_vector_ref<group_field>(), data);
+            auto&& fut_group_field = update_database_table<group_field>(net_helper.get_vector_ref<group_field>(), data);
             if(!fut_group_field.get())
             {
                 set_status(stat::DB_GROUP_FIELD_ERROR);
@@ -280,7 +280,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
-            auto&& fut_field = update_database_table<field>(net_transport.get_vector_ref<field>(), data);
+            auto&& fut_field = update_database_table<field>(net_helper.get_vector_ref<field>(), data);
             if(!fut_field.get())
             {
                 set_status(stat::DB_FIELD_ERROR);
@@ -288,9 +288,10 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
-            dao{database}.update_all_index(net_transport);
+            dao{database}.update_all_index(net_helper);
 
-            return {std::move(net_transport.user) };
+            set_status(stat::READY);
+            return {std::move(net_helper.user) };
         }
         catch (const runtime_error& e)
         {

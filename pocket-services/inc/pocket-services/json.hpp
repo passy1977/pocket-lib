@@ -21,7 +21,7 @@
 #include "pocket/globals.hpp"
 #include "pocket-iface/synchronizable.hpp"
 #include "pocket-pods/device.hpp"
-#include "pocket-pods/net-transport.hpp"
+#include "pocket-pods/helpers.hpp"
 #include "BS_thread_pool.hpp"
 
 #include <nlohmann/json.hpp>
@@ -31,9 +31,9 @@
 namespace pocket::services::inline v5
 {
 
-void json_parse_net_transport(BS::thread_pool<6>& pool, std::string_view json_response, pods::net_transport& net_transport);
+void json_parse_net_helper(BS::thread_pool<6>& pool, std::string_view json_response, pods::net_helper& net_helper);
 
-std::string net_transport_serialize_json(const pods::net_transport& net_transport);
+std::string net_helper_serialize_json(const pods::net_helper& net_helper);
 
 pods::device json_to_device(const std::string_view& str_json);
 

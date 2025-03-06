@@ -23,13 +23,12 @@
 #include "pocket-services/database.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket-pods/user.hpp"
-#include "pocket-pods/net-transport.hpp"
+#include "pocket-pods/helpers.hpp"
 #include "pocket-daos/dao.hpp"
 #include "BS_thread_pool.hpp"
 
 #include <optional>
 #include <string_view>
-
 
 namespace pocket::services::inline v5
 {
@@ -100,19 +99,11 @@ public:
 
 private:
     stat status = stat::READY;
-    //stat& referenced_status;
-    struct data_server_id
-    {
-        std::map<int64_t, int64_t> groups_server_id;
-        std::map<int64_t, int64_t> groups_fields_server_id;
-        std::map<int64_t, int64_t> fields_server_id;
-        bool valid;
-    };
 
-    std::optional<pods::user::ptr> parse_data_from_net(const std::string_view& response, data_server_id& data);
+    std::optional<pods::user::ptr> parse_data_from_net(const std::string_view& response, pods::server_id_helper& data);
 
     template<iface::require_pod T>
-    std::future<bool> update_database_table(const std::vector<T*> vect, data_server_id& data)
+    std::future<bool> update_database_table(const std::vector<T*> vect, pods::server_id_helper& data)
     {
         return pool.submit_task([this, vect, data]() mutable
          {

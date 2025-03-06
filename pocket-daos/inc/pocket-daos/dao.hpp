@@ -26,7 +26,7 @@
 #include "pocket-daos/dao-read-write-group.hpp"
 #include "pocket-daos/dao-read-write-group-field.hpp"
 #include "pocket-daos/dao-read-write-field.hpp"
-#include "pocket-pods/net-transport.hpp"
+#include "pocket-pods/helpers.hpp"
 
 #include <vector>
 
@@ -48,6 +48,42 @@ public:
     POCKET_NO_COPY_NO_MOVE(dao)
     ~dao() = default;
 
+    template<iface::require_pod T>
+    std::optional<typename T::ptr> get(int64_t id) const
+    {
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE id = ?", {id} ); opt_rs.has_value()) //throw exception
+        {
+            for(auto&& row : **opt_rs)
+            {
+                if constexpr (std::is_same_v<T, pods::group>)
+                {
+                    dao_read_write<pods::group> dao;
+                    if(auto&& it = dao.read(row); it.get())
+                    {
+                        return it;
+                    }
+                }
+                else if constexpr (std::is_same_v<T, pods::group_field>)
+                {
+                    dao_read_write<pods::group_field> dao;
+                    if(auto&& it = dao.read(row); it.get())
+                    {
+                        return std::move(it);
+                    }
+                }
+                else if constexpr (std::is_same_v<T, pods::field>)
+                {
+                    dao_read_write<pods::field> dao;
+                    if(auto&& it = dao.read(row); it.get())
+                    {
+                        return std::move(it);
+                    }
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
 
     template<iface::require_pod T>
     list<T> get_all(int64_t group_id = -1, bool to_synch = false) const
@@ -89,7 +125,7 @@ public:
         return ret;
     }
 
-    void update_all_index(const pods::net_transport& net_transport);
+    void update_all_index(const pods::net_helper& net_helper) const;
 
     template<iface::require_pod T>
     inline int64_t del(int64_t id) const
