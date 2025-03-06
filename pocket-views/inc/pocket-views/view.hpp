@@ -36,7 +36,6 @@ namespace pocket::views::inline v5
 template<iface::require_pod T>
 class view final
 {
-
     services::aes aes;
 
     services::database::ptr& database;

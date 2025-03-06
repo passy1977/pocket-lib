@@ -119,25 +119,25 @@ std::string network::perform(network::method method, const std::string_view& url
     {
         case method::GET:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-            info(typeid(*this).name(), full_url);
+            info(typeid(*this).name(), "GET:" + full_url);
             break;
 
         case method::POST:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());
-            info(typeid(*this).name(), full_url);
+            info(typeid(*this).name(), "POST:" + full_url);
             break;
 
         case method::PUT:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());
-            info(typeid(*this).name(), full_url);
+            info(typeid(*this).name(), "PUT:" + full_url);
             break;
 
         case method::DEL:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             full_url += query;
-            info(typeid(*this).name(), full_url);
+            info(typeid(*this).name(), "DELETE:" + full_url);
             break;
     }
 

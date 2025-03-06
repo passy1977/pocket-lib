@@ -142,6 +142,7 @@ public:
     template<iface::require_pod T>
     constexpr int64_t persist(const T::ptr& t, bool return_rows_modified = true) const
     {
+        
         if constexpr (std::is_same_v<T, pods::group>)
         {
             return persist<pods::group>(t, return_rows_modified);
