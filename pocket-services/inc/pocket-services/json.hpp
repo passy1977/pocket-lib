@@ -31,7 +31,7 @@
 namespace pocket::services::inline v5
 {
 
-void json_parse_net_helper(BS::thread_pool<6>& pool, std::string_view json_response, pods::net_helper& net_helper);
+void json_parse_net_helper(BS::thread_pool<>& pool, std::string_view json_response, pods::net_helper& net_helper);
 
 std::string net_helper_serialize_json(const pods::net_helper& net_helper);
 

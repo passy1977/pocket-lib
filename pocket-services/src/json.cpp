@@ -46,7 +46,7 @@ static json serialize_json(const group_field::ptr& group);
 static field json_to_field(const json& json);
 static json serialize_json(const field::ptr& group);
 
-void json_parse_net_helper(BS::thread_pool<6>& pool, string_view json_response, pods::net_helper& net_helper) try
+void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, pods::net_helper& net_helper) try
 {
     if(json_response.empty())
     {

@@ -29,6 +29,7 @@
 #include "pocket-daos/dao.hpp"
 
 #include <algorithm>
+#include <boost/histogram/axis/variant.hpp>
 
 namespace pocket::views::inline v5
 {
@@ -100,10 +101,18 @@ public:
 
     inline daos::dao::list<T> get_list(const T::ptr t, std::string search = "") const
     {
-        throw "NOOOO it->server_id";
         if(t == nullptr)
         {
             return daos::dao::NO_ID;
+        }
+        if constexpr(std::is_same_v<T, pods::group>)
+        {
+            if(t->group_id > 0)
+            {
+                dao.del_by_group_id<pods::group>(t->group_id);
+                dao.del_by_group_id<pods::group_field>(t->group_id);
+                dao.del_by_group_id<pods::field>(t->group_id);
+            }
         }
         return get_list(t->id, search);
     }
@@ -128,12 +137,13 @@ public:
         {
             return daos::dao::NO_ID;
         }
+        if constexpr(std::is_same_v<T, pods::group>)
+        {
+            dao.del_by_group_id<pods::group>(t->group_id);
+            dao.del_by_group_id<pods::group_field>(t->group_id);
+            dao.del_by_group_id<pods::field>(t->group_id);
+        }
         return del_by_group_id<T>(t->group_id);
-    }
-    
-    inline int64_t del_by_group_id(int64_t group_id) const
-    {
-        throw dao.del_by_group_id<T>(group_id);
     }
     
     

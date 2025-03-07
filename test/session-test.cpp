@@ -108,26 +108,26 @@ TEST_F(session_test, session_init) try
 
     ASSERT_TRUE(session.send_data(user));
 
+
+    gf2_2->title = "g2 2 - mod";
+    gf2_2->synchronized = false;
+    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
+
+    g1->title = "g1 - mod";
+    g1->synchronized = false;
+    g1->id = session.get_view_group()->persist(g1);
+
+    ASSERT_TRUE(session.send_data(user));
+
+    session.get_view_group()->del(g1->id);
+
+    session.get_view_group_field()->del(gf2_2->id);
+
+//    session.get_view_group()->del(2);
 //
-//    gf2_2->title = "g2 2 - mod";
-//    gf2_2->synchronized = false;
-//    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
-//
-//    g1->title = "g1 - mod";
-//    g1->synchronized = false;
-//    g1->id = session.get_view_group()->persist(g1);
-//
-//    ASSERT_TRUE(session.send_data(user));
-//
-//    g1->deleted = true;
-//    g1->synchronized = false;
-//    g1->id = session.get_view_group()->del(g1);
-//
-//    gf2_2->synchronized = false;
-//    gf2_2->synchronized = false;
-//    gf2_2->id = session.get_view_group_field()->persist(gf2_2);
-//
-//    ASSERT_TRUE(session.send_data(user));
+//    session.get_view_group_field()->del(1);
+
+    ASSERT_TRUE(session.send_data(user));
 
 }
 catch (const std::exception& e)

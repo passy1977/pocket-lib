@@ -39,7 +39,7 @@ class synchronizer final
     std::string& secret;
     pods::device& device;
     
-    BS::thread_pool<6> pool;
+    BS::thread_pool<> pool{6};
 public:
     enum class stat : uint64_t
     {
@@ -113,6 +113,7 @@ private:
                  for(auto&& it : vect)
                  {
                      it->user_id = device.user_id;
+                     it->synchronized = 1;
                      if constexpr (std::is_same_v<T, pods::group>)
                      {
                         if(data.groups_server_id.contains(it->server_id))
