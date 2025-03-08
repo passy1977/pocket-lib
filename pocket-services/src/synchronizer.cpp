@@ -211,7 +211,7 @@ bool synchronizer::send_data(const pods::user::ptr& user)
             //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
 
-            auto&& data = net_helper_serialize_json(ret.get());http://192.168.12.110:8081/api/v5/727fd661-ed0a-4393-a8dc-c4a488a91719/QF6nauEnzftbvJDfvPVknn9I_0m7VpTTfuazj38FiIAHxhzt1g-tX1ayOmJAIvUXvRnCevS5OrDIKgrCh5VV5Dq3y_xhlatepmkAZqQH5NPu2LVuTPAOpW9SD0i5pKNq0hfeMLFMjq7DsTGzm8-4Rqqfztd2EDP8l1kzPq73tn2PXLaJQkT2T6Z4e2KClEi8DJnVYXN-SO1zfKz6zl0pTJDeTpSnkMeiAIo_AxZFZPt1lyEm-3449pQT4TxgEe_zK-JCPzR_8ZTSUE2gp-yJnP4NSraJc4g8bisj2RLTUsAlXvziU-NseTqHE0oJWufRpZ5YuguYWGlQxScP5ePyQA==
+            auto&& data = net_helper_serialize_json(ret.get());
 
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
             set_status(stat{network.get_http_code()});
