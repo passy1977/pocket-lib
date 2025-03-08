@@ -138,7 +138,7 @@ private:
 
                      if(it->deleted)
                      {
-                        if(dao.rm<T>(it->server_id) == 0)
+                        if(dao.rm<T>(it->id) == 0)
                         {
                             std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
                             error(typeid(this).name(),  msg);
