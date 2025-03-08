@@ -29,7 +29,6 @@
 #include "pocket-daos/dao.hpp"
 
 #include <algorithm>
-#include <boost/histogram/axis/variant.hpp>
 
 namespace pocket::views::inline v5
 {
@@ -131,6 +130,11 @@ public:
         return dao.del<T>(t->id);
     }
 
+    inline int64_t del_by_group_id(const int64_t group_id) const
+    {
+        return dao.del_by_group_id<T>(group_id);
+    }
+    
     inline int64_t del_by_group_id(const T::ptr& t) const
     {
         if(t == nullptr)
