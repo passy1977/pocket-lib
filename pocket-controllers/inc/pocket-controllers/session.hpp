@@ -62,6 +62,8 @@ public:
 
     bool send_data(const std::optional<pods::user::ptr>& user);
 
+    bool logout(const std::optional<pods::user::ptr>& user_opt);
+
     inline services::synchronizer::stat get_status() const noexcept
     {
         return *status;

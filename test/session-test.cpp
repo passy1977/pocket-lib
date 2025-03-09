@@ -171,6 +171,12 @@ TEST_F(session_test, session_init) try
 
     ASSERT_TRUE(session.send_data(user));
 
+    ASSERT_TRUE(session.logout(user));
+
+    user = session.login("test@test.it", "pwd");
+    ASSERT_TRUE(user.has_value());
+
+
 }
 catch (const std::exception& e)
 {

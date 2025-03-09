@@ -173,7 +173,6 @@ bool synchronizer::send_data(const pods::user::ptr& user)
 
     });
 
-
     auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
     {
 
@@ -237,6 +236,55 @@ bool synchronizer::send_data(const pods::user::ptr& user)
         throw;
     }
 
+}
+
+bool synchronizer::invalidate_data(const user::ptr& user)
+{
+    if(user == nullptr)
+    {
+        return false;
+    }
+
+    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
+       {
+           set_status(stat::BUSY);
+           network network;
+           try
+           {
+
+    #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+               timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+    #endif
+               auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
+
+               network.perform(network::method::DEL, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+               set_status(stat{network.get_http_code()});
+               return status;
+           }
+           catch (const runtime_error& e)
+           {
+               set_status(stat{network.get_http_code()});
+               return status;
+           }
+       });
+
+
+    try
+    {
+        if(fut_response.get() == stat::OK)
+        {
+            set_status(stat::READY);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch (const runtime_error& e)
+    {
+        throw;
+    }
 }
 
 std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::string_view& response, server_id_helper& data)

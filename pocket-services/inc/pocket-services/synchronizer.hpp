@@ -77,23 +77,22 @@ public:
     : database(database)
     , secret(secret)
     , device(device)
-    //, referenced_status(referenced_status)
     {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
     std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     bool send_data(const pods::user::ptr& user);
-    
+
+    bool invalidate_data(const pods::user::ptr& user);
+
     inline void set_status(stat status) noexcept
     {
-        //referenced_status = status;
         synchronizer::status = status;
     }
 
     inline const stat* set_status() const noexcept
     {
-        //referenced_status = status;
         return &status;
     }
 

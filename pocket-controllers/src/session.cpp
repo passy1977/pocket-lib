@@ -236,6 +236,17 @@ bool session::send_data(const std::optional<pods::user::ptr>& user)
 }
 
 
+bool session::logout(const optional<user::ptr>& user_opt)
+{
+    if(!user_opt.has_value())
+    {
+        return false;
+    }
+    return synchronizer->invalidate_data(user_opt.value());
+}
+
+
+
 void session::lock()
 {
 #ifndef POCKET_DISABLE_LOCK
