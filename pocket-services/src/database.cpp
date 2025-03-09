@@ -234,6 +234,7 @@ bool database::rm()
 
 void database::lock()
 {
+#ifndef POCKET_DISABLE_DB_LOCK
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -246,11 +247,12 @@ void database::lock()
         }
         throw runtime_error(msg);
     }
-
+#endif
 }
 
 void database::unlock()
 {
+#ifndef POCKET_DISABLE_DB_LOCK
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -263,6 +265,7 @@ void database::unlock()
         }
         throw runtime_error(msg);
     }
+#endif
 }
 
 optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters) try

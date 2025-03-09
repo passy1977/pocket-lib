@@ -61,6 +61,11 @@ public:
         this->enable_aes = enable_aes;
     }
 
+    std::optional<typename T::ptr> get(int64_t id) const
+    {
+        return dao.get<T>(id);
+    }
+
     daos::dao::list<T> get_list(int64_t group_id, std::string search = "") const
     {
         auto&& ret = dao.get_all<T>(group_id, false);
