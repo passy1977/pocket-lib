@@ -76,9 +76,9 @@ struct net_helper
 
 struct server_id_helper
 {
-    std::map<int64_t, int64_t> groups_server_id;
-    std::map<int64_t, int64_t> groups_fields_server_id;
-    std::map<int64_t, int64_t> fields_server_id;
+    std::map<int64_t, int64_t> groups_server_id; //server_id/id
+    std::map<int64_t, int64_t> groups_fields_server_id; //server_id/id
+    std::map<int64_t, int64_t> fields_server_id; //server_id/id
     bool valid;
 };
 

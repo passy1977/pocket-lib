@@ -337,7 +337,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
                 return nullopt;
             }
 
-            dao{database}.update_all_index(net_helper);
+//            dao{database}.update_all_index(net_helper);
 
             set_status(stat::READY);
             return {std::move(net_helper.user) };
