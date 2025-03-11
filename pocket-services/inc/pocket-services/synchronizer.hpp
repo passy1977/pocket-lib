@@ -102,140 +102,134 @@ private:
     std::optional<pods::user::ptr> parse_data_from_net(const std::string_view& response, pods::server_id_helper& data);
 
     template<iface::require_pod T>
-    std::future<bool> update_database_table(const std::vector<T*> vect, pods::server_id_helper& data)
+    bool update_database_table(const std::vector<T*> vect, pods::server_id_helper& data) try
     {
-        return pool.submit_task([this, vect, data]() mutable
+     daos::dao dao(database);
+     for(auto&& it : vect)
+     {
+         it->user_id = device.user_id;
+         it->synchronized = 1;
+         if constexpr (std::is_same_v<T, pods::group>)
          {
-             try
+            if(data.groups_server_id.contains(it->server_id))
+            {
+                it->id = data.groups_server_id[it->server_id];
+            }
+         }
+         else if constexpr (std::is_same_v<T, pods::group_field>)
+         {
+             if(data.groups_fields_server_id.contains(it->server_id))
              {
-                 daos::dao dao(database);
-                 for(auto&& it : vect)
-                 {
-                     it->user_id = device.user_id;
-                     it->synchronized = 1;
-                     if constexpr (std::is_same_v<T, pods::group>)
-                     {
-                        if(data.groups_server_id.contains(it->server_id))
-                        {
-                            it->id = data.groups_server_id[it->server_id];
-                        }
-                     }
-                     else if constexpr (std::is_same_v<T, pods::group_field>)
-                     {
-                         if(data.groups_fields_server_id.contains(it->server_id))
-                         {
-                             it->id = data.groups_fields_server_id[it->server_id];
-                         }
-                     }
-                     else if constexpr (std::is_same_v<T, pods::field>)
-                     {
-                         if(data.fields_server_id.contains(it->server_id))
-                         {
-                             it->id = data.fields_server_id[it->server_id];
-                         }
-                     }
-
-                     if(it->deleted)
-                     {
-                        if(dao.rm<T>(it->id) == 0)
-                        {
-                            std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
-                            error(typeid(this).name(),  msg);
-                            return false;
-                        }
-                     }
-                     else if(auto last_id = dao.persist<T>(std::make_unique<T>(*it), false); last_id == 0)
-                     {
-                         std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
-                         error(typeid(this).name(),  msg);
-                         return false;
-                     }
-                     else
-                     {
-                         it->id = last_id;
-                         if constexpr (std::is_same_v<T, pods::group>)
-                         {
-                            if(!data.groups_server_id.contains(it->server_id))
-                            {
-                                data.groups_server_id[it->server_id] = last_id;
-                            }
-                         }
-                         else if constexpr (std::is_same_v<T, pods::group_field>)
-                         {
-                             if(!data.groups_fields_server_id.contains(it->server_id))
-                             {
-                                 data.groups_fields_server_id[it->server_id] = last_id;
-                             }
-                         }
-                         else if constexpr (std::is_same_v<T, pods::field>)
-                         {
-                             if(!data.fields_server_id.contains(it->server_id))
-                             {
-                                 data.fields_server_id[it->server_id] = last_id;
-                             }
-                         }
-                     }
-                 }
-                 
-                 for(auto&& it: vect)
-                 {
-                     bool perform_persist = false;
-                     
-                     if(it->group_id == 0 && it->server_group_id > 0)
-                     {
-                         if(data.groups_server_id.contains(it->server_id))
-                         {
-                             it->group_id = data.groups_server_id[it->server_group_id];
-                         }
-                     }
-                     
-                     if(it->group_id > 0 && it->server_group_id == 0)
-                     {
-                         if(auto&& g = dao.get<T>(it->group_id); g.has_value())
-                         {
-                             it->server_group_id = g.value()->server_id;
-                             perform_persist = true;
-                         }
-                     }
-                     
-                     if constexpr (std::is_same_v<T, pods::field>)
-                     {
-                         if(it->group_id == 0 && it->server_group_id > 0)
-                         {
-                             if(data.groups_fields_server_id.contains(it->server_id))
-                             {
-                                 it->server_group_field_id = data.groups_fields_server_id[it->server_group_field_id];
-                                 perform_persist = true;
-                             }
-                         }
-                         
-                         if(it->group_field_id > 0 && it->server_group_field_id == 0)
-                         {
-                             if(auto&& g = dao.get<pods::group_field>(it->group_field_id); g.has_value())
-                             {
-                                 it->server_group_field_id = g.value()->server_id;
-                                 perform_persist = true;
-                             }
-                         }
-                     }
-                     
-                     if(perform_persist)
-                     {
-                         dao.persist<T>(std::make_unique<T>(*it));
-                     }
-
-                 }
-                
-
-                 return true;
+                 it->id = data.groups_fields_server_id[it->server_id];
              }
-             catch (const std::runtime_error& e)
+         }
+         else if constexpr (std::is_same_v<T, pods::field>)
+         {
+             if(data.fields_server_id.contains(it->server_id))
              {
-                 error(typeid(this).name(), e.what());
-                 return false;
+                 it->id = data.fields_server_id[it->server_id];
              }
-         });
-    }
+         }
+
+         if(it->deleted)
+         {
+            if(dao.rm<T>(it->id) == 0)
+            {
+                std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
+                error(typeid(this).name(),  msg);
+                return false;
+            }
+         }
+         else if(auto last_id = dao.persist<T>(std::make_unique<T>(*it), false); last_id == 0)
+         {
+             std::string msg = "Persist error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
+             error(typeid(this).name(),  msg);
+             return false;
+         }
+         else
+         {
+             it->id = last_id;
+             if constexpr (std::is_same_v<T, pods::group>)
+             {
+                if(!data.groups_server_id.contains(it->server_id))
+                {
+                    data.groups_server_id[it->server_id] = last_id;
+                }
+             }
+             else if constexpr (std::is_same_v<T, pods::group_field>)
+             {
+                 if(!data.groups_fields_server_id.contains(it->server_id))
+                 {
+                     data.groups_fields_server_id[it->server_id] = last_id;
+                 }
+             }
+             else if constexpr (std::is_same_v<T, pods::field>)
+             {
+                 if(!data.fields_server_id.contains(it->server_id))
+                 {
+                     data.fields_server_id[it->server_id] = last_id;
+                 }
+             }
+         }
+     }
+     
+     for(auto&& it: vect)
+     {
+         bool perform_persist = false;
+         
+         if(it->group_id == 0 && it->server_group_id > 0)
+         {
+             if(data.groups_server_id.contains(it->server_group_id))
+             {
+                 it->group_id = data.groups_server_id[it->server_group_id];
+                 perform_persist = true;
+             }
+         }
+
+         if(it->group_id > 0 && it->server_group_id == 0)
+         {
+             if(auto&& g = dao.get<T>(it->group_id); g.has_value())
+             {
+                 it->server_group_id = g.value()->server_id;
+                 perform_persist = true;
+             }
+         }
+         
+         if constexpr (std::is_same_v<T, pods::field>)
+         {
+             if(it->group_id == 0 && it->server_group_id > 0)
+             {
+                 if(data.groups_fields_server_id.contains(it->server_id))
+                 {
+                     it->server_group_field_id = data.groups_fields_server_id[it->server_group_field_id];
+                     perform_persist = true;
+                 }
+             }
+             
+             if(it->group_field_id > 0 && it->server_group_field_id == 0)
+             {
+                 if(auto&& g = dao.get<pods::group_field>(it->group_field_id); g.has_value())
+                 {
+                     it->server_group_field_id = g.value()->server_id;
+                     perform_persist = true;
+                 }
+             }
+         }
+         
+         if(perform_persist)
+         {
+             dao.persist<T>(std::make_unique<T>(*it));
+         }
+
+     }
+
+     return true;
+}
+catch (const std::runtime_error& e)
+{
+     error(typeid(this).name(), e.what());
+     return false;
+}
 
 
     template<iface::require_pod T>

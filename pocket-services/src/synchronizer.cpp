@@ -314,7 +314,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             }
 
             auto&& fut_group = update_database_table<group>(net_helper.get_vector_ref<group>(), data);
-            if(!fut_group.get())
+            if(!fut_group)
             {
                 set_status(stat::DB_GROUP_ERROR);
                 error(typeid(this).name(), "Some error on populate groups table");
@@ -322,7 +322,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             }
 
             auto&& fut_group_field = update_database_table<group_field>(net_helper.get_vector_ref<group_field>(), data);
-            if(!fut_group_field.get())
+            if(!fut_group_field)
             {
                 set_status(stat::DB_GROUP_FIELD_ERROR);
                 error(typeid(this).name(), "Some error on populate groups_fields table");
@@ -330,7 +330,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
             }
 
             auto&& fut_field = update_database_table<field>(net_helper.get_vector_ref<field>(), data);
-            if(!fut_field.get())
+            if(!fut_field)
             {
                 set_status(stat::DB_FIELD_ERROR);
                 error(typeid(this).name(), "Some error on populate fields table");
