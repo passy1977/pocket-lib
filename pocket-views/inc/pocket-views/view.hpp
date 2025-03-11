@@ -109,6 +109,8 @@ public:
         {
             return daos::dao::NO_ID;
         }
+        
+        
         if constexpr(std::is_same_v<T, pods::group>)
         {
             if(t->group_id > 0)
