@@ -164,7 +164,7 @@ TEST_F(session_test, session_init) try
     session.get_view_group_field()->del(gf2_1->id);
     session.get_view_group_field()->del(gf2_2->id);
     session.get_view_group_field()->del(gf2_3->id);
-    session.get_view_group()->del(g1->id);
+    session.get_view_group()->del(g2->id);
 //    session.get_view_group()->del(2);
 //
 //    session.get_view_group_field()->del(1);

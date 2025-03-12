@@ -133,11 +133,16 @@ private:
 
          if(it->deleted)
          {
-            if(dao.rm<T>(it->id) == 0)
+             
+            if(it->id && dao.rm<T>(it->id) == 0)
             {
                 std::string msg = "Remove error for " + T::get_name() + " id:" + std::to_string(it->id) + " it->server_id:" + std::to_string(it->server_id);
                 error(typeid(this).name(),  msg);
                 return false;
+            }
+            else
+            {
+                continue;
             }
          }
          else if(auto last_id = dao.persist<T>(std::make_unique<T>(*it), false); last_id == 0)
@@ -175,8 +180,14 @@ private:
      
      for(auto&& it: vect)
      {
+         if(it->deleted)
+         {
+             continue;
+         }
+         
          bool perform_persist = false;
          
+
          if(it->group_id == 0 && it->server_group_id > 0)
          {
              if(data.groups_server_id.contains(it->server_group_id))
