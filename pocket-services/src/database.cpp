@@ -156,9 +156,27 @@ bool database::is_created(uint8_t& db_version) noexcept try
 }
 catch (...)
 {
+    cerr << "Unhandled exception is_created()" << endl;
+
     unlock();
+
+    auto eptr = current_exception();
+
+    if (eptr)
+    {
+        try
+        {
+            rethrow_exception(eptr);
+        }
+        catch (const runtime_error& e)
+        {
+            cerr << e.what() << endl;
+            return false;
+        }
+    }
     return false;
 }
+
 
 bool database::create(const char creation_sql[])
 {

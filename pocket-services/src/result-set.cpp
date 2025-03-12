@@ -65,16 +65,6 @@ result_set::result_set(class database& database, const std::string& query, const
         {
             for (int i = 0; i < sqlite3_column_count(stmt); i++)
             {
-                int type = 0;
-                switch (sqlite3_column_type(stmt, i))
-                {
-                    case SQLITE3_TEXT:  type = SQLITE3_TEXT;  break;
-                    case SQLITE_INTEGER: type = SQLITE_INTEGER; break;
-                    case SQLITE_FLOAT: type = SQLITE_FLOAT; break;
-                    case SQLITE_BLOB: type = SQLITE_BLOB; break;
-                    default: break;
-                }
-
                 columns[sqlite3_column_name(stmt, i)] = i;
             }
             sqlite3_reset(stmt);
