@@ -165,9 +165,6 @@ TEST_F(session_test, session_init) try
     session.get_view_group_field()->del(gf2_2->id);
     session.get_view_group_field()->del(gf2_3->id);
     session.get_view_group()->del(g2->id);
-//    session.get_view_group()->del(2);
-//
-//    session.get_view_group_field()->del(1);
 
     ASSERT_TRUE(session.send_data(user));
 
@@ -175,6 +172,44 @@ TEST_F(session_test, session_init) try
 
     user = session.login("test@test.it", "pwd");
     ASSERT_TRUE(user.has_value());
+
+    ASSERT_TRUE(session.send_data(user));
+
+    auto&& g3 = std::make_unique<group>();
+    g3->user_id = user->get()->id;
+    g3->group_id = g1->id;
+    g3->timestamp_creation = millis;
+    g3->title = "g3";
+    g3->synchronized = false;
+    g3->id = session.get_view_group()->persist(g3);
+
+
+    auto&& gf3_1 = std::make_unique<group_field>();
+    gf3_1->user_id = user->get()->id;
+    gf3_1->timestamp_creation = millis;
+    gf3_1->title = "g3 1";
+    gf3_1->synchronized = false;
+    gf3_1->group_id = g3->id;
+    gf3_1->id = session.get_view_group_field()->persist(gf3_1);
+
+    auto&& f3_1 = std::make_unique<field>();
+    f3_1->user_id = user->get()->id;
+    f3_1->group_id = g3->id;
+    f3_1->group_field_id = gf3_1->id;
+    f3_1->timestamp_creation = millis;
+    f3_1->title = "g3 1";
+    f3_1->value = "value 1";
+    f3_1->synchronized = false;
+    f3_1->id = session.get_view_field()->persist(f3_1);
+
+    auto&& f3_2 = std::make_unique<field>();
+    f3_2->user_id = user->get()->id;
+    f3_2->group_id = g3->id;
+    f3_2->timestamp_creation = millis;
+    f3_2->title = "g3 2";
+    f3_2->value = "value 2";
+    f3_2->synchronized = false;
+    f3_2->id = session.get_view_field()->persist(f3_2);
 
     ASSERT_TRUE(session.send_data(user));
 

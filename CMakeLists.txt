@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_definitions(-DPOCKET_DISABLE_LOCK)
-#add_definitions(-DPOCKET_DISABLE_DB_LOCK)
+add_definitions(-DPOCKET_DISABLE_DB_LOCK)
 add_definitions(-DPOCKET_MAX_BUFFER_RESPONSE_SIZE=10485760)
 #add_definitions(-DPOCKET_FORCE_TIMESTAMP_LAST_UPDATE=1739741159)
 option(POCKET_FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)

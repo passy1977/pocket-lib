@@ -23,6 +23,7 @@
 #include "pocket-services/database.hpp"
 #include "pocket-services/synchronizer.hpp"
 #include "pocket-services/crypto.hpp"
+#include "pocket-services/json.hpp"
 #include "pocket-pods/user.hpp"
 #include "pocket-pods/device.hpp"
 #include "pocket/globals.hpp"
@@ -64,6 +65,10 @@ public:
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
+    bool export_data(const std::optional<pods::user::ptr>& user_opt, const std::string_view& file_name);
+
+    bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file);
+
     inline services::synchronizer::stat get_status() const noexcept
     {
         return *status;
@@ -86,6 +91,8 @@ public:
     
     
 private:
+    void export_data(nlohmann::json& json, const daos::dao& dao, const pods::group::ptr& group);
+
     void lock();
 
     void unlock();

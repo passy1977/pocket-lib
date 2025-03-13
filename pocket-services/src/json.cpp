@@ -36,15 +36,13 @@ constexpr char APP_TAG[] = "json";
 
 //static group json_to_group(const std::string_view& str_json);
 static group json_to_group(const json& json);
-static json serialize_json(const group::ptr& group);
 
 //static group_field json_to_group_field(const std::string_view& str_json);
 static group_field json_to_group_field(const json& json);
-static json serialize_json(const group_field::ptr& group);
 
 //static field json_to_field(const std::string_view& str_json);
 static field json_to_field(const json& json);
-static json serialize_json(const field::ptr& group);
+
 
 void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, pods::net_helper& net_helper) try
 {
@@ -509,7 +507,7 @@ group json_to_group(const json& json)
     return group;
 }
 
-json serialize_json(const group::ptr& group)
+json serialize_json(const group::ptr& group, bool no_id)
 {
     if(group == nullptr)
     {
@@ -518,10 +516,13 @@ json serialize_json(const group::ptr& group)
 
     json j;
 
-    j["id"] = group->id;
-    j["serverId"] = group->server_id;
-    j["groupId"] = group->group_id;
-    j["serverGroupId"] = group->server_group_id;
+    if(!no_id)
+    {
+        j["id"] = group->id;
+        j["serverId"] = group->server_id;
+        j["groupId"] = group->group_id;
+        j["serverGroupId"] = group->server_group_id;
+    }
     j["title"] = group->title;
     j["icon"] = group->icon;
     j["note"] = group->note;
@@ -626,7 +627,7 @@ group_field json_to_group_field(const json& json)
     return group_field;
 }
 
-json serialize_json(const group_field::ptr& group_field)
+json serialize_json(const group_field::ptr& group_field, bool no_id)
 {
     if(group_field == nullptr)
     {
@@ -635,10 +636,13 @@ json serialize_json(const group_field::ptr& group_field)
 
     json j;
 
-    j["id"] = group_field->id;
-    j["serverId"] = group_field->server_id;
-    j["groupId"] = group_field->group_id;
-    j["serverGroupId"] = group_field->server_group_id;
+    if(!no_id)
+    {
+        j["id"] = group_field->id;
+        j["serverId"] = group_field->server_id;
+        j["groupId"] = group_field->group_id;
+        j["serverGroupId"] = group_field->server_group_id;
+    }
     j["title"] = group_field->title;
     j["isHidden"] = group_field->is_hidden;
     j["synchronized"] = group_field->synchronized;
@@ -771,7 +775,7 @@ field json_to_field(const json& json)
     return field;
 }
 
-json serialize_json(const field::ptr& field)
+json serialize_json(const field::ptr& field, bool no_id)
 {
     if(field == nullptr)
     {
@@ -780,12 +784,15 @@ json serialize_json(const field::ptr& field)
 
     json j;
 
-    j["id"] = field->id;
-    j["serverId"] = field->server_id;
-    j["groupId"] = field->group_id;
-    j["serverGroupId"] = field->server_group_id;
-    j["groupFieldId"] = field->group_id;
-    j["serverGroupFieldId"] = field->server_group_id;
+    if(!no_id)
+    {
+        j["id"] = field->id;
+        j["serverId"] = field->server_id;
+        j["groupId"] = field->group_id;
+        j["serverGroupId"] = field->server_group_id;
+        j["groupFieldId"] = field->group_id;
+        j["serverGroupFieldId"] = field->server_group_id;
+    }
     j["title"] = field->title;
     j["value"] = field->value;
     j["isHidden"] = field->is_hidden;

@@ -18,14 +18,12 @@
  ***************************************************************************/
 
 #include "pocket-controllers/session.hpp"
-#include "pocket-services/network.hpp"
 #include "pocket-services/crypto.hpp"
 #include "pocket-daos/dao-user.hpp"
 
 #include <filesystem>
 #include <thread>
-#include <fstream>
-#include <unistd.h>
+#include <stdexcept>
 
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
 #warning You force user.timestamp_last_update
@@ -40,6 +38,7 @@ namespace pocket::controllers::inline v5
 {
 
 using namespace pods;
+using namespace services;
 using services::database;
 using services::synchronizer;
 using services::crypto_encode_sha512;
@@ -47,6 +46,7 @@ using daos::dao_user;
 using views::view;
 using namespace std;
 using namespace std::filesystem;
+using namespace nlohmann;
 
 
 
@@ -245,7 +245,81 @@ bool session::logout(const optional<user::ptr>& user_opt)
     return synchronizer->invalidate_data(user_opt.value());
 }
 
+bool session::export_data(const optional<user::ptr>& user_opt, const std::string_view& file_name)
+{
+    if(file_name.empty())
+    {
+        return false;
+    }
 
+    if(!user_opt.has_value())
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    if(device->user_id != user_opt.value()->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    nlohmann::json json;
+    daos::dao dao{database};
+
+    for(auto& group : dao.get_all<group>(0))
+    {
+        export_data(json, dao, group);
+    }
+
+    return false;
+}
+
+bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string full_path_file)
+{
+    if(full_path_file.starts_with("file://"))
+    {
+        full_path_file = &full_path_file[7];
+    }
+
+    if(!exists(full_path_file))
+    {
+        error(typeid(this).name(), "File not found:" + full_path_file);
+        return false;
+    }
+
+    if(!user_opt.has_value())
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    if(device->user_id != user_opt.value()->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    return false;
+}
+
+void session::export_data(json& json, const daos::dao& dao, const pods::group::ptr& group)
+{
+    auto json_group = serialize_json(group);
+
+    for(const auto& group_field : dao.get_all<group_field>(group->id))
+    {
+        json_group["group_field"].push_back(serialize_json(group_field));
+    }
+
+    for(const auto& field : dao.get_all<field>(group->id))
+    {
+        json_group["field"].push_back(serialize_json(field));
+    }
+
+//    for(const auto& field : dao.get_all<group>(group->id))
+//    {
+//        json_group["field"].push_back(serialize_json(field));
+//    }
+}
 
 void session::lock()
 {
