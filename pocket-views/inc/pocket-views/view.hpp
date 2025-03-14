@@ -165,6 +165,10 @@ public:
     
     inline int64_t persist(T::ptr& t) const
     {
+        if(t->id == 0)
+        {
+            t->timestamp_creation = get_current_time_GMT();
+        }
         if(enable_aes)
         {
             encrypt(t);

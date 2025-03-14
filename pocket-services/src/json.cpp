@@ -790,8 +790,8 @@ json serialize_json(const field::ptr& field, bool no_id)
         j["serverId"] = field->server_id;
         j["groupId"] = field->group_id;
         j["serverGroupId"] = field->server_group_id;
-        j["groupFieldId"] = field->group_id;
-        j["serverGroupFieldId"] = field->server_group_id;
+        j["groupFieldId"] = field->group_field_id;
+        j["serverGroupFieldId"] = field->server_group_field_id;
     }
     j["title"] = field->title;
     j["value"] = field->value;
