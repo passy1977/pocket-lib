@@ -273,6 +273,10 @@ aes::~aes()
 
 std::string aes::encrypt(const string_view& plain) const
 {
+    if(plain.empty())
+    {
+        return  "";
+    }
 
     auto cipher_text = new(nothrow) uint8_t[((plain.size() + AES_BLOCK_SIZE) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE];
     if(cipher_text == nullptr)
@@ -324,6 +328,11 @@ std::string aes::encrypt(const string_view& plain) const
 
 std::string aes::decrypt(const string_view& encrypted) const
 {
+    if(encrypted.empty())
+    {
+        return  "";
+    }
+
     auto&& cipher = crypto_base64_decode(encrypted.data());
 
     auto plain_text = new(nothrow) uint8_t[encrypted.size()];

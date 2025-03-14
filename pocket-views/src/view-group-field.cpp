@@ -24,12 +24,6 @@ namespace pocket::views::inline v5
 {
 
 template<>
-void view<group_field>::test() const noexcept
-{
-
-}
-
-template<>
 int64_t view<group_field>::get_last_id() const
 {
     return dao.get_last_id<group_field>();

@@ -30,6 +30,11 @@
 
 #include <algorithm>
 
+namespace pocket::controllers::inline v5
+{
+class session;
+}
+
 namespace pocket::views::inline v5
 {
 
@@ -169,8 +174,6 @@ public:
 
     int64_t get_last_id() const = delete;
 private:
-    void test() const noexcept = delete;
-
     constexpr void encrypt(T::ptr& it) const
     {
         if(!it->title.empty())

@@ -65,7 +65,7 @@ public:
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
-    bool export_data(const std::optional<pods::user::ptr>& user_opt, const std::string_view& file_name);
+    bool export_data(const std::optional<pods::user::ptr>& user_opt, const std::string_view& file_name, bool enable_aes = true);
 
     bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file);
 
@@ -88,10 +88,10 @@ public:
     {
         return view_field;
     }
-    
+
     
 private:
-    void export_data(nlohmann::json& json, const daos::dao& dao, const pods::group::ptr& group);
+    void export_data(nlohmann::json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes);
 
     void lock();
 

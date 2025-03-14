@@ -137,6 +137,8 @@ TEST_F(session_test, session_init) try
     gf2_1 = *session.get_view_group_field()->get(gf2_1->id);
     gf2_2 = *session.get_view_group_field()->get(gf2_2->id);
 
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
     auto&& gf2_3 = std::make_unique<group_field>();
     gf2_3->user_id = user->get()->id;
     gf2_3->timestamp_creation = millis;
@@ -150,6 +152,8 @@ TEST_F(session_test, session_init) try
     ASSERT_TRUE(session.send_data(user));
     gf2_3 = *session.get_view_group_field()->get(gf2_3->id);
 
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
     gf2_2->title = "g2 2 - mod";
     gf2_2->synchronized = false;
     gf2_2->id = session.get_view_group_field()->persist(gf2_2);
@@ -159,7 +163,7 @@ TEST_F(session_test, session_init) try
     g1->id = session.get_view_group()->persist(g1);
 
     ASSERT_TRUE(session.send_data(user));
-
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
     session.get_view_group_field()->del(gf2_1->id);
     session.get_view_group_field()->del(gf2_2->id);
@@ -167,13 +171,19 @@ TEST_F(session_test, session_init) try
     session.get_view_group()->del(g2->id);
 
     ASSERT_TRUE(session.send_data(user));
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
     ASSERT_TRUE(session.logout(user));
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
     user = session.login("test@test.it", "pwd");
     ASSERT_TRUE(user.has_value());
 
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
     ASSERT_TRUE(session.send_data(user));
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
 
     auto&& g3 = std::make_unique<group>();
     g3->user_id = user->get()->id;
@@ -212,6 +222,38 @@ TEST_F(session_test, session_init) try
     f3_2->id = session.get_view_field()->persist(f3_2);
 
     ASSERT_TRUE(session.send_data(user));
+
+    millis = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+
+    auto&& g4 = std::make_unique<group>();
+    g4->user_id = user->get()->id;
+    g4->group_id = g3->id;
+    g4->timestamp_creation = millis;
+    g4->title = "g4";
+    g4->synchronized = false;
+    g4->id = session.get_view_group()->persist(g4);
+
+
+    auto&& gf4_1 = std::make_unique<group_field>();
+    gf4_1->user_id = user->get()->id;
+    gf4_1->timestamp_creation = millis;
+    gf4_1->title = "g4 1";
+    gf4_1->synchronized = false;
+    gf4_1->group_id = g4->id;
+    gf4_1->id = session.get_view_group_field()->persist(gf4_1);
+
+    auto&& f4_1 = std::make_unique<field>();
+    f4_1->user_id = user->get()->id;
+    f4_1->group_id = g4->id;
+    f4_1->group_field_id = gf4_1->id;
+    f4_1->timestamp_creation = millis;
+    f4_1->title = "g4 1";
+    f4_1->value = "value 1";
+    f4_1->synchronized = false;
+    f4_1->id = session.get_view_field()->persist(f4_1);
+
+    ASSERT_TRUE(session.export_data(user, "test.json", false));
+
 
 }
 catch (const std::exception& e)

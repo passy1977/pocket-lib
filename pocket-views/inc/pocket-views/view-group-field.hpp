@@ -28,9 +28,6 @@ namespace pocket::views::inline v5
 using pods::group_field;
 
 template<>
-void view<group_field>::test() const noexcept;
-
-template<>
 int64_t view<group_field>::get_last_id() const;
     
 } // pocket

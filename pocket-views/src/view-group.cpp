@@ -33,12 +33,5 @@ inline daos::dao::list<group> view<group>::get_list(const group::ptr it, std::st
     return get_list(it->id, search);
 }
 
-template<>
-void view<group>::test() const noexcept
-{
-
-}
-
-
 }
 

@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <thread>
 #include <stdexcept>
+#include <fstream>
 
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
 #warning You force user.timestamp_last_update
@@ -245,7 +246,7 @@ bool session::logout(const optional<user::ptr>& user_opt)
     return synchronizer->invalidate_data(user_opt.value());
 }
 
-bool session::export_data(const optional<user::ptr>& user_opt, const std::string_view& file_name)
+bool session::export_data(const optional<user::ptr>& user_opt, const std::string_view& file_name, bool enable_aes)
 {
     if(file_name.empty())
     {
@@ -258,20 +259,45 @@ bool session::export_data(const optional<user::ptr>& user_opt, const std::string
         return false;
     }
 
-    if(device->user_id != user_opt.value()->id)
+    auto&& user = user_opt.value();
+
+    if(device->user_id != user->id)
     {
         throw runtime_error("User id not match");
     }
 
     nlohmann::json json;
     daos::dao dao{database};
+    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
 
     for(auto& group : dao.get_all<group>(0))
     {
-        export_data(json, dao, group);
+        export_data(json, dao, aes, group, enable_aes);
     }
 
-    return false;
+    string full_path_file = config.get()->get_config_path();
+
+    if(!full_path_file.ends_with(path::preferred_separator))
+    {
+        full_path_file += path::preferred_separator;
+    }
+
+    full_path_file += file_name;
+    ofstream file(full_path_file);
+
+    if (file.is_open())
+    {
+        file << json.dump();
+        file.close();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+
+
 }
 
 bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string full_path_file)
@@ -301,24 +327,53 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
     return false;
 }
 
-void session::export_data(json& json, const daos::dao& dao, const pods::group::ptr& group)
+void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes)
 {
-    auto json_group = serialize_json(group);
-
-    for(const auto& group_field : dao.get_all<group_field>(group->id))
+    if(group->deleted)
     {
-        json_group["group_field"].push_back(serialize_json(group_field));
+        return;
+    }
+    if(enable_aes)
+    {
+        group->title = aes.encrypt(group->title);
+        group->note = aes.encrypt(group->note);
+        group->icon = aes.encrypt(group->icon);
+    }
+    auto json_group = serialize_json(group, true);
+
+    for(const auto& g : dao.get_all<struct group>(group->id))
+    {
+        export_data(json_group, dao, aes, g, enable_aes);
     }
 
-    for(const auto& field : dao.get_all<field>(group->id))
+    for(const auto& gf : dao.get_all<group_field>(group->id))
     {
-        json_group["field"].push_back(serialize_json(field));
+        if(gf->deleted)
+        {
+            continue;
+        }
+        if(enable_aes)
+        {
+            gf->title = aes.encrypt(gf->title);
+        }
+        json_group["group_field"].push_back(serialize_json(gf, true));
     }
 
-//    for(const auto& field : dao.get_all<group>(group->id))
-//    {
-//        json_group["field"].push_back(serialize_json(field));
-//    }
+    for(const auto& f : dao.get_all<field>(group->id))
+    {
+        if(f->deleted)
+        {
+            continue;
+        }
+        if(enable_aes)
+        {
+            f->title = aes.encrypt(f->title);
+            f->value = aes.encrypt(f->value);
+        }
+        json_group["field"].push_back(serialize_json(f, true));
+    }
+
+    json["groups"].push_back(json_group);
 }
 
 void session::lock()
