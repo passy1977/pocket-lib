@@ -300,7 +300,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, const std::string
 
 }
 
-bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string full_path_file)
+bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string full_path_file, bool enable_aes)
 {
     if(full_path_file.starts_with("file://"))
     {
@@ -319,10 +319,17 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
         return false;
     }
 
-    if(device->user_id != user_opt.value()->id)
+    auto&& user = user_opt.value();
+
+    if(device->user_id != user->id)
     {
         throw runtime_error("User id not match");
     }
+
+    daos::dao dao{database};
+    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
+
+
 
     return false;
 }
