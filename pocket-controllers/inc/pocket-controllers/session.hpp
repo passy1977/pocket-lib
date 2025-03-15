@@ -31,6 +31,12 @@
 
 #include <optional>
 
+#ifndef POCKET_ENABLE_AES
+#warning AES disabled, data stored non safe
+#define POCKET_ENABLE_AES (0)
+#endif
+
+
 namespace pocket::controllers::inline v5
 {
 
@@ -65,7 +71,7 @@ public:
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
-    bool export_data(const std::optional<pods::user::ptr>& user_opt, const std::string_view& file_name, bool enable_aes = true);
+    bool export_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
     bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 

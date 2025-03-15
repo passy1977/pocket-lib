@@ -30,11 +30,6 @@
 #warning You force user.timestamp_last_update
 #endif
 
-#ifndef POCKET_ENABLE_AES
-#warning AES disabled, data stored non safe
-#define POCKET_ENABLE_AES (0)
-#endif
-
 namespace pocket::controllers::inline v5
 {
 
@@ -246,11 +241,16 @@ bool session::logout(const optional<user::ptr>& user_opt)
     return synchronizer->invalidate_data(user_opt.value());
 }
 
-bool session::export_data(const optional<user::ptr>& user_opt, const std::string_view& file_name, bool enable_aes)
+bool session::export_data(const optional<user::ptr>& user_opt, string full_path_file, bool enable_aes)
 {
-    if(file_name.empty())
+    if(full_path_file.empty())
     {
         return false;
+    }
+    
+    if(full_path_file.starts_with("file://"))
+    {
+        full_path_file = &full_path_file[7];
     }
 
     if(!user_opt.has_value())
@@ -275,14 +275,6 @@ bool session::export_data(const optional<user::ptr>& user_opt, const std::string
         export_data(json, dao, aes, group, enable_aes);
     }
 
-    string full_path_file = config.get()->get_config_path();
-
-    if(!full_path_file.ends_with(path::preferred_separator))
-    {
-        full_path_file += path::preferred_separator;
-    }
-
-    full_path_file += file_name;
     ofstream file(full_path_file);
 
     if (file.is_open())
@@ -293,6 +285,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, const std::string
     }
     else
     {
+        error(typeid(this).name(), "File not open:" + full_path_file);
         return false;
     }
 
