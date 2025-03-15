@@ -42,9 +42,12 @@ pods::device json_to_device(const nlohmann::json& json);
 pods::user json_to_user(const nlohmann::json& json);
 
 nlohmann::json serialize_json(const pods::group::ptr& group, bool no_id = false);
+pods::group json_to_group(const nlohmann::json& json, bool no_id = false);
 
 nlohmann::json serialize_json(const pods::group_field::ptr& group, bool no_id = false);
+pods::group_field json_to_group_field(const nlohmann::json& json, bool no_id = false);
 
 nlohmann::json serialize_json(const pods::field::ptr& group, bool no_id = false);
+pods::field json_to_field(const nlohmann::json& json, bool no_id = false);
 
 }

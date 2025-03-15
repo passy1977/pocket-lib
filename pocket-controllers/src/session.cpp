@@ -329,12 +329,26 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
     daos::dao dao{database};
     auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
 
+    json data = json::parse(ifstream(full_path_file));
 
+    if(data["groups"].is_null() || !data["groups"].is_array())
+    {
+        return false;
+    }
 
-    return false;
+    dao.del_all<field>();
+    dao.del_all<group_field>();
+    dao.del_all<group>();
+
+    for(auto&& json_group : data["groups"])
+    {
+        import_data(user, json_group, dao, aes, nullopt, enable_aes);
+    }
+
+    return true;
 }
 
-void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes)
+void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
 {
     if(group->deleted)
     {
@@ -342,9 +356,9 @@ void session::export_data(json& json, const daos::dao& dao, const services::aes&
     }
     if(enable_aes)
     {
-        group->title = aes.encrypt(group->title);
-        group->note = aes.encrypt(group->note);
-        group->icon = aes.encrypt(group->icon);
+        group->title = aes.decrypt(group->title);
+        group->note = aes.decrypt(group->note);
+        group->icon = aes.decrypt(group->icon);
     }
     auto json_group = serialize_json(group, true);
 
@@ -361,9 +375,9 @@ void session::export_data(json& json, const daos::dao& dao, const services::aes&
         }
         if(enable_aes)
         {
-            gf->title = aes.encrypt(gf->title);
+            gf->title = aes.decrypt(gf->title);
         }
-        json_group["group_field"].push_back(serialize_json(gf, true));
+        json_group["groupsFields"].push_back(serialize_json(gf, true));
     }
 
     for(const auto& f : dao.get_all<field>(group->id))
@@ -374,13 +388,85 @@ void session::export_data(json& json, const daos::dao& dao, const services::aes&
         }
         if(enable_aes)
         {
-            f->title = aes.encrypt(f->title);
-            f->value = aes.encrypt(f->value);
+            f->title = aes.decrypt(f->title);
+            f->value = aes.decrypt(f->value);
         }
-        json_group["field"].push_back(serialize_json(f, true));
+        json_group["fields"].push_back(serialize_json(f, true));
     }
 
     json["groups"].push_back(json_group);
+}
+
+void session::import_data(const pods::user::ptr& user, nlohmann::json& json_group, const daos::dao& dao, const services::aes& aes, std::optional<pods::group*> father, bool enable_aes) const
+{
+    auto&& g = json_to_group(json_group, true);
+    if(g.deleted)
+    {
+        return;
+    }
+    if(father)
+    {
+        g.group_id = father.value()->id;
+    }
+    if(enable_aes)
+    {
+        g.title = aes.encrypt(g.title);
+        g.note = aes.encrypt(g.note);
+        g.icon = aes.encrypt(g.icon);
+    }
+    g.user_id = user->id;
+    g.synchronized = false;
+    g.id = dao.persist<pods::group>(make_unique<pods::group>(g), false);
+
+    if(!json_group["groupsFields"].is_null() &&  json_group["groupsFields"].is_array())
+    {
+        for(auto&& json_group_field : json_group["groupsFields"])
+        {
+            auto&& gf = json_to_group_field(json_group_field, true);
+            if(gf.deleted)
+            {
+                continue;
+            }
+            if(enable_aes)
+            {
+                gf.title = aes.encrypt(g.title);
+            }
+            gf.group_id = g.id;
+            gf.user_id = user->id;
+            gf.synchronized = false;
+            gf.id = dao.persist<group_field>(make_unique<group_field>(gf), false);
+        }
+    }
+
+    if(!json_group["fields"].is_null() && json_group["fields"].is_array())
+    {
+        for(auto&& json_field: json_group["fields"])
+        {
+            auto&& f = json_to_field(json_field, true);
+            if(f.deleted)
+            {
+                continue;
+            }
+            if(enable_aes)
+            {
+                f.title = aes.encrypt(g.title);
+            }
+            f.group_id = g.id;
+            f.user_id = user->id;
+            f.synchronized = false;
+            f.id = dao.persist<field>(make_unique<field>(f), false);
+
+        }
+    }
+
+    if(!json_group["groups"].is_null() && json_group["groups"].is_array())
+    {
+        for(auto&& jg: json_group["groups"])
+        {
+            import_data(user, jg, dao, aes, &g, enable_aes);
+        }
+    }
+
 }
 
 void session::lock()

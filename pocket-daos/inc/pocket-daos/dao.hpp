@@ -134,6 +134,12 @@ public:
     }
 
     template<iface::require_pod T>
+    inline int64_t del_all() const
+    {
+        return database->update("UPDATE " + T::get_name() + " SET deleted = 1, synchronized = 0");
+    }
+
+    template<iface::require_pod T>
     inline int64_t del(const T::ptr& t) const
     {
         return del(t->server_id);

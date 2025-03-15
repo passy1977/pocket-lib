@@ -34,16 +34,6 @@ namespace
 constexpr char APP_TAG[] = "json";
 }
 
-//static group json_to_group(const std::string_view& str_json);
-static group json_to_group(const json& json);
-
-//static group_field json_to_group_field(const std::string_view& str_json);
-static group_field json_to_group_field(const json& json);
-
-//static field json_to_field(const std::string_view& str_json);
-static field json_to_field(const json& json);
-
-
 void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, pods::net_helper& net_helper) try
 {
     if(json_response.empty())
@@ -412,7 +402,7 @@ user json_to_user(const json& json)
 //    return json_to_group(json::parse(str_json));
 //}
 
-group json_to_group(const json& json)
+group json_to_group(const json& json, bool no_id)
 {
     if (!json.is_object())
     {
@@ -421,42 +411,44 @@ group json_to_group(const json& json)
 
     group group;
 
-    if(json.contains("id") && json["id"].is_number())
+    if(!no_id)
     {
-        group.id = json["id"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field id");
-    }
+        if(json.contains("id") && json["id"].is_number())
+        {
+            group.id = json["id"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field id");
+        }
 
-    if(json.contains("serverId") && json["serverId"].is_number())
-    {
-        group.server_id = json["serverId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverId");
-    }
+        if(json.contains("serverId") && json["serverId"].is_number())
+        {
+            group.server_id = json["serverId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverId");
+        }
 
-    if(json.contains("groupId") && json["groupId"].is_number())
-    {
-        group.group_id = json["groupId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field groupId");
-    }
+        if(json.contains("groupId") && json["groupId"].is_number())
+        {
+            group.group_id = json["groupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field groupId");
+        }
 
-    if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
-    {
-        group.server_group_id = json["serverGroupId"];
+        if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
+        {
+            group.server_group_id = json["serverGroupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverGroupId");
+        }
     }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverGroupId");
-    }
-
 
     if(json.contains("title") && json["title"].is_string())
     {
@@ -543,7 +535,7 @@ json serialize_json(const group::ptr& group, bool no_id)
 //    return json_to_group_field(json::parse(str_json));
 //}
 
-group_field json_to_group_field(const json& json)
+group_field json_to_group_field(const json& json, bool no_id)
 {
     if (!json.is_object())
     {
@@ -552,40 +544,43 @@ group_field json_to_group_field(const json& json)
 
     group_field group_field;
 
-    if(json.contains("id") && json["id"].is_number())
+    if(!no_id)
     {
-        group_field.id = json["id"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field id");
-    }
+        if(json.contains("id") && json["id"].is_number())
+        {
+            group_field.id = json["id"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field id");
+        }
 
-    if(json.contains("serverId") && json["serverId"].is_number())
-    {
-        group_field.server_id = json["serverId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverId");
-    }
+        if(json.contains("serverId") && json["serverId"].is_number())
+        {
+            group_field.server_id = json["serverId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverId");
+        }
 
-    if(json.contains("groupId") && json["groupId"].is_number())
-    {
-        group_field.group_id = json["groupId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field groupId");
-    }
+        if(json.contains("groupId") && json["groupId"].is_number())
+        {
+            group_field.group_id = json["groupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field groupId");
+        }
 
-    if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
-    {
-        group_field.server_group_id = json["serverGroupId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverGroupId");
+        if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
+        {
+            group_field.server_group_id = json["serverGroupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverGroupId");
+        }
     }
 
     if(json.contains("title") && json["title"].is_string())
@@ -662,7 +657,7 @@ json serialize_json(const group_field::ptr& group_field, bool no_id)
 //    return json_to_field(json::parse(str_json));
 //}
 
-field json_to_field(const json& json)
+field json_to_field(const json& json, bool no_id)
 {
     if (!json.is_object())
     {
@@ -671,59 +666,62 @@ field json_to_field(const json& json)
 
     field field;
 
-    if(json.contains("id") && json["id"].is_number())
+    if(!no_id)
     {
-        field.id = json["id"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field id");
-    }
+        if(json.contains("id") && json["id"].is_number())
+        {
+            field.id = json["id"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field id");
+        }
 
-    if(json.contains("serverId") && json["serverId"].is_number())
-    {
-        field.server_id = json["serverId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverId");
-    }
+        if(json.contains("serverId") && json["serverId"].is_number())
+        {
+            field.server_id = json["serverId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverId");
+        }
 
-    if(json.contains("groupId") && json["groupId"].is_number())
-    {
-        field.group_id = json["groupId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field groupId");
-    }
+        if(json.contains("groupId") && json["groupId"].is_number())
+        {
+            field.group_id = json["groupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field groupId");
+        }
 
-    if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
-    {
-        field.server_group_id = json["serverGroupId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverGroupId");
-    }
+        if(json.contains("serverGroupId") && json["serverGroupId"].is_number())
+        {
+            field.server_group_id = json["serverGroupId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverGroupId");
+        }
 
 
-    if(json.contains("groupFieldId") && json["groupFieldId"].is_number())
-    {
-        field.group_field_id = json["groupFieldId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field groupFieldId");
-    }
+        if(json.contains("groupFieldId") && json["groupFieldId"].is_number())
+        {
+            field.group_field_id = json["groupFieldId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field groupFieldId");
+        }
 
-    if(json.contains("serverGroupFieldId") && json["serverGroupFieldId"].is_number())
-    {
-        field.server_group_field_id = json["serverGroupFieldId"];
-    }
-    else
-    {
-        throw runtime_error("Invalid type or non defined field serverGroupFieldId");
+        if(json.contains("serverGroupFieldId") && json["serverGroupFieldId"].is_number())
+        {
+            field.server_group_field_id = json["serverGroupFieldId"];
+        }
+        else
+        {
+            throw runtime_error("Invalid type or non defined field serverGroupFieldId");
+        }
     }
 
     if(json.contains("title") && json["title"].is_string())
