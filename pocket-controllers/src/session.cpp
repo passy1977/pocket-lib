@@ -74,12 +74,7 @@ session::session(const optional<string>& config_json, const optional<string>& co
 
 session::~session() try
 {
-    if(database)
-    {
-        database->close();
-    }
-    fill(secret.begin(), secret.end(), 0x00);
-    unlock();
+    logout(nullopt);
 }
 catch (const runtime_error& e)
 {
@@ -234,11 +229,31 @@ bool session::send_data(const std::optional<pods::user::ptr>& user)
 
 bool session::logout(const optional<user::ptr>& user_opt)
 {
-    if(!user_opt.has_value())
+    if(user_opt)
     {
-        return false;
+        synchronizer->invalidate_data(user_opt.value());
     }
-    return synchronizer->invalidate_data(user_opt.value());
+    
+    if(database)
+    {
+        database->close();
+    }
+    fill(secret.begin(), secret.end(), 0x00);
+    unlock();
+    
+    config = nullptr;
+    database = nullptr;
+    synchronizer = nullptr;
+
+    view_group = nullptr;
+    view_group_field = nullptr;
+    view_field = nullptr;
+
+    device = nullopt;
+
+    status = nullptr;
+    
+    return true;
 }
 
 bool session::export_data(const optional<user::ptr>& user_opt, string full_path_file, bool enable_aes)
