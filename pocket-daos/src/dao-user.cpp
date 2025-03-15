@@ -41,7 +41,7 @@ dao_user::dao_user(services::database::ptr& database) noexcept
 user::opt dao_user::get()
 {
 
-    if(auto&& opt_rs = database->execute("SELECT * FROM user LIMIT 1"); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT * FROM user LIMIT 1"); opt_rs) //throw exception
     {
         for(auto&& row : **opt_rs)
         {
@@ -61,7 +61,7 @@ user::opt dao_user::get()
 
 user::opt dao_user::login(const string& email, const string& passwd)
 {
-    if(auto&& opt_rs = database->execute("SELECT * FROM user WHERE email = ? AND passwd = ?", { email, passwd }); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT * FROM user WHERE email = ? AND passwd = ?", { email, passwd }); opt_rs) //throw exception
     {
         for(auto&& row : **opt_rs)
         {
@@ -91,7 +91,7 @@ bool dao_user::persist(const pods::user& user)
     };
 
     int64_t count = 0;
-    if(get().has_value())
+    if(get())
     {
         count = database->update(R"(
 UPDATE user

@@ -113,7 +113,7 @@ INSERT INTO groups_fields
 template<>
 int64_t dao::get_last_id<pods::group_field>() const
 {
-    if(auto&& opt_rs = database->execute("SELECT id FROM groups_fields ORDER BY id DESC"); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT id FROM groups_fields ORDER BY id DESC"); opt_rs) //throw exception
     {
         if(auto&& it = *opt_rs; !it->empty())
         {

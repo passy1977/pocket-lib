@@ -48,7 +48,7 @@ using namespace nlohmann;
 
 session::session(const optional<string>& config_json, const optional<string>& config_path)
 {
-    if(!config_json.has_value())
+    if(!config_json)
     {
         throw runtime_error("config_json not defined it's mandatory");
     }
@@ -88,7 +88,7 @@ const device::opt& session::init()
         throw runtime_error("config not defined");
     }
 
-    if(!device.has_value())
+    if(!device)
     {
         throw runtime_error("config not defined");
     }
@@ -152,7 +152,7 @@ std::optional<user::ptr> session::login(const string& email, const string& passw
 
 std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::ptr>& user_opt) try
 {
-    if(!user_opt.has_value())
+    if(!user_opt)
     {
         error(typeid(this).name(), "user empty");
         return nullopt;
@@ -173,7 +173,7 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
         error(typeid(this).name(), string("Probably no connection err: ") + e.what());
     }
 
-    if(user_from_net.has_value())
+    if(user_from_net)
     {
         auto&& u = user_from_net.value();
         if(u->id != device->user_id &&  u->status != user::stat::ACTIVE)
@@ -218,7 +218,7 @@ catch(const exception& e)
 
 bool session::send_data(const std::optional<pods::user::ptr>& user)
 {
-    if(!user.has_value())
+    if(!user)
     {
         return false;
     }
@@ -268,7 +268,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
         full_path_file = &full_path_file[7];
     }
 
-    if(!user_opt.has_value())
+    if(!user_opt)
     {
         error(typeid(this).name(), "User empty");
         return false;
@@ -321,7 +321,7 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
         return false;
     }
 
-    if(!user_opt.has_value())
+    if(!user_opt)
     {
         error(typeid(this).name(), "User empty");
         return false;

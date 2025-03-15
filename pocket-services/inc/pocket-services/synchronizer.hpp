@@ -199,7 +199,7 @@ private:
 
          if(it->group_id > 0 && it->server_group_id == 0)
          {
-             if(auto&& g = dao.get<T>(it->group_id); g.has_value())
+             if(auto&& g = dao.get<T>(it->group_id); g)
              {
                  it->server_group_id = g.value()->server_id;
                  perform_persist = true;
@@ -219,7 +219,7 @@ private:
              
              if(it->group_field_id > 0 && it->server_group_field_id == 0)
              {
-                 if(auto&& g = dao.get<pods::group_field>(it->group_field_id); g.has_value())
+                 if(auto&& g = dao.get<pods::group_field>(it->group_field_id); g)
                  {
                      it->server_group_field_id = g.value()->server_id;
                      perform_persist = true;

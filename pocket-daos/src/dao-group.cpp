@@ -35,7 +35,7 @@ vector<group::ptr> dao::get_all<group>(int64_t group_id, bool to_synch) const
     tree ret;
 
 
-    if(auto&& opt_rs = database->execute("SELECT * FROM " + group::get_name() + (to_synch ? " WHERE synchronized = 0" : (group_id < 0 ? " WHERE deleted = 0" : " WHERE deleted = 0 AND group_id = " + std::to_string(group_id))) + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT * FROM " + group::get_name() + (to_synch ? " WHERE synchronized = 0" : (group_id < 0 ? " WHERE deleted = 0" : " WHERE deleted = 0 AND group_id = " + std::to_string(group_id))) + " ORDER BY group_id, id"); opt_rs) //throw exception
     {
         for(auto&& row : **opt_rs)
         {

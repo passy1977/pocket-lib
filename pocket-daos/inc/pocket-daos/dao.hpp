@@ -51,7 +51,7 @@ public:
     template<iface::require_pod T>
     std::optional<typename T::ptr> get(int64_t id) const
     {
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE id = ?", {id} ); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + " WHERE id = ?", {id} ); opt_rs) //throw exception
         {
             for(auto&& row : **opt_rs)
             {
@@ -91,7 +91,7 @@ public:
         std::vector<typename iface::pod<T>::ptr> ret;
 
 
-        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : (group_id < 0 ? " WHERE deleted = 0" : " WHERE deleted = 0 AND group_id = " + std::to_string(group_id))) + " ORDER BY group_id, id"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT * FROM " + T::get_name() + (to_synch ? " WHERE synchronized = 0" : (group_id < 0 ? " WHERE deleted = 0" : " WHERE deleted = 0 AND group_id = " + std::to_string(group_id))) + " ORDER BY group_id, id"); opt_rs) //throw exception
         {
             for(auto&& row : **opt_rs)
             {
@@ -204,7 +204,7 @@ public:
 private:
     int64_t get_last_inserted_id() const
     {
-        if(auto&& opt_rs = database->execute("SELECT last_insert_rowid() AS id"); opt_rs.has_value()) //throw exception
+        if(auto&& opt_rs = database->execute("SELECT last_insert_rowid() AS id"); opt_rs) //throw exception
         {
             if(auto&& it = *opt_rs; !it->empty())
             {

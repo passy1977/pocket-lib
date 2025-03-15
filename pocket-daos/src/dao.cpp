@@ -37,7 +37,7 @@ void dao::update_all_index(const pods::net_helper& net_helper) const
     {
         if(it->group_id > 0 && it->server_group_id == 0)
         {
-            if(auto&& g = get<group>(it->group_id); g.has_value())
+            if(auto&& g = get<group>(it->group_id); g)
             {
                 it->server_group_id = g.value()->server_id;
                 persist<group>(it);
@@ -49,7 +49,7 @@ void dao::update_all_index(const pods::net_helper& net_helper) const
     {
         if(it->group_id > 0 && it->server_group_id == 0)
         {
-            if(auto&& g = get<group>(it->group_id); g.has_value())
+            if(auto&& g = get<group>(it->group_id); g)
             {
                 it->server_group_id = g.value()->server_id;
                 persist<group_field>(it);
@@ -62,7 +62,7 @@ void dao::update_all_index(const pods::net_helper& net_helper) const
         bool perform_persist = false;
         if(it->group_id > 0 && it->server_group_id == 0)
         {
-            if(auto&& g = get<group>(it->group_id); g.has_value())
+            if(auto&& g = get<group>(it->group_id); g)
             {
                 it->server_group_id = g.value()->server_id;
                 perform_persist = true;
@@ -71,7 +71,7 @@ void dao::update_all_index(const pods::net_helper& net_helper) const
 
         if(it->group_field_id > 0 && it->server_group_field_id == 0)
         {
-            if(auto&& g = get<group_field>(it->group_field_id); g.has_value())
+            if(auto&& g = get<group_field>(it->group_field_id); g)
             {
                 it->server_group_field_id = g.value()->server_id;
                 perform_persist = true;
