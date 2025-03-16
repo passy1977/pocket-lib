@@ -184,25 +184,35 @@ std::vector<uint8_t> crypto_base64_decode(std::string data, bool url_compliant)
         str_replace_all(data, "-", "+");
     }
 
-    auto buffer = new uint8_t[data.length()];
-    memset(buffer, 0x00, data.length());
+    vector<uint8_t> ret;
+    
+    auto buffer = new(nothrow) uint8_t[data.size()];
+    if(buffer == nullptr)
+    {
+        throw_rsa_error("buffer impossible alloc");
+    }
+    memset(buffer, 0x00, data.size());
 
     auto b64 = BIO_new(BIO_f_base64());
-    auto bmem = BIO_new_mem_buf(data.data(), static_cast<int>(data.length()));
+    auto bmem = BIO_new_mem_buf(data.data(), static_cast<int>(data.size()));
     bmem = BIO_push(b64, bmem);
 
     BIO_set_flags(bmem, BIO_FLAGS_BASE64_NO_NL);
     BIO_set_close(bmem, BIO_CLOSE);
-    int buffer_length = BIO_read(bmem, buffer, static_cast<int>(data.length()));
-
-    BIO_free_all(bmem);
-
-    vector<uint8_t> ret;
-
-    for (uint32_t i = 0; i < buffer_length; i++)
+    int buffer_length = BIO_read(bmem, buffer, static_cast<int>(data.size()));
+    if(buffer_length > 0)
     {
-        ret.push_back(buffer[i]);
+        for (uint32_t i = 0; i < buffer_length; i++)
+        {
+            ret.push_back(buffer[i]);
+        }
     }
+    else
+    {
+        throw runtime_error("BIO_read less then 0 bytes read err:" + to_string(ERR_get_error()));
+    }
+    
+    BIO_free_all(bmem);
 
     delete [] buffer;
 
