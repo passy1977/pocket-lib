@@ -158,9 +158,16 @@ std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::
         return nullopt;
     }
 
-    dao_user dao(database);
     auto&& user = *user_opt;
 
+    if(user == nullptr)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return nullopt;
+    }
+    
+    dao_user dao(database);
+    
     bool remote_connection_error = false;
     optional<user::ptr> user_from_net = nullopt;
     try
@@ -216,14 +223,23 @@ catch(const exception& e)
     return nullopt;
 }
 
-bool session::send_data(const std::optional<pods::user::ptr>& user)
+bool session::send_data(const std::optional<pods::user::ptr>& user_opt)
 {
-    if(!user)
+    if(secret.empty())
     {
+        error(typeid(this).name(), "Session not valid");
         return false;
     }
+    
+    auto&& user = user_opt.value();
 
-    return synchronizer->send_data(user.value());
+    if(user == nullptr)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
+    return synchronizer->send_data(user);
 }
 
 
@@ -253,6 +269,8 @@ bool session::logout(const optional<user::ptr>& user_opt)
 
     status = nullptr;
     
+    secret = "";
+    
     return true;
 }
 
@@ -268,6 +286,12 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
         full_path_file = &full_path_file[7];
     }
 
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return false;
+    }
+    
     if(!user_opt)
     {
         error(typeid(this).name(), "User empty");
@@ -276,6 +300,12 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
 
     auto&& user = user_opt.value();
 
+    if(user == nullptr)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
     if(device->user_id != user->id)
     {
         throw runtime_error("User id not match");
@@ -321,14 +351,27 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
         return false;
     }
 
+    
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return false;
+    }
+    
     if(!user_opt)
     {
         error(typeid(this).name(), "User empty");
         return false;
     }
-
+    
     auto&& user = user_opt.value();
 
+    if(user == nullptr)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
     if(device->user_id != user->id)
     {
         throw runtime_error("User id not match");
@@ -375,8 +418,20 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
         return false;
     }
 
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return false;
+    }
+    
     auto&& user = user_opt.value();
 
+    if(!user)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
     if(device->user_id != user->id)
     {
         throw runtime_error("User id not match");
@@ -402,11 +457,11 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
 
     XMLElement *element = root->FirstChildElement();
 
-    group group;
-    group.id = 0;
+    auto group = make_unique<class group>();
+    group->id = 0;
 
     while (element) {
-        import_data_legacy_group(user, dao, element, group);
+        import_data_legacy_group(user, dao, element, aes, group, enable_aes);
 
         element = element->NextSiblingElement();
     }
@@ -535,75 +590,121 @@ void session::import_data(const pods::user::ptr& user, nlohmann::json& json_grou
 
 }
 
-void session::import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+void session::import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const
 {
     group::ptr group = nullptr;
     string &&name = element->Name();
-    if (name == group::get_name() || name == "entry")
+    if (name == "group" || name == "entry")
     {
 
         group = make_unique<struct group>();
-        group->title = element->Attribute("title");
-        if (element->FindAttribute("icon")) {
-            group->icon = element->Attribute("icon");
+        if(enable_aes)
+        {
+            group->title = aes.encrypt(element->Attribute("title"));
+            if (element->FindAttribute("icon"))
+            {
+                group->icon = aes.encrypt(element->Attribute("icon"));
+            }
+            if (element->FindAttribute("note"))
+            {
+                group->note = aes.encrypt(element->Attribute("note"));
+            }
         }
-        if (element->FindAttribute("note")) {
-            group->note = element->Attribute("note");
+        else
+        {
+            group->title = element->Attribute("title");
+            if (element->FindAttribute("icon"))
+            {
+                group->icon = element->Attribute("icon");
+            }
+            if (element->FindAttribute("note"))
+            {
+                group->note = element->Attribute("note");
+            }
         }
-        group->group_id = father.id;
+        
+        group->group_id = father->id;
         group->synchronized = false;
         group->user_id = user->id;
 
-        auto last = dao.persist<struct group>(group, true);
+        group->id = dao.persist<struct group>(group, true);
 
         auto child = element->FirstChildElement();
         while(child)
         {
 
-            import_data_legacy_group(user, dao, child, *group);
+            import_data_legacy_group(user, dao, child, aes, group, enable_aes);
 
             child = child->NextSiblingElement();
         }
 
     }
-    else if (name == group_field::get_name())
+    else if (name == "groupField")
     {
-        import_data_legacy_group_field(user, dao, element, *group);
+        if(group == nullptr)
+        {
+            group = make_unique<class group>(*father);
+        }
+        import_data_legacy_group_field(user, dao, element, aes, group, enable_aes);
     }
-    else if (name == field::get_name())
+    else if (name == "field")
     {
-        import_data_legacy_field(user, dao, element, *group);
+        if(group == nullptr)
+        {
+            group = make_unique<class group>(*father);
+        }
+        import_data_legacy_field(user, dao, element, aes, group, enable_aes);
     }
 }
 
-void session::import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+void session::import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const
 {
     auto group_field = make_unique<struct group_field>();
-    group_field->title = element->Attribute("title");
+    if(enable_aes)
+    {
+        group_field->title = aes.encrypt(element->Attribute("title"));
+    
+    }
+    else
+    {
+	group_field->title = element->Attribute("title");
+    }    
     if (element->FindAttribute("hidden"))
     {
         group_field->is_hidden = element->BoolAttribute("hidden");
     }
-    group_field->group_id = father.id;
+    group_field->group_id = father->id;
     group_field->synchronized = false;
     group_field->user_id = user->id;
 
     dao.persist<struct group_field>(group_field);
 }
 
-void session::import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+void session::import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const
 {
     auto field = make_unique<struct field>();
-    field->title = element->Attribute("title");
-    if (element->FindAttribute("value"))
+    if(enable_aes)
     {
-        field->value = element->Attribute("value");
+        field->title = aes.encrypt(element->Attribute("title"));
+        if (element->FindAttribute("value"))
+	{
+    	    field->value = aes.encrypt(element->Attribute("value"));
+        }
     }
+    else
+    {
+	field->title = element->Attribute("title");
+	if (element->FindAttribute("value"))
+	{
+    	    field->value = element->Attribute("value");
+        }
+    }    
+
     if (element->FindAttribute("hidden"))
     {
         field->is_hidden = element->BoolAttribute("hidden");
     }
-    field->group_id = father.id;
+    field->group_id = father->id;
     field->synchronized = false;
     field->user_id = user->id;
 

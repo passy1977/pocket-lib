@@ -29,8 +29,10 @@
 #include "pocket/globals.hpp"
 #include "pocket-views/view.hpp"
 
+#include "tinyxml2.h"
+
 #include <optional>
-#include <tinyxml2.h>
+
 
 #ifndef POCKET_ENABLE_AES
 #warning AES disabled, data stored non safe
@@ -104,11 +106,11 @@ private:
 
     void import_data(const pods::user::ptr& user, nlohmann::json& json_group, const daos::dao& dao, const services::aes& aes, std::optional<pods::group*> father, bool enable_aes) const;
 
-    void import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
+    void import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
-    void import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
+    void import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
-    void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
+    void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
     void lock();
 
