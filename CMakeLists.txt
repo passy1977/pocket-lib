@@ -61,6 +61,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
+message(STATUS "start tinyxml2 download")
+FetchContent_Declare(
+        tinyxml2
+        GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+        GIT_TAG 11.0.0
+)
+FetchContent_MakeAvailable(tinyxml2)
+
+
 file(GLOB_RECURSE POCKET_INCLUDES CONFIGURE_DEPENDS "inc/pocket/*.hpp" "thread-pool/include/*.hpp")
 file(GLOB_RECURSE POCKET_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
@@ -96,11 +105,13 @@ target_link_libraries(${PROJECT_NAME}
         ${OPENSSL_LIBRARIES}
         ${SQLITE3_LIBRARIES}
         nlohmann_json::nlohmann_json
+        tinyxml2
         dl
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/inc
+#        ${CMAKE_CURRENT_SOURCE_DIR}/inc/tinyxml2
         ${CMAKE_CURRENT_SOURCE_DIR}/pocket-controllers/inc
         ${CMAKE_CURRENT_SOURCE_DIR}/pocket-daos/inc
         ${CMAKE_CURRENT_SOURCE_DIR}/pocket-iface/inc
@@ -143,6 +154,7 @@ target_link_libraries(${PROJECT_NAME}-test
         ${OPENSSL_LIBRARIES}
         ${SQLITE3_LIBRARIES}
         nlohmann_json::nlohmann_json
+        tinyxml2
         dl
         GTest::gtest
         GTest::gtest_main

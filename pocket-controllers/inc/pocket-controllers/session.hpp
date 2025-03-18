@@ -30,6 +30,7 @@
 #include "pocket-views/view.hpp"
 
 #include <optional>
+#include <tinyxml2.h>
 
 #ifndef POCKET_ENABLE_AES
 #warning AES disabled, data stored non safe
@@ -75,6 +76,8 @@ public:
 
     bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
+    bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
+
     inline services::synchronizer::stat get_status() const noexcept
     {
         return *status;
@@ -100,6 +103,12 @@ private:
     void export_data(nlohmann::json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const;
 
     void import_data(const pods::user::ptr& user, nlohmann::json& json_group, const daos::dao& dao, const services::aes& aes, std::optional<pods::group*> father, bool enable_aes) const;
+
+    void import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
+
+    void import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
+
+    void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const;
 
     void lock();
 

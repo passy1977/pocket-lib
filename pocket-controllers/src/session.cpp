@@ -43,7 +43,7 @@ using views::view;
 using namespace std;
 using namespace std::filesystem;
 using namespace nlohmann;
-
+using namespace tinyxml2;
 
 
 session::session(const optional<string>& config_json, const optional<string>& config_path)
@@ -356,6 +356,64 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
     return true;
 }
 
+bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes)
+{
+    if(full_path_file.starts_with("file://"))
+    {
+        full_path_file = &full_path_file[7];
+    }
+
+    if(!exists(full_path_file))
+    {
+        error(typeid(this).name(), "File not found:" + full_path_file);
+        return false;
+    }
+
+    if(!user_opt)
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    auto&& user = user_opt.value();
+
+    if(device->user_id != user->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    daos::dao dao{database};
+    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
+
+
+    XMLDocument document;
+    document.LoadFile(full_path_file.c_str());
+
+    if(document.ErrorID())
+    {
+        throw runtime_error(document.ErrorStr());
+    }
+
+    dao.del_all<field>();
+    dao.del_all<group_field>();
+    dao.del_all<group>();
+
+    XMLElement *root = document.FirstChildElement("groups");
+
+    XMLElement *element = root->FirstChildElement();
+
+    group group;
+    group.id = 0;
+
+    while (element) {
+        import_data_legacy_group(user, dao, element, group);
+
+        element = element->NextSiblingElement();
+    }
+
+    return true;
+}
+
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
 {
     if(group->deleted)
@@ -475,6 +533,81 @@ void session::import_data(const pods::user::ptr& user, nlohmann::json& json_grou
         }
     }
 
+}
+
+void session::import_data_legacy_group(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+{
+    group::ptr group = nullptr;
+    string &&name = element->Name();
+    if (name == group::get_name() || name == "entry")
+    {
+
+        group = make_unique<struct group>();
+        group->title = element->Attribute("title");
+        if (element->FindAttribute("icon")) {
+            group->icon = element->Attribute("icon");
+        }
+        if (element->FindAttribute("note")) {
+            group->note = element->Attribute("note");
+        }
+        group->group_id = father.id;
+        group->synchronized = false;
+        group->user_id = user->id;
+
+        auto last = dao.persist<struct group>(group, true);
+
+        auto child = element->FirstChildElement();
+        while(child)
+        {
+
+            import_data_legacy_group(user, dao, child, *group);
+
+            child = child->NextSiblingElement();
+        }
+
+    }
+    else if (name == group_field::get_name())
+    {
+        import_data_legacy_group_field(user, dao, element, *group);
+    }
+    else if (name == field::get_name())
+    {
+        import_data_legacy_field(user, dao, element, *group);
+    }
+}
+
+void session::import_data_legacy_group_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+{
+    auto group_field = make_unique<struct group_field>();
+    group_field->title = element->Attribute("title");
+    if (element->FindAttribute("hidden"))
+    {
+        group_field->is_hidden = element->BoolAttribute("hidden");
+    }
+    group_field->group_id = father.id;
+    group_field->synchronized = false;
+    group_field->user_id = user->id;
+
+    dao.persist<struct group_field>(group_field);
+}
+
+void session::import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, pods::group &father) const
+{
+    auto field = make_unique<struct field>();
+    field->title = element->Attribute("title");
+    if (element->FindAttribute("value"))
+    {
+        field->value = element->Attribute("value");
+    }
+    if (element->FindAttribute("hidden"))
+    {
+        field->is_hidden = element->BoolAttribute("hidden");
+    }
+    field->group_id = father.id;
+    field->synchronized = false;
+    field->user_id = user->id;
+
+    dao.persist<struct field>(field);
 }
 
 void session::lock()
