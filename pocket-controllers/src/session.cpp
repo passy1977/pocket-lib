@@ -460,7 +460,8 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
     auto group = make_unique<class group>();
     group->id = 0;
 
-    while (element) {
+    while (element)
+    {
         import_data_legacy_group(user, dao, element, aes, group, enable_aes);
 
         element = element->NextSiblingElement();
@@ -626,7 +627,7 @@ void session::import_data_legacy_group(const pods::user::ptr& user, const daos::
         group->group_id = father->id;
         group->synchronized = false;
         group->user_id = user->id;
-
+        
         group->id = dao.persist<struct group>(group, true);
 
         auto child = element->FirstChildElement();
