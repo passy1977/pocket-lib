@@ -155,7 +155,7 @@ std::string network::perform(network::method method, const std::string_view& url
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret_data);
   
-#ifndef DISABLE_SERVER_TIMEOUT
+#ifndef POCKET_DISABLE_SERVER_TIMEOUT
     // timeout in seconds
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
     

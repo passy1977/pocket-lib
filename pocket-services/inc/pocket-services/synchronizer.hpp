@@ -82,7 +82,7 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
-    bool send_data(const pods::user::ptr& user);
+    std::optional<pods::user::ptr>  send_data(const pods::user::ptr& user);
 
     bool invalidate_data(const pods::user::ptr& user);
 

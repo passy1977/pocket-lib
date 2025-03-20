@@ -70,7 +70,7 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt);
 
-    bool send_data(const std::optional<pods::user::ptr>& user);
+    std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user);
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 

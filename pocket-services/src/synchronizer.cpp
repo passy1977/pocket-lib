@@ -130,12 +130,12 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 }
 
 
-bool synchronizer::send_data(const pods::user::ptr& user)
+std::optional<pods::user::ptr> synchronizer::send_data(const pods::user::ptr& user)
 {
     if(status != stat::READY)
     {
-        error(typeid(this).name(), "No network login impossible send data");
-        return false;
+        error(typeid(this).name(), "No network impossible send data");
+        return nullopt;
     }
 
     auto&& fut_data = pool.submit_task([this]
@@ -228,11 +228,16 @@ bool synchronizer::send_data(const pods::user::ptr& user)
     try
     {
         auto&& data = fut_data.get();
-        auto&& response = fut_response.get();
-        return parse_data_from_net(response, data).has_value();
+        
+        auto&& ret = parse_data_from_net(fut_response.get(), data);
+
+        set_status(stat::READY);
+
+        return ret;
     }
     catch (const runtime_error& e)
     {
+        set_status(stat::NO_NETWORK);
         throw;
     }
 

@@ -223,12 +223,12 @@ catch(const exception& e)
     return nullopt;
 }
 
-bool session::send_data(const std::optional<pods::user::ptr>& user_opt)
+std::optional<pods::user::ptr> session::send_data(const std::optional<pods::user::ptr>& user_opt)
 {
     if(secret.empty())
     {
         error(typeid(this).name(), "Session not valid");
-        return false;
+        return nullopt;
     }
     
     auto&& user = user_opt.value();
@@ -236,10 +236,44 @@ bool session::send_data(const std::optional<pods::user::ptr>& user_opt)
     if(user == nullptr)
     {
         error(typeid(this).name(), "User nullptr");
-        return false;
+        return nullopt;
     }
     
-    return synchronizer->send_data(user);
+    bool remote_connection_error = false;
+    optional<user::ptr> user_from_net = nullopt;
+    try
+    {
+        user_from_net = synchronizer->send_data(user);
+    }
+    catch (const runtime_error& e)
+    {
+        remote_connection_error = true;
+        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+    }
+    
+
+    if(user_from_net)
+    {
+        dao_user dao(database);
+        auto&& u = user_from_net.value();
+        if(u->id != device->user_id &&  user->id != u->id && u->status != user::stat::ACTIVE)
+        {
+            return nullopt;
+        }
+
+
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+        u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
+        u->passwd = crypto_encode_sha512(user->passwd);
+
+        dao.persist(u);
+        u->passwd = user->passwd;
+        
+        return make_unique<class user>(*u);
+    }
+    
+    return nullopt;
 }
 
 
@@ -249,11 +283,21 @@ bool session::logout(const optional<user::ptr>& user_opt)
     {
         synchronizer->invalidate_data(user_opt.value());
     }
-    
+    auto&& file_db_path = config->get_config_path();
+    if(!file_db_path.ends_with(path::preferred_separator))
+    {
+        file_db_path += path::preferred_separator;
+    }
+    file_db_path += device->uuid;
+    file_db_path += ".db";
+
     if(database)
     {
         database->close();
     }
+    
+    remove(file_db_path.c_str());
+    
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
     
