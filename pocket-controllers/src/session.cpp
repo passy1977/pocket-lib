@@ -122,7 +122,7 @@ const device::opt& session::init()
     return device;
 }
 
-std::optional<user::ptr> session::login(const string& email, const string& passwd)
+optional<user::ptr> session::login(const string& email, const string& passwd)
 {
     if(email.empty() || passwd.empty())
     {
@@ -150,7 +150,7 @@ std::optional<user::ptr> session::login(const string& email, const string& passw
 }
 
 
-std::optional<user::ptr> session::retrieve_data(const std::optional<pods::user::ptr>& user_opt) try
+optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt) try
 {
     if(!user_opt)
     {
@@ -223,7 +223,7 @@ catch(const exception& e)
     return nullopt;
 }
 
-std::optional<pods::user::ptr> session::send_data(const std::optional<pods::user::ptr>& user_opt)
+optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
 {
     if(secret.empty())
     {
@@ -273,6 +273,58 @@ std::optional<pods::user::ptr> session::send_data(const std::optional<pods::user
         return make_unique<class user>(*u);
     }
     
+    return nullopt;
+}
+
+optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const string_view& new_passwd)
+{
+    if(new_passwd.empty())
+    {
+        error(typeid(this).name(), "new_passwd empty");
+        return nullopt;
+    }
+
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return nullopt;
+    }
+
+    auto&& user = user_opt.value();
+
+    if(user == nullptr)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return nullopt;
+    }
+
+    bool result_from_net = false;
+    try
+    {
+        result_from_net = synchronizer->change_passwd(user, new_passwd);
+    }
+    catch (const runtime_error& e)
+    {
+        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+    }
+
+
+    if(result_from_net)
+    {
+        dao_user dao(database);
+
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+        u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
+        user::ptr u = make_unique<class user>(*user);
+        u->passwd = crypto_encode_sha512(new_passwd);
+
+        dao.persist(u);
+        u->passwd = user->passwd;
+
+        return std::move(u);
+    }
+
     return nullopt;
 }
 

@@ -243,6 +243,56 @@ std::optional<pods::user::ptr> synchronizer::send_data(const pods::user::ptr& us
 
 }
 
+bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd)
+{
+    if(status != stat::READY)
+    {
+        error(typeid(this).name(), "No network impossible send data");
+        return false;
+    }
+
+    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd, timestamp_last_update = user->timestamp_last_update]() mutable
+   {
+
+       network network;
+       try
+       {
+
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+           timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
+           auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd + DIVISOR + new_passwd.data());
+
+           auto&& content = network.perform(network::method::PUT, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+           set_status(stat{network.get_http_code()});
+           return content;
+       }
+       catch (const runtime_error& e)
+       {
+           set_status(stat{network.get_http_code()});
+           secret = "";
+           return string(ERROR_HTTP_CODE) + e.what();
+       }
+   });
+
+
+    try
+    {
+        auto&& content = fut_response.get();
+
+        parse_data_from_change_passwd(content);
+
+        set_status(stat::READY);
+
+        return true;
+    }
+    catch (const runtime_error& e)
+    {
+        set_status(stat::NO_NETWORK);
+        throw;
+    }
+}
+
 bool synchronizer::invalidate_data(const user::ptr& user)
 {
     if(user == nullptr)
@@ -397,6 +447,12 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
     }
     return nullopt;
 }
+
+bool synchronizer::parse_data_from_change_passwd(const string_view& response)
+{
+    return true;
+}
+
 
 }
 

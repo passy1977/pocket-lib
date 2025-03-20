@@ -50,7 +50,7 @@ public:
         DEVICE_ID_NOT_MATCH = 602,
         DEVICE_NOT_FOUND = 603,
         SECRET_NOT_MATCH = 604,
-        USER_ID_NOT_MATCH = 605,
+        PASSWD_ERROR = 605,
         TIMESTAMP_LAST_UPDATE_NOT_MATCH = 606,
         CACHE_NOT_FOND = 607,
         SECRET_EMPTY = 608,
@@ -82,7 +82,9 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
-    std::optional<pods::user::ptr>  send_data(const pods::user::ptr& user);
+    std::optional<pods::user::ptr> send_data(const pods::user::ptr& user);
+
+    bool change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd);
 
     bool invalidate_data(const pods::user::ptr& user);
 
@@ -100,6 +102,8 @@ private:
     stat status = stat::READY;
 
     std::optional<pods::user::ptr> parse_data_from_net(const std::string_view& response, pods::server_id_helper& data);
+
+    bool parse_data_from_change_passwd(const std::string_view& response);
 
     template<iface::require_pod T>
     bool update_database_table(const std::vector<T*> vect, pods::server_id_helper& data) try

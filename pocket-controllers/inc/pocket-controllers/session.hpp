@@ -70,7 +70,9 @@ public:
 
     std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt);
 
-    std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user);
+    std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user_opt);
+
+    std::optional<pods::user::ptr> change_passwd(const std::optional<pods::user::ptr>& user_opt, const std::string_view& new_passwd);
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
