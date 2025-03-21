@@ -278,13 +278,13 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
 
     try
     {
-        auto&& content = fut_response.get();
+        if(parse_data_from_change_passwd(fut_response.get()))
+        {
+            set_status(stat::READY);
 
-        parse_data_from_change_passwd(content);
-
-        set_status(stat::READY);
-
-        return true;
+            return true;
+        }
+        return false;
     }
     catch (const runtime_error& e)
     {
@@ -450,7 +450,7 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
 
 bool synchronizer::parse_data_from_change_passwd(const string_view& response)
 {
-    return true;
+    return response == "true";
 }
 
 

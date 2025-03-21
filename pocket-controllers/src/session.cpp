@@ -122,7 +122,7 @@ const device::opt& session::init()
     return device;
 }
 
-optional<user::ptr> session::login(const string& email, const string& passwd)
+optional<user::ptr> session::login(const string& email, const string& passwd, bool enable_aes)
 {
     if(email.empty() || passwd.empty())
     {
@@ -137,20 +137,20 @@ optional<user::ptr> session::login(const string& email, const string& passwd)
     {
         auto&& user = user_from_db.value();
         user.passwd = passwd;
-        return retrieve_data(make_unique<struct user>(user));
+        return retrieve_data(make_unique<struct user>(user), enable_aes);
     }
     else
     {
         return retrieve_data(make_unique<struct user>(user{
                 .email = email,
                 .passwd = passwd
-        }));
+        }), enable_aes);
     }
 
 }
 
 
-optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt) try
+optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, bool enable_aes) try
 {
     if(!user_opt)
     {
@@ -197,17 +197,17 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt) 
         dao.persist(u);
         u->passwd = user->passwd;
 
-        view_group = make_unique<view<group>>(u, database, POCKET_ENABLE_AES);
-        view_group_field = make_unique<view<group_field>>(u, database, POCKET_ENABLE_AES);
-        view_field = make_unique<view<field>>(u, database, POCKET_ENABLE_AES);
+        view_group = make_unique<view<group>>(u, database, enable_aes);
+        view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
+        view_field = make_unique<view<field>>(u, database, enable_aes);
 
         return std::move(u);
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-        view_group = make_unique<view<group>>(user, database, POCKET_ENABLE_AES);
-        view_group_field = make_unique<view<group_field>>(user, database, POCKET_ENABLE_AES);
-        view_field = make_unique<view<field>>(user, database, POCKET_ENABLE_AES);
+        view_group = make_unique<view<group>>(user, database, enable_aes);
+        view_group_field = make_unique<view<group_field>>(user, database, enable_aes);
+        view_field = make_unique<view<field>>(user, database, enable_aes);
 
         return make_unique<struct user>(*user);
     }
@@ -276,7 +276,7 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     return nullopt;
 }
 
-optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const string_view& new_passwd)
+optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const std::string_view& full_path_file, const string_view& new_passwd, bool enable_aes)
 {
     if(new_passwd.empty())
     {
@@ -298,6 +298,19 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
         return nullopt;
     }
 
+    try
+    {
+        if(!export_data(user_opt, full_path_file.data(), enable_aes))
+        {
+            return nullopt;
+        }
+    }
+    catch (const runtime_error& e)
+    {
+        error(typeid(this).name(), e.what());
+        return nullopt;
+    }
+    
     bool result_from_net = false;
     try
     {
@@ -306,8 +319,8 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
     catch (const runtime_error& e)
     {
         error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+        throw;
     }
-
 
     if(result_from_net)
     {
@@ -316,13 +329,47 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
         u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
-        user::ptr u = make_unique<class user>(*user);
+        optional<user::ptr> user_ret = make_unique<class user>(*user);
+        user::ptr& u = user_ret.value();
+        u->passwd = new_passwd;
+        
+        try
+        {
+            if(!import_data(user_ret, full_path_file.data(), enable_aes))
+            {
+                error(typeid(this).name(), "Impossible import data");
+                return nullopt;
+            }
+        }
+        catch (const runtime_error& e)
+        {
+            error(typeid(this).name(), e.what());
+            return nullopt;
+        }
+        
+        try
+        {
+            if(!send_data(user_ret))
+            {
+                error(typeid(this).name(), "Impossible send data");
+                return nullopt;
+            }
+        }
+        catch (const runtime_error& e)
+        {
+            error(typeid(this).name(), e.what());
+            return nullopt;
+        }
+        
+        view_group = make_unique<view<group>>(u, database, enable_aes);
+        view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
+        view_field = make_unique<view<field>>(u, database, enable_aes);
+        
         u->passwd = crypto_encode_sha512(new_passwd);
-
         dao.persist(u);
-        u->passwd = user->passwd;
-
-        return std::move(u);
+        u->passwd = new_passwd;
+        
+        return user_ret;
     }
 
     return nullopt;

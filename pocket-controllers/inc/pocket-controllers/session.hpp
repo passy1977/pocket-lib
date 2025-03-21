@@ -66,13 +66,13 @@ public:
 
     const pods::device::opt& init();
 
-    std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd);
+    std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd, bool enable_aes = true);
 
-    std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt);
+    std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt, bool enable_aes = true);
 
     std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user_opt);
 
-    std::optional<pods::user::ptr> change_passwd(const std::optional<pods::user::ptr>& user_opt, const std::string_view& new_passwd);
+    std::optional<pods::user::ptr> change_passwd(const std::optional<pods::user::ptr>& user_opt, const std::string_view& full_path_file,  const std::string_view& new_passwd, bool enable_aes = true);
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
