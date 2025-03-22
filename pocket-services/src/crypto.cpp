@@ -245,15 +245,17 @@ aes::aes(const string&& iv, const string& key)
         throw runtime_error("iv size != " + to_string(AES_BLOCK_SIZE));
     }
 
-    uint8_t i = 0;
-    for (; i < key.size() && i < KEY_SIZE; i++)
-    {
-        this->key[i] = key[i];
-    }
-    for (; i < KEY_SIZE; i++)
-    {
-        this->key[i] = PADDING;
-    }
+//    uint8_t i = 0;
+//    for (; i < key.size() && i < KEY_SIZE; i++)
+//    {
+//        this->key[i] = key[i];
+//    }
+//    for (; i < KEY_SIZE; i++)
+//    {
+//        this->key[i] = PADDING;
+//    }
+
+    memcpy(this->key, set_key_padding(key).data(), KEY_SIZE);
 
     memset(this->iv, 0x00, AES_BLOCK_SIZE);
     memcpy(this->iv, iv.data(), AES_BLOCK_SIZE);
@@ -281,7 +283,7 @@ aes::~aes()
     EVP_CIPHER_CTX_free(ctx);
 }
 
-std::string aes::encrypt(const string_view& plain) const
+std::string aes::encrypt(const string_view& plain, bool url_compliant) const
 {
     if(plain.empty())
     {
@@ -329,21 +331,21 @@ std::string aes::encrypt(const string_view& plain) const
     }
     cipher_text_len += len;
     
-    auto&& ret = crypto_base64_encode(cipher_text, cipher_text_len, false);
+    auto&& ret = crypto_base64_encode(cipher_text, cipher_text_len, url_compliant);
 
     delete[] cipher_text;
 
     return ret;
 }
 
-std::string aes::decrypt(const string_view& encrypted) const
+std::string aes::decrypt(const string_view& encrypted, bool url_compliant) const
 {
     if(encrypted.empty())
     {
         return  "";
     }
 
-    auto&& cipher = crypto_base64_decode(encrypted.data());
+    auto&& cipher = crypto_base64_decode(encrypted.data(), url_compliant);
 
     auto plain_text = new(nothrow) uint8_t[encrypted.size()];
     if(plain_text == nullptr)
@@ -397,6 +399,22 @@ std::string aes::decrypt(const string_view& encrypted) const
     delete[] plain_text;
 
     return ret;
+}
+
+vector<uint8_t> aes::set_key_padding(const string_view& key) noexcept
+{
+    uint8_t local_key[KEY_SIZE]{0};
+    uint8_t i = 0;
+    for (; i < key.size() && i < KEY_SIZE; i++)
+    {
+        local_key[i] = key[i];
+    }
+    for (; i < KEY_SIZE; i++)
+    {
+        local_key[i] = PADDING;
+    }
+
+    return {local_key, local_key + sizeof(local_key)};
 }
 
 }

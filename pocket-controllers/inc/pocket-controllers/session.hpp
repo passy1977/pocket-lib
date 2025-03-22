@@ -72,7 +72,7 @@ public:
 
     std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user_opt);
 
-    std::optional<pods::user::ptr> change_passwd(const std::optional<pods::user::ptr>& user_opt, const std::string_view& full_path_file,  const std::string_view& new_passwd, bool enable_aes = true);
+    std::optional<pods::user::ptr> change_passwd(const std::optional<pods::user::ptr>& user_opt, const std::string& full_path_file, std::string new_passwd, bool enable_aes = true, bool change_passwd_data_on_server = false);
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
 
@@ -102,6 +102,21 @@ public:
         return view_field;
     }
 
+    inline void set_synchronizer_timeout(long timeout) const noexcept
+    {
+        if(synchronizer)
+        {
+            synchronizer->set_timeout(timeout);
+        }
+    }
+
+    inline void set_synchronizer_connect_timeout(long connect_timeout) const noexcept
+    {
+        if(synchronizer)
+        {
+            synchronizer->set_connect_timeout(connect_timeout);
+        }
+    }
     
 private:
     void export_data(nlohmann::json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const;

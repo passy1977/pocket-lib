@@ -276,12 +276,19 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     return nullopt;
 }
 
-optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const std::string_view& full_path_file, const string_view& new_passwd, bool enable_aes)
+optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const std::string& full_path_file, string new_passwd, bool enable_aes, bool change_passwd_data_on_server)
 {
     if(new_passwd.empty())
     {
         error(typeid(this).name(), "new_passwd empty");
         return nullopt;
+    }
+
+    auto&& new_passwd_tmp = aes::set_key_padding(new_passwd);
+    new_passwd.clear();
+    for(const auto& it : new_passwd_tmp)
+    {
+        new_passwd += static_cast<char>(it);
     }
 
     if(secret.empty())
@@ -314,7 +321,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
     bool result_from_net = false;
     try
     {
-        result_from_net = synchronizer->change_passwd(user, new_passwd);
+        result_from_net = synchronizer->change_passwd(user, new_passwd, change_passwd_data_on_server);
     }
     catch (const runtime_error& e)
     {
@@ -322,54 +329,61 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
         throw;
     }
 
-    if(result_from_net)
+    if(!change_passwd_data_on_server)
     {
-        dao_user dao(database);
+        if(result_from_net)
+        {
+            dao_user dao(database);
 
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
-        u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+            u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
-        optional<user::ptr> user_ret = make_unique<class user>(*user);
-        user::ptr& u = user_ret.value();
-        u->passwd = new_passwd;
-        
-        try
-        {
-            if(!import_data(user_ret, full_path_file.data(), enable_aes))
+            optional<user::ptr> user_ret = make_unique<class user>(*user);
+            user::ptr& u = user_ret.value();
+            u->passwd = new_passwd;
+
+            try
             {
-                error(typeid(this).name(), "Impossible import data");
+                if(!import_data(user_ret, full_path_file.data(), enable_aes))
+                {
+                    error(typeid(this).name(), "Impossible import data");
+                    return nullopt;
+                }
+            }
+            catch (const runtime_error& e)
+            {
+                error(typeid(this).name(), e.what());
                 return nullopt;
             }
-        }
-        catch (const runtime_error& e)
-        {
-            error(typeid(this).name(), e.what());
-            return nullopt;
-        }
-        
-        try
-        {
-            if(!send_data(user_ret))
+
+            try
             {
-                error(typeid(this).name(), "Impossible send data");
+                if(!send_data(user_ret))
+                {
+                    error(typeid(this).name(), "Impossible send data");
+                    return nullopt;
+                }
+            }
+            catch (const runtime_error& e)
+            {
+                error(typeid(this).name(), e.what());
                 return nullopt;
             }
+
+            view_group = make_unique<view<group>>(u, database, enable_aes);
+            view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
+            view_field = make_unique<view<field>>(u, database, enable_aes);
+
+            u->passwd = crypto_encode_sha512(new_passwd);
+            dao.persist(u);
+            u->passwd = new_passwd;
+
+            return user_ret;
         }
-        catch (const runtime_error& e)
-        {
-            error(typeid(this).name(), e.what());
-            return nullopt;
-        }
-        
-        view_group = make_unique<view<group>>(u, database, enable_aes);
-        view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
-        view_field = make_unique<view<field>>(u, database, enable_aes);
-        
-        u->passwd = crypto_encode_sha512(new_passwd);
-        dao.persist(u);
-        u->passwd = new_passwd;
-        
-        return user_ret;
+    }
+    else if(result_from_net)
+    {
+        return retrieve_data(user_opt, enable_aes);
     }
 
     return nullopt;

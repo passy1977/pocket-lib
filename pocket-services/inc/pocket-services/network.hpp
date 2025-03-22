@@ -43,6 +43,8 @@ class network final
     curl_slist* headers = nullptr;
     
     uint64_t http_code = 0;
+    long timeout = 0;
+    long connect_timeout = 0;
 public:    
     enum class method
     {
@@ -56,7 +58,17 @@ public:
     POCKET_NO_COPY_NO_MOVE(network)
 
     std::string perform(method method, const std::string_view& url, const map_parameters& params = {}, const std::string_view& json_data = {});
-    
+
+    inline void set_timeout(long timeout) noexcept
+    {
+        network::timeout = timeout;
+    }
+
+    inline void set_connect_timeout(long connect_timeout) noexcept
+    {
+        network::connect_timeout = connect_timeout;
+    }
+
     inline uint64_t get_http_code() const noexcept
     {
         return http_code;

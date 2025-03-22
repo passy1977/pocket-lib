@@ -38,7 +38,10 @@ class synchronizer final
     services::database::ptr& database;
     std::string& secret;
     pods::device& device;
-    
+
+    long timeout = 0;
+    long connect_timeout = 0;
+
     BS::thread_pool<> pool{6};
 public:
     enum class stat : uint64_t
@@ -84,7 +87,7 @@ public:
 
     std::optional<pods::user::ptr> send_data(const pods::user::ptr& user);
 
-    bool change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd);
+    bool change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd, bool change_passwd_data_on_server);
 
     bool invalidate_data(const pods::user::ptr& user);
 
@@ -96,6 +99,16 @@ public:
     inline const stat* set_status() const noexcept
     {
         return &status;
+    }
+
+    inline void set_timeout(long timeout) noexcept
+    {
+        synchronizer::timeout = timeout;
+    }
+
+    inline void set_connect_timeout(long connect_timeout) noexcept
+    {
+        synchronizer::connect_timeout = connect_timeout;
     }
 
 private:

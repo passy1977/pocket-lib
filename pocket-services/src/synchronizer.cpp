@@ -87,6 +87,15 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
     auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()] () mutable
      {
          network network;
+         if(timeout)
+         {
+             network.set_timeout(timeout);
+         }
+
+         if(connect_timeout)
+         {
+             network.set_connect_timeout(connect_timeout);
+         }
          try
          {
              if(secret.empty())
@@ -177,6 +186,15 @@ std::optional<pods::user::ptr> synchronizer::send_data(const pods::user::ptr& us
     {
 
         network network;
+        if(timeout)
+        {
+            network.set_timeout(timeout);
+        }
+
+        if(connect_timeout)
+        {
+            network.set_connect_timeout(connect_timeout);
+        }
         try
         {
             auto&& ret = pool.submit_task([this]
@@ -243,7 +261,7 @@ std::optional<pods::user::ptr> synchronizer::send_data(const pods::user::ptr& us
 
 }
 
-bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd)
+bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_view& new_passwd, bool change_passwd_data_on_server)
 {
     if(status != stat::READY)
     {
@@ -251,10 +269,20 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
         return false;
     }
 
-    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd, timestamp_last_update = user->timestamp_last_update]() mutable
+    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd, timestamp_last_update = user->timestamp_last_update, change_passwd_data_on_server]() mutable
    {
 
        network network;
+       if(timeout)
+       {
+           network.set_timeout(timeout);
+       }
+
+       if(connect_timeout)
+       {
+           network.set_connect_timeout(connect_timeout);
+       }
+
        try
        {
 
@@ -263,7 +291,7 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
 #endif
            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd + DIVISOR + new_passwd.data());
 
-           auto&& content = network.perform(network::method::PUT, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+           auto&& content = network.perform(network::method::PUT, device.host + API_VERSION + "/" + device.uuid + "/" + crypt + "/" + to_string(change_passwd_data_on_server));
            set_status(stat{network.get_http_code()});
            return content;
        }
@@ -304,6 +332,15 @@ bool synchronizer::invalidate_data(const user::ptr& user)
        {
            set_status(stat::BUSY);
            network network;
+           if(timeout)
+           {
+               network.set_timeout(timeout);
+           }
+
+           if(connect_timeout)
+           {
+               network.set_connect_timeout(connect_timeout);
+           }
            try
            {
 

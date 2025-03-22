@@ -58,18 +58,19 @@ public:
     POCKET_NO_COPY_NO_MOVE(aes)
     ~aes();
 
-    std::string encrypt(const std::string_view &plain) const;
-    inline std::string encrypt(const std::string_view &&plain) const
+    std::string encrypt(const std::string_view &plain, bool url_compliant = false) const;
+    inline std::string encrypt(const std::string_view &&plain, bool url_compliant = false) const
     {
-        return encrypt(plain);
+        return encrypt(plain, url_compliant);
     }
 
-    std::string  decrypt(const std::string_view &encrypted) const;
-    inline std::string decrypt(const std::string_view &&encrypted) const
+    std::string  decrypt(const std::string_view &encrypted, bool url_compliant = false) const;
+    inline std::string decrypt(const std::string_view &&encrypted, bool url_compliant = false) const
     {
-        return decrypt(encrypted);
+        return decrypt(encrypted, url_compliant);
     }
 
+    static std::vector<uint8_t> set_key_padding(const std::string_view & key) noexcept;
 
 };
 
