@@ -93,3 +93,33 @@ catch (const std::exception& e)
     std::cerr << e.what() << std::endl;
     ASSERT_TRUE(false);
 }
+
+TEST_F(crypto_test, aes2) try
+{
+    using pocket::services::aes;
+
+    aes crypto(POCKET_AES_CBC_IV, "");
+
+    auto&& enc = crypto.encrypt("ciao");
+
+    ASSERT_TRUE(enc == "eKIbCVIPzA+wkVJEkbsv6g==");
+
+    enc = crypto.encrypt("sono");
+
+    ASSERT_TRUE(enc == "CRaDt0WrN+7ybjum5680mA==");
+
+    auto&& dec = crypto.decrypt("eKIbCVIPzA+wkVJEkbsv6g==");
+
+    ASSERT_TRUE(dec == "ciao");
+
+    dec = crypto.decrypt("CRaDt0WrN+7ybjum5680mA==");
+
+    ASSERT_TRUE(dec == "sono");
+
+}
+catch (const std::exception& e)
+{
+    std::cerr << e.what() << std::endl;
+    ASSERT_TRUE(false);
+}
+
