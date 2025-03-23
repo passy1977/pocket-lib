@@ -260,6 +260,11 @@ aes::aes(const string&& iv, const string& key)
     memset(this->iv, 0x00, AES_BLOCK_SIZE);
     memcpy(this->iv, iv.data(), AES_BLOCK_SIZE);
 
+    /* Create and initialise the context */
+    if(!(ctx = EVP_CIPHER_CTX_new()))
+    {
+        throw runtime_error(get_open_ssl_error());
+    }
 }
 
 aes::~aes()
@@ -273,6 +278,8 @@ aes::~aes()
         b = 0;
     }
 
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
 }
 
 std::string aes::encrypt(const string_view& plain, bool url_compliant) const
@@ -290,13 +297,6 @@ std::string aes::encrypt(const string_view& plain, bool url_compliant) const
 
     int len = 0;
     int cipher_text_len = 0;
-
-    /* Create and initialise the context */
-    EVP_CIPHER_CTX *ctx = nullptr;
-    if(!(ctx = EVP_CIPHER_CTX_new()))
-    {
-        throw runtime_error(get_open_ssl_error());
-    }
 
     /*
      * Initialise the encryption operation. IMPORTANT - ensure you use a key
@@ -330,9 +330,6 @@ std::string aes::encrypt(const string_view& plain, bool url_compliant) const
     }
     cipher_text_len += len;
 
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
-
     auto&& ret = crypto_base64_encode(cipher_text, cipher_text_len, url_compliant);
 
     delete[] cipher_text;
@@ -358,13 +355,6 @@ std::string aes::decrypt(const string_view& encrypted, bool url_compliant) const
 
     int len = 0;
     int plain_text_len = 0;
-
-    /* Create and initialise the context */
-    EVP_CIPHER_CTX *ctx = nullptr;
-    if(!(ctx = EVP_CIPHER_CTX_new()))
-    {
-        throw runtime_error(get_open_ssl_error());
-    }
 
     /*
     * Initialise the decryption operation. IMPORTANT - ensure you use a key
@@ -397,9 +387,6 @@ std::string aes::decrypt(const string_view& encrypted, bool url_compliant) const
         throw runtime_error(get_open_ssl_error());
     }
     plain_text_len += len;
-
-    /* Clean up */
-    EVP_CIPHER_CTX_free(ctx);
 
     string ret;
 

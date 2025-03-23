@@ -50,7 +50,7 @@ class aes final
     uint8_t key[KEY_SIZE]{0};
     uint8_t iv[AES_BLOCK_SIZE]{0};
 
-    //EVP_CIPHER_CTX *ctx = nullptr;
+    EVP_CIPHER_CTX *ctx = nullptr;
 public:
     using ptr = std::unique_ptr<aes>;
 

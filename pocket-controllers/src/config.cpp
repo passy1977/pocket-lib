@@ -81,7 +81,7 @@ catch (const nlohmann::detail::parse_error& e)
     throw runtime_error(e.what());
 }
     
-device config::parse(string_view config_json) try
+device config::parse(const string_view& config_json) try
 {
     auto&& device = json_to_device(config_json);
 

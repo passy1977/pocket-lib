@@ -276,19 +276,12 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     return nullopt;
 }
 
-optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const std::string& full_path_file, string new_passwd, bool enable_aes, bool change_passwd_data_on_server)
+optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const string_view& full_path_file, const string_view& new_passwd, bool enable_aes, bool change_passwd_data_on_server)
 {
     if(new_passwd.empty())
     {
         error(typeid(this).name(), "new_passwd empty");
         return nullopt;
-    }
-
-    auto&& new_passwd_tmp = aes::set_key_padding(new_passwd);
-    new_passwd.clear();
-    for(const auto& it : new_passwd_tmp)
-    {
-        new_passwd += static_cast<char>(it);
     }
 
     if(secret.empty())
