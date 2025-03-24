@@ -376,6 +376,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
     }
     else if(result_from_net)
     {
+        user_opt.value()->passwd = new_passwd;
         return retrieve_data(user_opt, enable_aes);
     }
 
