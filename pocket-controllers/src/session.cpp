@@ -390,20 +390,24 @@ bool session::logout(const optional<user::ptr>& user_opt)
     {
         synchronizer->invalidate_data(user_opt.value());
     }
-    auto&& file_db_path = config->get_config_path();
-    if(!file_db_path.ends_with(path::preferred_separator))
-    {
-        file_db_path += path::preferred_separator;
-    }
-    file_db_path += device->uuid;
-    file_db_path += ".db";
-
+    
     if(database)
     {
         database->close();
     }
     
-    remove(file_db_path.c_str());
+    if(user_opt)
+    {
+        auto&& file_db_path = config->get_config_path();
+        if(!file_db_path.ends_with(path::preferred_separator))
+        {
+            file_db_path += path::preferred_separator;
+        }
+        file_db_path += device->uuid;
+        file_db_path += ".db";
+        
+        remove(file_db_path.c_str());
+    }
     
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
@@ -419,6 +423,27 @@ bool session::logout(const optional<user::ptr>& user_opt)
     device = nullopt;
 
     status = nullptr;
+    
+    secret = "";
+    
+    return true;
+}
+    
+bool session::soft_logout(const optional<user::ptr>& user_opt)
+{
+    if(user_opt)
+    {
+        auto&& user = user_opt.value();
+        synchronizer->invalidate_data(user);
+        dao_user{database}.rm(*user);
+    }
+    
+    view_field->rm_all();
+    view_group_field->rm_all();
+    view_group->rm_all();
+    
+    fill(secret.begin(), secret.end(), 0x00);
+    unlock();
     
     secret = "";
     

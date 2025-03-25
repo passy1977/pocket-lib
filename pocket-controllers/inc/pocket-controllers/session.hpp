@@ -75,7 +75,9 @@ public:
     std::optional<pods::user::ptr> change_passwd(const std::optional <pods::user::ptr>& user_opt, const std::string_view& full_path_file, const std::string_view& new_passwd, bool enable_aes = true, bool change_passwd_data_on_server = true);
 
     bool logout(const std::optional<pods::user::ptr>& user_opt);
-
+    
+    bool soft_logout(const std::optional<pods::user::ptr>& user_opt);
+    
     bool export_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
     bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);

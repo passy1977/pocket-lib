@@ -129,6 +129,11 @@ INSERT INTO user
 
     return count > 0;
 }
+    
+bool dao_user::rm(const pods::user& user)
+{
+    return database->update("DELETE FROM user WHERE id = ?", {user.id});
+}
 
 }
 

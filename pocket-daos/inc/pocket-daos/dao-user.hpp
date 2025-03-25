@@ -44,6 +44,8 @@ public:
     pods::user::opt login(const std::string& email, const std::string& passwd);
 
     bool persist(const pods::user& user);
+    
+    bool rm(const pods::user& user);
 
     inline bool persist(const pods::user::ptr& user)
     {
