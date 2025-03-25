@@ -134,15 +134,15 @@ public:
     }
 
     template<iface::require_pod T>
-    inline int64_t del_all() const
-    {
-        return database->update("UPDATE " + T::get_name() + " SET deleted = 1, synchronized = 0");
-    }
-
-    template<iface::require_pod T>
     inline int64_t del(const T::ptr& t) const
     {
         return del(t->server_id);
+    }
+    
+    template<iface::require_pod T>
+    inline int64_t del_all() const
+    {
+        return database->update("UPDATE " + T::get_name() + " SET deleted = 1, synchronized = 0");
     }
     
     template<iface::require_pod T>
@@ -169,6 +169,12 @@ public:
         return rm(t->id);
     }
 
+    template<iface::require_pod T>
+    inline int64_t rm_all() const
+    {
+        return database->update("DELETE FROM " + T::get_name());
+    }
+    
     template<iface::require_pod T>
     inline int64_t rm_by_group_id(const T::ptr& t) const
     {

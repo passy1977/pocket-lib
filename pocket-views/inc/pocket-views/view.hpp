@@ -162,6 +162,10 @@ public:
         return del_by_group_id<T>(t->group_id);
     }
     
+    inline int64_t rm_all() const
+    {
+        return dao.rm_all<T>();
+    }
     
     inline int64_t persist(T::ptr& t) const
     {
