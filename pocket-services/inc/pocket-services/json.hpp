@@ -37,6 +37,8 @@ std::string net_helper_serialize_json(const pods::net_helper& net_helper);
 
 pods::device json_to_device(const std::string_view& str_json);
 
+std::string json_to_aes_cbc_iv(const std::string_view& str_json);
+
 pods::device json_to_device(const nlohmann::json& json);
 
 pods::user json_to_user(const nlohmann::json& json);

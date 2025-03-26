@@ -327,6 +327,33 @@ device json_to_device(const string_view& str_json)
     return json_to_device(json::parse(str_json));
 }
 
+std::string json_to_aes_cbc_iv(const std::string_view& str_json)
+{
+    if(str_json.empty())
+    {
+        throw runtime_error("str_json json empty");
+    }
+
+    const auto& json = json::parse(str_json);
+
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    string ret;
+    if(json.contains("aesCbcIv") && json["aesCbcIv"].is_string())
+    {
+        ret = json["aesCbcIv"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field aesCbcIv");
+    }
+
+    return ret;
+}
+
 user json_to_user(const json& json)
 {
     if (!json.is_object())

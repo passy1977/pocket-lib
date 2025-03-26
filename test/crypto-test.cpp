@@ -98,7 +98,7 @@ TEST_F(crypto_test, aes2) try
 {
     using pocket::services::aes;
 
-    aes crypto(POCKET_AES_CBC_IV, "");
+    aes crypto("1234567812345678", "");
 
     auto&& enc = crypto.encrypt("ciao");
 

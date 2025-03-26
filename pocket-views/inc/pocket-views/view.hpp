@@ -49,8 +49,8 @@ class view final
 public:
     using ptr = std::unique_ptr<view>;
 
-    explicit view(const pods::user::ptr &user, services::database::ptr& database, bool enable_aes = true) noexcept
-    : aes(POCKET_AES_CBC_IV, user->passwd)
+    explicit view(const pods::user::ptr &user, services::database::ptr& database, const std::string_view& aes_cbc_iv, bool enable_aes = true) noexcept
+    : aes(aes_cbc_iv, user->passwd)
     , database(database)
     , dao(database)
     , enable_aes(enable_aes)

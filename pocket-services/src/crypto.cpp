@@ -238,7 +238,7 @@ string crypto_generate_random_string(size_t length)
 }
 
 
-aes::aes(const string&& iv, const string& key)
+aes::aes(const string_view& iv, const string_view& key)
 {
     if (iv.length() != AES_BLOCK_SIZE)
     {

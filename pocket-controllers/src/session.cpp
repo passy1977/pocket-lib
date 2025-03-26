@@ -60,16 +60,18 @@ session::session(const optional<string>& config_json, const optional<string>& co
     
     this->config = make_unique<class config>(config_path);
 
-    device = config->parse(*config_json);
+    auto&& [device, aes_cbc_iv] = config->parse(*config_json);
+    this->device = std::move(device);
+    this->aes_cbc_iv = std::move(aes_cbc_iv);
 
     if(check_lock())
     {
-        throw runtime_error("Another session handle:" + device->uuid);
+        throw runtime_error("Another session handle:" + session::device->uuid);
     }
 
     lock();
 
-    info(typeid(*this).name(), "Create new session:" + device->uuid + " at:" + config->get_config_path() );
+    info(typeid(*this).name(), "Create new session:" + session::device->uuid + " at:" + config->get_config_path() );
 }
 
 session::~session() try
@@ -131,7 +133,6 @@ optional<user::ptr> session::login(const string& email, const string& passwd, bo
 
     dao_user dao(database);
 
-    //uint64_t timestamp_last_update = synchronizer::FULL_SYNC;
     auto&& user_from_db = dao.login(email, crypto_encode_sha512(passwd));
     if(user_from_db)
     {
@@ -197,17 +198,17 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, 
         dao.persist(u);
         u->passwd = user->passwd;
 
-        view_group = make_unique<view<group>>(u, database, enable_aes);
-        view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
-        view_field = make_unique<view<field>>(u, database, enable_aes);
+        view_group = make_unique<view<group>>(u, database, aes_cbc_iv, enable_aes);
+        view_group_field = make_unique<view<group_field>>(u, database, aes_cbc_iv, enable_aes);
+        view_field = make_unique<view<field>>(u, database, aes_cbc_iv, enable_aes);
 
         return std::move(u);
     }
     else if(remote_connection_error && !user->name.empty() && user->status == user::stat::ACTIVE)
     {
-        view_group = make_unique<view<group>>(user, database, enable_aes);
-        view_group_field = make_unique<view<group_field>>(user, database, enable_aes);
-        view_field = make_unique<view<field>>(user, database, enable_aes);
+        view_group = make_unique<view<group>>(user, database, aes_cbc_iv, enable_aes);
+        view_group_field = make_unique<view<group_field>>(user, database, aes_cbc_iv, enable_aes);
+        view_field = make_unique<view<field>>(user, database, aes_cbc_iv, enable_aes);
 
         return make_unique<struct user>(*user);
     }
@@ -363,9 +364,9 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
                 return nullopt;
             }
 
-            view_group = make_unique<view<group>>(u, database, enable_aes);
-            view_group_field = make_unique<view<group_field>>(u, database, enable_aes);
-            view_field = make_unique<view<field>>(u, database, enable_aes);
+            view_group = make_unique<view<group>>(u, database, aes_cbc_iv, enable_aes);
+            view_group_field = make_unique<view<group_field>>(u, database, aes_cbc_iv, enable_aes);
+            view_field = make_unique<view<field>>(u, database, aes_cbc_iv, enable_aes);
 
             u->passwd = crypto_encode_sha512(new_passwd);
             dao.persist(u);
@@ -424,7 +425,8 @@ bool session::logout(const optional<user::ptr>& user_opt)
 
     status = nullptr;
     
-    secret = "";
+    secret.clear();
+    aes_cbc_iv.clear();
     
     return true;
 }
@@ -444,8 +446,9 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
-    
-    secret = "";
+
+    secret.clear();
+    aes_cbc_iv.clear();
     
     return true;
 }
@@ -489,7 +492,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
 
     nlohmann::json json;
     daos::dao dao{database};
-    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
+    auto aes = services::aes(aes_cbc_iv, user->passwd);
 
     for(auto& group : dao.get_all<group>(0))
     {
@@ -554,7 +557,7 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
     }
 
     daos::dao dao{database};
-    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
+    auto aes = services::aes(aes_cbc_iv, user->passwd);
 
     json data = json::parse(ifstream(full_path_file));
 
@@ -614,7 +617,7 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
     }
 
     daos::dao dao{database};
-    auto aes = services::aes(POCKET_AES_CBC_IV, user->passwd);
+    auto aes = services::aes(aes_cbc_iv, user->passwd);
 
 
     XMLDocument document;

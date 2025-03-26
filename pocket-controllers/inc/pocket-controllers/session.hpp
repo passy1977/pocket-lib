@@ -56,6 +56,7 @@ class session final
     views::view<pods::field>::ptr view_field = nullptr;
 
     std::string secret;
+    std::string aes_cbc_iv;
     pods::device::opt device;
 
     const services::synchronizer::stat* status = nullptr;
@@ -83,6 +84,11 @@ public:
     bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
     bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
+
+    inline const std::string_view& get_aes_cbc_iv() const noexcept
+    {
+        return aes_cbc_iv;
+    }
 
     inline services::synchronizer::stat get_status() const noexcept
     {

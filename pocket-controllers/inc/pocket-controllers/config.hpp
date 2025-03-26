@@ -36,7 +36,7 @@ public:
     explicit config(const std::optional<std::string>& config_path = {});
     POCKET_NO_COPY_NO_MOVE(config)
 
-    pods::device parse(const std::string_view& config_json);
+    std::pair<pods::device, std::string> parse(const std::string_view& config_json);
 
     inline std::string get_config_path() const noexcept
     {

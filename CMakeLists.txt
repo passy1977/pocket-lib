@@ -12,6 +12,7 @@ add_definitions(-DPOCKET_DISABLE_DB_LOCK)
 add_definitions(-DPOCKET_MAX_BUFFER_RESPONSE_SIZE=10485760)
 #add_definitions(-DPOCKET_FORCE_TIMESTAMP_LAST_UPDATE=1739741159)
 add_definitions(-DPOCKET_ENABLE_LOG)
+add_definitions(-DPOCKET_ENABLE_AES)
 option(POCKET_FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
@@ -20,10 +21,9 @@ message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
 # Include the secrets file if it exists
 if(EXISTS "${CMAKE_SOURCE_DIR}/secrets.cmake")
     include(secrets.cmake)
-    message(STATUS "Found AES IV value")
-    add_definitions(-DPOCKET_AES_CBC_IV="${AES_CBC_IV}")
-else ()
-    message(FATAL_ERROR "NOT found AES IV value")
+    message(STATUS "Found secrets.cmake")
+else()
+    message(STATUS "Not found secrets.cmake")
 endif()
 
 

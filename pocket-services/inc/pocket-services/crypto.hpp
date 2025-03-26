@@ -24,10 +24,6 @@
 #include <string>
 #include <openssl/aes.h>
 
-#ifndef POCKET_AES_CBC_IV
-#error POCKET_AES_CBC_IV not defined
-#endif
-
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 namespace pocket::services::inline v5
 {
@@ -54,7 +50,7 @@ class aes final
 public:
     using ptr = std::unique_ptr<aes>;
 
-    aes(const std::string&& iv, const std::string& key);
+    aes(const std::string_view& iv, const std::string_view& key);
     POCKET_NO_COPY_NO_MOVE(aes)
     ~aes();
 

@@ -30,6 +30,7 @@ namespace pocket::controllers::inline v5
 
 using pods::device;
 using services::json_to_device;
+using services::json_to_aes_cbc_iv;
 using nlohmann::json;
 using namespace std;
 using namespace std::filesystem;
@@ -80,10 +81,11 @@ catch (const nlohmann::detail::parse_error& e)
 {
     throw runtime_error(e.what());
 }
-    
-device config::parse(const string_view& config_json) try
+
+pair<device, string> config::parse(const string_view& config_json) try
 {
     auto&& device = json_to_device(config_json);
+    auto&&aes_cbc_iv = json_to_aes_cbc_iv(config_json);
 
     if(device.user_id == 0)
     {
@@ -102,7 +104,7 @@ device config::parse(const string_view& config_json) try
 
     debug(typeid(*this).name(), "Create new config");
 
-    return device;
+    return {device, aes_cbc_iv};
 }
 catch (const runtime_error& e)
 {

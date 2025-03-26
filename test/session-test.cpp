@@ -28,15 +28,7 @@ using namespace pocket::controllers;
 
 
 constexpr char data[] = R"json(
-{
-   "id":59,
-   "uuid":"727fd661-ed0a-4393-a8dc-c4a488a91719",
-   "status":"ACTIVE",
-   "timestampCreation":1739139440,
-   "userId":5,
-   "host":"http://192.168.12.110:8081",
-   "hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy1JALwTL/IkKT01sWz4ICGvookAKImKZe/5qYE6dslmm5jh5hT71T20GEKghW/BuT4d/WyMkPEkCTOzX9KX30t1Hy/ZdkTsh6Ps5gUwxRTEvLbiG9pOO8hqK2t+LNvs4BvKHrMyHVJj77jYRfaMXiq3p2YkfbPYsz8erbcj5Fu4FffdSURxmGw/cK1wagWJRHn4jUpOeLyIty421CGHhYQ1UgIPgneqZ6aEP3WUYeGlfagq7ZpJbdjFnqeYhkXOaraA4CeWGEUBfILMwKZoKOyiCXaiUF+/Abw7l+sjIxaLf+MPUgPQFnjSJ0V4l0+gDfKdXUzwYi5AbqsDsrCxinwIDAQAB\n-----END PUBLIC KEY-----\n"
-}
+{"id":58,"uuid":"925177c9-97d7-4d13-b889-9de79e1a341b","status":"ACTIVE","timestampCreation":1743025185,"userId":8,"host":"http://192.168.12.110:8081","hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwsRQkF7QlL914TVBmndLx23GJ3m61XMwWJPwfkbytm5OEJxi/x8FC80cW+dLRYyeDKdsoN8e+pAVF25Fgp5HwN20lD046m2V9ycrug18WDWX1IQGVcgv4rUyefJTrGaZTWpTBOTqhwOskbGrFHUHFKWAagDSSb4PvIGTx1Pr762AoYZuFceYmnHKnRiYw20zfbHmpJIA7W7ewDNalROsfYmtRTR7AYFDfPkrtuwPMWObaUGbok/g1GohR2BYdmI+AlBniZaamxRUvWEH7EmVbi+UNfPLaXRNbhuky3+fZm78Eh47WVYIWiy7tjW97z/Sdmb9dhYfs9x3uUTfdis5TQIDAQAB\n-----END PUBLIC KEY-----\n","aesCbcIv":"1234567812345678"}
 )json";
 
 struct session_test : public ::testing::Test {};
