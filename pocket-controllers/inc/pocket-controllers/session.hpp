@@ -85,7 +85,7 @@ public:
 
     bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
-    inline const std::string_view& get_aes_cbc_iv() const noexcept
+    inline const std::string& get_aes_cbc_iv() const noexcept
     {
         return aes_cbc_iv;
     }
