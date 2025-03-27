@@ -448,7 +448,6 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     unlock();
 
     secret.clear();
-    aes_cbc_iv.clear();
     
     return true;
 }
