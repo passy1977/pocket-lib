@@ -60,6 +60,7 @@ class session final
     pods::device::opt device;
 
     const services::synchronizer::stat* status = nullptr;
+    bool offline = false;
 public:
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
@@ -124,6 +125,11 @@ public:
         {
             synchronizer->set_connect_timeout(connect_timeout);
         }
+    }
+    
+    inline void set_offline(bool offline) noexcept
+    {
+        this->offline = offline;
     }
     
 private:

@@ -158,6 +158,18 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, 
         error(typeid(this).name(), "user empty");
         return nullopt;
     }
+    
+    if(offline)
+    {
+        if(user_opt)
+        {
+            return make_unique<user>(**user_opt);
+        }
+        else
+        {
+            return nullopt;
+        }
+    }
 
     auto&& user = *user_opt;
 
@@ -232,6 +244,18 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
         return nullopt;
     }
     
+    if(offline)
+    {
+        if(user_opt)
+        {
+            return make_unique<user>(**user_opt);
+        }
+        else
+        {
+            return nullopt;
+        }
+    }
+    
     auto&& user = user_opt.value();
 
     if(user == nullptr)
@@ -279,6 +303,11 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
 
 optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, const string_view& full_path_file, const string_view& new_passwd, bool enable_aes, bool change_passwd_data_on_server)
 {
+    if(offline)
+    {
+        throw runtime_error("Impossible change passwd when you are offline");
+    }
+    
     if(new_passwd.empty())
     {
         error(typeid(this).name(), "new_passwd empty");
@@ -387,7 +416,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
 
 bool session::logout(const optional<user::ptr>& user_opt)
 {
-    if(user_opt)
+    if(user_opt && !offline)
     {
         synchronizer->invalidate_data(user_opt.value());
     }
@@ -436,7 +465,8 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     if(user_opt)
     {
         auto&& user = user_opt.value();
-        synchronizer->invalidate_data(user);
+        if(!offline)
+            synchronizer->invalidate_data(user);
         dao_user{database}.rm(*user);
     }
     
