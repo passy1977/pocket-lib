@@ -75,7 +75,7 @@ public:
     std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user_opt);
 
     std::optional<pods::user::ptr> change_passwd(const std::optional <pods::user::ptr>& user_opt, const std::string_view& full_path_file, const std::string_view& new_passwd, bool enable_aes = true, bool change_passwd_data_on_server = true);
-
+    
     bool logout(const std::optional<pods::user::ptr>& user_opt);
     
     bool soft_logout(const std::optional<pods::user::ptr>& user_opt);
@@ -86,6 +86,10 @@ public:
 
     bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
+    bool move(const std::optional <pods::user::ptr>& user_opt, const pods::group::ptr &group_src, const pods::group::ptr &group_dst, bool copy = false);
+    
+    bool move(const std::optional <pods::user::ptr>& user_opt, const pods::field::ptr &field_src, const pods::group::ptr &group_dst, bool copy = false);
+    
     inline const std::string& get_aes_cbc_iv() const noexcept
     {
         return aes_cbc_iv;
@@ -143,6 +147,12 @@ private:
 
     void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
+    void move(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool copy     ) const;
+    
+    void move(const daos::dao& dao, const services::aes& aes, const pods::group_field::ptr& group_field, bool copy) const;
+    
+    void move(const daos::dao& dao, const services::aes& aes, const pods::field::ptr& field, bool copy) const;
+    
     void lock();
 
     void unlock();

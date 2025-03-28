@@ -678,6 +678,78 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
     return true;
 }
 
+bool session::move(const std::optional <pods::user::ptr>& user_opt, const pods::group::ptr &group_src, const pods::group::ptr &group_dst, bool copy)
+{
+    if(!user_opt)
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return false;
+    }
+    
+    auto&& user = user_opt.value();
+
+    if(!user)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
+    if(device->user_id != user->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    daos::dao dao{database};
+    auto aes = services::aes(aes_cbc_iv, user->passwd);
+    
+    
+    for(auto&& group : dao.get_all<class group>())
+    {
+        move(dao, aes, group, copy);
+    }
+
+    return true;
+}
+
+bool session:: move(const std::optional <pods::user::ptr>& user_opt, const pods::field::ptr &field_src, const pods::group::ptr &group_dst, bool copy)
+{
+    if(!user_opt)
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Session not valid");
+        return false;
+    }
+    
+    auto&& user = user_opt.value();
+
+    if(!user)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
+    if(device->user_id != user->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    daos::dao dao{database};
+    auto aes = services::aes(aes_cbc_iv, user->passwd);
+    
+    return true;
+}
+    
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
 {
     if(group->deleted)
@@ -920,6 +992,26 @@ void session::import_data_legacy_field(const pods::user::ptr& user, const daos::
     dao.persist<struct field>(field);
 }
 
+void session::move(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool copy) const
+{
+    if(group->deleted)
+    {
+        return;
+    }
+    
+}
+
+void session::move(const daos::dao& dao, const services::aes& aes, const pods::group_field::ptr& group_field, bool copy) const
+{
+    
+}
+
+void session::move(const daos::dao& dao, const services::aes& aes, const pods::field::ptr& field, bool copy) const
+{
+    
+}
+    
+    
 void session::lock()
 {
 #ifndef POCKET_DISABLE_LOCK
