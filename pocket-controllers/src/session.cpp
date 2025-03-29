@@ -1015,57 +1015,56 @@ void session::import_data_legacy_field(const pods::user::ptr& user, const daos::
     dao.persist<struct field>(field);
 }
 
-void session::copy(const daos::dao& dao, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const
+void session::copy(const daos::dao& dao, const pods::group::ptr& group, int64_t father_group_id, int64_t father_server_group_id, bool move) const
 {
-    if(group_src->deleted)
+    if(group->deleted)
     {
         return;
     }
     
-    auto group_id_src = group_src->id;
-    auto server_group_id_src = group_src->server_id;
-    group_src->id = 0;
-    group_src->server_id = 0;
-    group_src->group_id = group_id_dst;
-    group_src->server_group_id = server_group_id_dst;
-    group_src->synchronized = false;
-    group_src->timestamp_creation = get_current_time_GMT();
-    auto group_last_id_inserted = dao.persist<class group>(group_src, false);
+    auto group_id = group->id;
+    group->id = 0;
+    group->server_id = 0;
+    group->group_id = father_group_id;
+    group->server_group_id = father_server_group_id;
+    group->synchronized = false;
+    group->timestamp_creation = get_current_time_GMT();
+    auto group_last_id_inserted = dao.persist<class group>(group, false);
     int64_t group_field_last_id_inserted = 0;
     int64_t field_last_id_inserted = 0;
     if(move)
     {
-        dao.del<class group>(group_id_src);
+        dao.del<class group>(group_id);
     }
     
     
     map<int64_t, int64_t> map_id_src_id_dst;
     vector<int64_t> src_server_ids;
-    for(auto&& group_field : dao.get_all<class group_field>(group_id_src))
+    for(auto&& group_field : dao.get_all<class group_field>(group_id))
     {
         auto group_field_id_src = group_field->id;
         src_server_ids.push_back(group_field->server_id);
         group_field->id = 0;
         group_field->server_id = 0;
         group_field->group_id = group_last_id_inserted;
-        group_field->server_group_id = server_group_id_src;
+        group_field->server_group_id = 0;
         group_field->timestamp_creation = get_current_time_GMT();
         group_field->synchronized = false;
         group_field_last_id_inserted = dao.persist<class group_field>(group_field, false);
         map_id_src_id_dst[group_field_id_src] = group_field_last_id_inserted;
         if(move)
         {
-            dao.del<class group_field>(group_id_src);
+            dao.del<class group_field>(group_id);
         }
     }
     
-    for(auto&& field : dao.get_all<class field>(group_id_src))
+    for(auto&& field : dao.get_all<class field>(group_id))
     {
         auto field_id_src = field->id;
         field->id = 0;
         field->server_id = 0;
         field->group_id = group_last_id_inserted;
-        field->server_group_id = server_group_id_src;
+        field->server_group_id = 0;
         if(map_id_src_id_dst.contains(field->server_id))
         {
             field->group_field_id = map_id_src_id_dst[field->server_id];
@@ -1087,9 +1086,9 @@ void session::copy(const daos::dao& dao, const pods::group::ptr& group_src, int6
         }
     }
     
-    for(auto&& group : dao.get_all<class group>(group_id_src))
+    for(auto&& g : dao.get_all<class group>(group_id))
     {
-        copy(dao, group_src, group->id, group->server_id, move);
+        copy(dao, g, group_id, 0, move);
     }
 }
 
