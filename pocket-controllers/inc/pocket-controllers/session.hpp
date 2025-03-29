@@ -147,7 +147,7 @@ private:
 
     void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
-    void copy(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const;
+    void copy(const daos::dao& dao, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const;
     
     void lock();
 

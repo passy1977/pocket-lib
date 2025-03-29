@@ -706,14 +706,13 @@ bool session::copy_group(const std::optional <pods::user::ptr>& user_opt, int64_
     }
 
     daos::dao dao{database};
-    auto aes = services::aes(aes_cbc_iv, user->passwd);
     
     
     auto&& group_src = dao.get<class group>(group_id_src);
     auto&& group_dst = dao.get<class group>(group_id_dst);
     if(group_src && group_dst)
     {
-        copy(dao, aes, *group_src, group_dst.value()->id, group_dst.value()->server_id,  move);
+        copy(dao, *group_src, group_dst.value()->id, group_dst.value()->server_id,  move);
         return true;
     }
     
@@ -1016,7 +1015,7 @@ void session::import_data_legacy_field(const pods::user::ptr& user, const daos::
     dao.persist<struct field>(field);
 }
 
-void session::copy(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const
+void session::copy(const daos::dao& dao, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const
 {
     if(group_src->deleted)
     {
@@ -1090,7 +1089,7 @@ void session::copy(const daos::dao& dao, const services::aes& aes, const pods::g
     
     for(auto&& group : dao.get_all<class group>(group_id_src))
     {
-        copy(dao, aes, group_src, group->id, group->server_id, move);
+        copy(dao, group_src, group->id, group->server_id, move);
     }
 }
 
