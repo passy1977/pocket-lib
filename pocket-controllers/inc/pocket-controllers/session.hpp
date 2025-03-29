@@ -86,9 +86,9 @@ public:
 
     bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
 
-    bool move(const std::optional <pods::user::ptr>& user_opt, const pods::group::ptr &group_src, const pods::group::ptr &group_dst, bool copy = false);
+    bool copy_group(const std::optional <pods::user::ptr>& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move = false);
     
-    bool move(const std::optional <pods::user::ptr>& user_opt, const pods::field::ptr &field_src, const pods::group::ptr &group_dst, bool copy = false);
+    bool copy_field(const std::optional <pods::user::ptr>& user_opt, int64_t field_id_src, int64_t group_id_dst, bool move = false);
     
     inline const std::string& get_aes_cbc_iv() const noexcept
     {
@@ -147,11 +147,7 @@ private:
 
     void import_data_legacy_field(const pods::user::ptr& user, const daos::dao &dao, const tinyxml2::XMLElement *element, const services::aes& aes, const pods::group::ptr &father, bool enable_aes) const;
 
-    void move(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool copy     ) const;
-    
-    void move(const daos::dao& dao, const services::aes& aes, const pods::group_field::ptr& group_field, bool copy) const;
-    
-    void move(const daos::dao& dao, const services::aes& aes, const pods::field::ptr& field, bool copy) const;
+    void copy(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const;
     
     void lock();
 

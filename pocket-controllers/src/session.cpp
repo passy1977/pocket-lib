@@ -44,7 +44,7 @@ using namespace std;
 using namespace std::filesystem;
 using namespace nlohmann;
 using namespace tinyxml2;
-
+using namespace std::chrono;
 
 session::session(const optional<string>& config_json, const optional<string>& config_path)
 {
@@ -678,7 +678,7 @@ bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt,
     return true;
 }
 
-bool session::move(const std::optional <pods::user::ptr>& user_opt, const pods::group::ptr &group_src, const pods::group::ptr &group_dst, bool copy)
+bool session::copy_group(const std::optional <pods::user::ptr>& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move)
 {
     if(!user_opt)
     {
@@ -709,15 +709,18 @@ bool session::move(const std::optional <pods::user::ptr>& user_opt, const pods::
     auto aes = services::aes(aes_cbc_iv, user->passwd);
     
     
-    for(auto&& group : dao.get_all<class group>())
+    auto&& group_src = dao.get<class group>(group_id_src);
+    auto&& group_dst = dao.get<class group>(group_id_dst);
+    if(group_src && group_dst)
     {
-        move(dao, aes, group, copy);
+        copy(dao, aes, *group_src, group_dst.value()->id, group_dst.value()->server_id,  move);
+        return true;
     }
-
-    return true;
+    
+    return false;
 }
 
-bool session:: move(const std::optional <pods::user::ptr>& user_opt, const pods::field::ptr &field_src, const pods::group::ptr &group_dst, bool copy)
+bool session::copy_field(const optional <user::ptr>& user_opt, int64_t field_id_src,  int64_t group_id_dst, bool move)
 {
     if(!user_opt)
     {
@@ -746,6 +749,27 @@ bool session:: move(const std::optional <pods::user::ptr>& user_opt, const pods:
 
     daos::dao dao{database};
     auto aes = services::aes(aes_cbc_iv, user->passwd);
+        
+    auto&& field_src = dao.get<class field>(field_id_src);
+    auto&& group_dst = dao.get<class group>(group_id_dst);
+    if(field_src && group_dst)
+    {
+        auto field = make_unique<class field>(*field_src.value());
+        auto field_id = field->id;
+        field->id = 0;
+        field->server_id = 0;
+        field->group_id = group_dst.value()->id;
+        field->server_group_id = group_dst.value()->server_id;
+        field->timestamp_creation = get_current_time_GMT();
+        field->synchronized = false;
+        dao.persist<class field>(field, false);
+        if(move)
+        {
+            dao.del<class field>(field_id);
+        }
+        
+        return true;
+    }
     
     return true;
 }
@@ -992,25 +1016,84 @@ void session::import_data_legacy_field(const pods::user::ptr& user, const daos::
     dao.persist<struct field>(field);
 }
 
-void session::move(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool copy) const
+void session::copy(const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group_src, int64_t group_id_dst, int64_t server_group_id_dst, bool move) const
 {
-    if(group->deleted)
+    if(group_src->deleted)
     {
         return;
     }
     
+    auto group_id_src = group_src->id;
+    auto server_group_id_src = group_src->server_id;
+    group_src->id = 0;
+    group_src->server_id = 0;
+    group_src->group_id = group_id_dst;
+    group_src->server_group_id = server_group_id_dst;
+    group_src->synchronized = false;
+    group_src->timestamp_creation = get_current_time_GMT();
+    auto group_last_id_inserted = dao.persist<class group>(group_src, false);
+    int64_t group_field_last_id_inserted = 0;
+    int64_t field_last_id_inserted = 0;
+    if(move)
+    {
+        dao.del<class group>(group_id_src);
+    }
+    
+    
+    map<int64_t, int64_t> map_id_src_id_dst;
+    vector<int64_t> src_server_ids;
+    for(auto&& group_field : dao.get_all<class group_field>(group_id_src))
+    {
+        auto group_field_id_src = group_field->id;
+        src_server_ids.push_back(group_field->server_id);
+        group_field->id = 0;
+        group_field->server_id = 0;
+        group_field->group_id = group_last_id_inserted;
+        group_field->server_group_id = server_group_id_src;
+        group_field->timestamp_creation = get_current_time_GMT();
+        group_field->synchronized = false;
+        group_field_last_id_inserted = dao.persist<class group_field>(group_field, false);
+        map_id_src_id_dst[group_field_id_src] = group_field_last_id_inserted;
+        if(move)
+        {
+            dao.del<class group_field>(group_id_src);
+        }
+    }
+    
+    for(auto&& field : dao.get_all<class field>(group_id_src))
+    {
+        auto field_id_src = field->id;
+        field->id = 0;
+        field->server_id = 0;
+        field->group_id = group_last_id_inserted;
+        field->server_group_id = server_group_id_src;
+        if(map_id_src_id_dst.contains(field->server_id))
+        {
+            field->group_field_id = map_id_src_id_dst[field->server_id];
+
+            auto it = find_if(src_server_ids.begin(), src_server_ids.end(), [server_group_field_id = field->server_group_field_id](int id) {
+                return server_group_field_id == id;
+            });
+            if (it != src_server_ids.end())
+            {
+                field->server_group_field_id = *it;
+            }
+        }
+        field->timestamp_creation = get_current_time_GMT();
+        field->synchronized = false;
+        field_last_id_inserted = dao.persist<class field>(field, false);
+        if(move)
+        {
+            dao.del<class field>(field_id_src);
+        }
+    }
+    
+    for(auto&& group : dao.get_all<class group>(group_id_src))
+    {
+        copy(dao, aes, group_src, group->id, group->server_id, move);
+    }
 }
 
-void session::move(const daos::dao& dao, const services::aes& aes, const pods::group_field::ptr& group_field, bool copy) const
-{
-    
-}
-
-void session::move(const daos::dao& dao, const services::aes& aes, const pods::field::ptr& field, bool copy) const
-{
-    
-}
-    
     
 void session::lock()
 {
