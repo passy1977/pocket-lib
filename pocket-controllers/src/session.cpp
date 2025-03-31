@@ -1030,7 +1030,6 @@ void session::copy(const daos::dao& dao, const pods::group::ptr& group, int64_t 
     group->synchronized = false;
     group->timestamp_creation = get_current_time_GMT();
     group->id = dao.persist<class group>(group, false);
-    int64_t field_last_id_inserted = 0;
     if(move)
     {
         dao.del<class group>(group_id);
@@ -1078,7 +1077,7 @@ void session::copy(const daos::dao& dao, const pods::group::ptr& group, int64_t 
         }
         field->timestamp_creation = get_current_time_GMT();
         field->synchronized = false;
-        field_last_id_inserted = dao.persist<class field>(field, false);
+        field->id = dao.persist<class field>(field, false);
         if(move)
         {
             dao.del<class field>(field_id_src);
