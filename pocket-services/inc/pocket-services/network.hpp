@@ -27,7 +27,7 @@
 #include <map>
 
 #ifndef POCKET_MAX_BUFFER_RESPONSE_SIZE
-#define POCKET_MAX_BUFFER_RESPONSE_SIZE 10485760
+#error POCKET_MAX_BUFFER_RESPONSE_SIZE not defined
 #endif
 
 namespace pocket::services::inline v5
