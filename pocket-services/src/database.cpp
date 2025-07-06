@@ -161,13 +161,13 @@ catch (...)
 
     unlock();
 
-    auto eptr = current_exception();
+    auto e_ptr = current_exception();
 
-    if (eptr)
+    if (e_ptr)
     {
         try
         {
-            rethrow_exception(eptr);
+            rethrow_exception(e_ptr);
         }
         catch (const runtime_error& e)
         {
