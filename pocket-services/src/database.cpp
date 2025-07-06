@@ -143,6 +143,7 @@ bool database::is_created(uint8_t& db_version) noexcept try
     result_set rs(*this, "SELECT * FROM metadata"); //throw exception
     if(rs.get_statement_stat() != SQLITE_OK)
     {
+        unlock();
         return false;
     }
 
