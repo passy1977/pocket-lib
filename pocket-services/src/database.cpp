@@ -73,7 +73,7 @@ catch (const exception& e)
     debug(typeid(*this).name(), e.what());
 }
 
-bool database::open(const string& file_db_path)
+bool database::open(const string& file_db_path) 
 {
     lock_guard<mutex> lg(m);
 
@@ -108,7 +108,15 @@ bool database::open(const string& file_db_path)
     }
     else
     {
-        return create(CREATION_SQL); //throw exception
+        try
+        {
+            return create(CREATION_SQL); //throw exception
+        }
+        catch (const runtime_error& e) 
+        {
+            error(typeid(this).name(), e.what());
+            return false;
+        }
     }
 
     return true;
@@ -253,7 +261,6 @@ bool database::rm()
 
 void database::lock()
 {
-    cout << "lock()" << endl;
 #ifndef POCKET_DISABLE_DB_LOCK
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
@@ -272,7 +279,6 @@ void database::lock()
 
 void database::unlock()
 {
-    cout << "unlock()" << endl;
 #ifndef POCKET_DISABLE_DB_LOCK
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)

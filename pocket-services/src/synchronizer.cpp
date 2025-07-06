@@ -465,15 +465,15 @@ std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::stri
         }
         catch (...)
         {
-            cerr << "Unhandled exception" << endl;
+            cerr << "Response:" << response << " Unhandled exception" << endl;
 
-            auto eptr = current_exception();
+            auto e_ptr = current_exception();
 
-            if (eptr)
+            if (e_ptr)
             {
                 try
                 {
-                    rethrow_exception(eptr);
+                    rethrow_exception(e_ptr);
                 }
                 catch (const runtime_error& e)
                 {
