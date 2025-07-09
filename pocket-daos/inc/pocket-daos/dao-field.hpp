@@ -25,8 +25,6 @@
 namespace pocket::daos::inline v5
 {
 
-template<>
-int64_t dao::persist<pods::field>(const pods::field::ptr& t, bool return_rows_modified) const;
-
+//int64_t persist_private(dao* dao, const pods::field::ptr& t, bool return_rows_modified);
 
 }

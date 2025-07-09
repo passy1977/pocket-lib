@@ -33,9 +33,18 @@
 namespace pocket::daos::inline v5
 {
 
+class dao;
+int64_t persist_private(dao* dao, const pods::field::ptr& t, bool return_rows_modified);
+int64_t persist_private(dao* dao, const pods::group_field::ptr& t, bool return_rows_modified);
+int64_t persist_private(dao* dao, const pods::group::ptr& t, bool return_rows_modified);
+
 class dao final
 {
     services::database::ptr&database;
+    friend int64_t persist_private(dao* dao, const pods::field::ptr& t, bool return_rows_modified);
+    friend int64_t persist_private(dao* dao, const pods::group_field::ptr& t, bool return_rows_modified);
+    friend int64_t persist_private(dao* dao, const pods::group::ptr& t, bool return_rows_modified);
+
 public:
     template<iface::require_pod T>
     using list = std::vector<typename iface::pod<T>::ptr>;
@@ -188,21 +197,9 @@ public:
     }
     
     template<iface::require_pod T>
-    constexpr int64_t persist(const T::ptr& t, bool return_rows_modified = true) const
+    int64_t persist(const T::ptr& t, bool return_rows_modified = true) const
     {
-        
-        if constexpr (std::is_same_v<T, pods::group>)
-        {
-            return persist<pods::group>(t, return_rows_modified);
-        }
-        else if constexpr (std::is_same_v<T, pods::group_field>)
-        {
-            return persist<pods::group_field>(t, return_rows_modified);
-        }
-        else if constexpr (std::is_same_v<T, pods::field>)
-        {
-            return persist<pods::field>(t, return_rows_modified);
-        }
+        return persist_private(t, return_rows_modified);
     }
 
     template<iface::require_pod T>
@@ -217,9 +214,11 @@ private:
                 return (*it->begin())["id"].to_integer();
             }
         }
-        return daos::dao::NO_ID;
+        return NO_ID;
     }
-    
+    int64_t persist_private(const pods::group::ptr& t, bool return_rows_modified) const;
+    int64_t persist_private(const pods::group_field::ptr& t, bool return_rows_modified) const;
+    int64_t persist_private(const pods::field::ptr& t, bool return_rows_modified) const;
 };
 
 

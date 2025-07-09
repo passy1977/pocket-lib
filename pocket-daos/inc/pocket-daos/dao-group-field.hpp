@@ -25,8 +25,7 @@
 namespace pocket::daos::inline v5
 {
 
-template<>
-int64_t dao::persist<pods::group_field>(const pods::group_field::ptr& t, bool return_rows_modified) const;
+// int64_t persist_private(dao* dao, const pods::group_field::ptr& t, bool return_rows_modified);
 
 template<>
 int64_t dao::get_last_id<pods::group_field>() const;
