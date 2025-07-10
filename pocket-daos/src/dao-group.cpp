@@ -17,7 +17,6 @@
  *
  ***************************************************************************/
 
-#include "pocket-daos/dao-group.hpp"
 #include "pocket-daos/dao.hpp"
 #include "pocket/tree.hpp"
 

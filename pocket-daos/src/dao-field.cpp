@@ -17,8 +17,7 @@
  *
  ***************************************************************************/
 
-#include "pocket-daos/dao-field.hpp"
-
+#include "pocket-daos/dao.hpp"
 
 namespace pocket::daos::inline v5
 {
