@@ -1,5 +1,5 @@
 # pocket-lib
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/passy1977/pocket-backend)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/passy1977/pocket-lib)
 ## Purpose and Scope
 
 Pocket-lib is a library for secure credential and password storage, providing a comprehensive system for managing, encrypting, and synchronizing sensitive user data. This document provides a high-level overview of the library's architecture, components, and core functionality.
