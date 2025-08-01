@@ -546,7 +546,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
 
 }
 
-bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string full_path_file, bool enable_aes)
+bool session::import_data(const pods::user::opt_ptr& user_opt, string full_path_file, bool enable_aes)
 {
     if(full_path_file.starts_with("file://"))
     {
@@ -607,7 +607,7 @@ bool session::import_data(const std::optional<pods::user::ptr>& user_opt, string
     return true;
 }
 
-bool session::import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes)
+bool session::import_data_legacy(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes)
 {
     if(full_path_file.starts_with("file://"))
     {

@@ -30,6 +30,7 @@ struct user final
 {
     using opt = std::optional<user>;
     using ptr = std::unique_ptr<user>;
+    using opt_ptr = std::optional<ptr>;
 
     enum class stat
     {

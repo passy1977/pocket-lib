@@ -39,7 +39,7 @@ namespace
 constexpr char ERROR_HTTP_CODE[] = "http_code: ";
 }
 
-std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
+pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
     if(email.empty() || passwd.empty())
     {
@@ -139,7 +139,7 @@ std::optional<pods::user::ptr> synchronizer::retrieve_data(int64_t timestamp_las
 }
 
 
-std::optional<pods::user::ptr> synchronizer::send_data(const pods::user::ptr& user)
+pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 {
     if(status != stat::READY)
     {
@@ -379,7 +379,7 @@ bool synchronizer::invalidate_data(const user::ptr& user)
     }
 }
 
-std::optional<pods::user::ptr> synchronizer::parse_data_from_net(const std::string_view& response, server_id_helper& data)
+pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& response, server_id_helper& data)
 {
     if(!response.starts_with(ERROR_HTTP_CODE))
     {

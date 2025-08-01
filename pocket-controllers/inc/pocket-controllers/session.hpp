@@ -68,23 +68,23 @@ public:
 
     const pods::device::opt& init();
 
-    std::optional<pods::user::ptr> login(const std::string& email, const std::string& passwd, bool enable_aes = true);
+    pods::user::opt_ptr login(const std::string& email, const std::string& passwd, bool enable_aes = true);
 
-    std::optional<pods::user::ptr> retrieve_data(const std::optional<pods::user::ptr>& user_opt, bool enable_aes = true);
+    pods::user::opt_ptr retrieve_data(const pods::user::opt_ptr& user_opt, bool enable_aes = true);
 
-    std::optional<pods::user::ptr> send_data(const std::optional<pods::user::ptr>& user_opt);
+    pods::user::opt_ptr send_data(const pods::user::opt_ptr& user_opt);
 
-    std::optional<pods::user::ptr> change_passwd(const std::optional <pods::user::ptr>& user_opt, const std::string_view& full_path_file, const std::string_view& new_passwd, bool enable_aes = true, bool change_passwd_data_on_server = true);
+    pods::user::opt_ptr change_passwd(const std::optional <pods::user::ptr>& user_opt, const std::string_view& full_path_file, const std::string_view& new_passwd, bool enable_aes = true, bool change_passwd_data_on_server = true);
     
-    bool logout(const std::optional<pods::user::ptr>& user_opt);
+    bool logout(const pods::user::opt_ptr& user_opt);
     
-    bool soft_logout(const std::optional<pods::user::ptr>& user_opt);
+    bool soft_logout(const pods::user::opt_ptr& user_opt);
     
-    bool export_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
+    bool export_data(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes = true);
 
-    bool import_data(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
+    bool import_data(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes = true);
 
-    bool import_data_legacy(const std::optional<pods::user::ptr>& user_opt, std::string full_path_file, bool enable_aes = true);
+    bool import_data_legacy(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes = true);
 
     bool copy_group(const std::optional <pods::user::ptr>& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move = false);
     
