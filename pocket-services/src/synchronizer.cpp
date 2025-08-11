@@ -225,7 +225,6 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
             timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
 
-            //auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret + DIVISOR + to_string(timestamp_last_update) + DIVISOR + to_string(id));
             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd) ;
 
             auto&& data = net_helper_serialize_json(ret.get());

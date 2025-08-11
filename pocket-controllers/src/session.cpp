@@ -190,7 +190,7 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, 
     catch (const runtime_error& e)
     {
         remote_connection_error = true;
-        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+        error(typeid(this).name(), string("Probably offline - err: ") + e.what());
     }
 
     if(user_from_net)
@@ -240,7 +240,7 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
 {
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return nullopt;
     }
     
@@ -273,7 +273,7 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     catch (const runtime_error& e)
     {
         remote_connection_error = true;
-        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+        error(typeid(this).name(), string("Probably offline - err: ") + e.what());
     }
     
 
@@ -316,7 +316,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
 
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return nullopt;
     }
 
@@ -348,7 +348,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
     }
     catch (const runtime_error& e)
     {
-        error(typeid(this).name(), string("Probably no connection err: ") + e.what());
+        error(typeid(this).name(), string("Probably offline - err: ") + e.what());
         throw;
     }
 
@@ -496,7 +496,7 @@ bool session::export_data(const optional<user::ptr>& user_opt, string full_path_
 
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return false;
     }
     
@@ -562,7 +562,7 @@ bool session::import_data(const pods::user::opt_ptr& user_opt, string full_path_
     
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return false;
     }
     
@@ -628,7 +628,7 @@ bool session::import_data_legacy(const pods::user::opt_ptr& user_opt, std::strin
 
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return false;
     }
     
@@ -688,7 +688,7 @@ bool session::copy_group(const std::optional <pods::user::ptr>& user_opt, int64_
 
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return false;
     }
     
@@ -729,7 +729,7 @@ bool session::copy_field(const optional <user::ptr>& user_opt, int64_t field_id_
 
     if(secret.empty())
     {
-        error(typeid(this).name(), "Session not valid");
+        error(typeid(this).name(), "Offline or session not valid");
         return false;
     }
     
