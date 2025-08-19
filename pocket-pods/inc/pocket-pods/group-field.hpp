@@ -36,7 +36,7 @@ struct group_field final : public iface::pod<group_field>
 
     static inline const std::string& get_name() noexcept
     {
-        static std::string const ret = "groups_fields";
+        static std::string const ret = "group_fields";
         return ret;
     }
 

@@ -61,7 +61,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
            for_each(g.begin(), g.end(), [&data](auto&& it) mutable { data.groups_server_id[it->server_id] = it->id; });
 
            auto&& gf = dao.get_all<group_field>();
-           for_each(gf.begin(), gf.end(), [&data](auto&& it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
+           for_each(gf.begin(), gf.end(), [&data](auto&& it) mutable { data.group_fields_server_id[it->server_id] = it->id; });
 
            auto&& f = dao.get_all<field>();
            for_each(f.begin(), f.end(), [&data](auto&& it) mutable { data.fields_server_id[it->server_id] = it->id; });
@@ -75,7 +75,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
            error(typeid(this).name(), e.what());
            return server_id_helper{
                    .groups_server_id = {},
-                   .groups_fields_server_id = {},
+                   .group_fields_server_id = {},
                    .fields_server_id = {},
                    .valid = false
            };
@@ -160,7 +160,7 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
            for_each(g.begin(), g.end(), [&data](auto&& it) mutable { data.groups_server_id[it->server_id] = it->id; });
 
            auto&& gf = dao.get_all<group_field>(daos::dao::NO_ID, true);
-           for_each(gf.begin(), gf.end(), [&data](auto&& it) mutable { data.groups_fields_server_id[it->server_id] = it->id; });
+           for_each(gf.begin(), gf.end(), [&data](auto&& it) mutable { data.group_fields_server_id[it->server_id] = it->id; });
 
            auto&& f = dao.get_all<field>(daos::dao::NO_ID, true);
            for_each(f.begin(), f.end(), [&data](auto&& it) mutable { data.fields_server_id[it->server_id] = it->id; });
@@ -174,7 +174,7 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
            error(typeid(this).name(), e.what());
            return server_id_helper{
                    .groups_server_id = {},
-                   .groups_fields_server_id = {},
+                   .group_fields_server_id = {},
                    .fields_server_id = {},
                    .valid = false
            };
@@ -207,7 +207,7 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
                     net_helper.groups = fut_group.get();
 
                     auto&& fur_group_field = collect_data_table<group_field>();
-                    net_helper.groups_fields = fur_group_field.get();
+                    net_helper.group_fields = fur_group_field.get();
 
                     auto&& fut_field = collect_data_table<field>();
                     net_helper.fields = fut_field.get();
@@ -416,7 +416,7 @@ pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& re
             if(!fut_group_field)
             {
                 set_status(stat::DB_GROUP_FIELD_ERROR);
-                error(typeid(this).name(), "Some error on populate groups_fields table");
+                error(typeid(this).name(), "Some error on populate group_fields table");
                 return nullopt;
             }
 

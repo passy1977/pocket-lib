@@ -45,7 +45,7 @@ void dao::update_all_index(const pods::net_helper& net_helper) const
         }
     }
 
-    for(auto&& it: net_helper.groups_fields)
+    for(auto&& it: net_helper.group_fields)
     {
         if(it->group_id > 0 && it->server_group_id == 0)
         {

@@ -802,7 +802,7 @@ void session::export_data(json& json, const daos::dao& dao, const services::aes&
         {
             gf->title = aes.decrypt(gf->title);
         }
-        json_group["groupsFields"].push_back(serialize_json(gf, true));
+        json_group["groupFields"].push_back(serialize_json(gf, true));
     }
 
     for(const auto& f : dao.get_all<field>(group->id))
@@ -843,9 +843,9 @@ void session::import_data(const pods::user::ptr& user, nlohmann::json& json_grou
     g.synchronized = false;
     g.id = dao.persist<pods::group>(make_unique<pods::group>(g), false);
 
-    if(!json_group["groupsFields"].is_null() &&  json_group["groupsFields"].is_array())
+    if(!json_group["groupFields"].is_null() &&  json_group["groupFields"].is_array())
     {
-        for(auto&& json_group_field : json_group["groupsFields"])
+        for(auto&& json_group_field : json_group["groupFields"])
         {
             auto&& gf = json_to_group_field(json_group_field, true);
             if(gf.deleted)

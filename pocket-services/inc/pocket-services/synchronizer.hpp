@@ -135,9 +135,9 @@ private:
          }
          else if constexpr (std::is_same_v<T, pods::group_field>)
          {
-             if(data.groups_fields_server_id.contains(it->server_id))
+             if(data.group_fields_server_id.contains(it->server_id))
              {
-                 it->id = data.groups_fields_server_id[it->server_id];
+                 it->id = data.group_fields_server_id[it->server_id];
              }
          }
          else if constexpr (std::is_same_v<T, pods::field>)
@@ -180,9 +180,9 @@ private:
              }
              else if constexpr (std::is_same_v<T, pods::group_field>)
              {
-                 if(!data.groups_fields_server_id.contains(it->server_id))
+                 if(!data.group_fields_server_id.contains(it->server_id))
                  {
-                     data.groups_fields_server_id[it->server_id] = last_id;
+                     data.group_fields_server_id[it->server_id] = last_id;
                  }
              }
              else if constexpr (std::is_same_v<T, pods::field>)
@@ -227,9 +227,9 @@ private:
          {
              if(it->group_id == 0 && it->server_group_id > 0)
              {
-                 if(data.groups_fields_server_id.contains(it->server_id))
+                 if(data.group_fields_server_id.contains(it->server_id))
                  {
-                     it->server_group_field_id = data.groups_fields_server_id[it->server_group_field_id];
+                     it->server_group_field_id = data.group_fields_server_id[it->server_group_field_id];
                      perform_persist = true;
                  }
              }

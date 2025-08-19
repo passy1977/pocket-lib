@@ -34,7 +34,7 @@ int64_t dao::persist_private(const group_field::ptr& t, bool return_rows_modifie
     if(t->id > 0)
     {
         auto count = database->update(R"(
-UPDATE groups_fields
+UPDATE group_fields
 SET
     server_id = ?,
     user_id = ?,
@@ -67,7 +67,7 @@ WHERE
     else
     {
         auto count = database->update(R"(
-INSERT INTO groups_fields
+INSERT INTO group_fields
 (
     server_id,
     user_id,
@@ -112,7 +112,7 @@ INSERT INTO groups_fields
 template<>
 int64_t dao::get_last_id<pods::group_field>() const
 {
-    if(auto&& opt_rs = database->execute("SELECT id FROM groups_fields ORDER BY id DESC"); opt_rs) //throw exception
+    if(auto&& opt_rs = database->execute("SELECT id FROM group_fields ORDER BY id DESC"); opt_rs) //throw exception
     {
         if(auto&& it = *opt_rs; !it->empty())
         {

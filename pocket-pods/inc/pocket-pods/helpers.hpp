@@ -50,7 +50,7 @@ struct net_helper
     pods::user::ptr user;
     pods::device::ptr device;
     std::vector<group::ptr> groups;
-    std::vector<group_field::ptr> groups_fields;
+    std::vector<group_field::ptr> group_fields;
     std::vector<field::ptr> fields;
 
     template<iface::require_pod T>
@@ -63,7 +63,7 @@ struct net_helper
         }
         else if constexpr(std::is_same_v<T, group_field>)
         {
-            vector_copy_ref<group_field>(groups_fields, ret);
+            vector_copy_ref<group_field>(group_fields, ret);
         }
         if constexpr(std::is_same_v<T, field>)
         {
@@ -77,7 +77,7 @@ struct net_helper
 struct server_id_helper
 {
     std::map<int64_t, int64_t> groups_server_id; //server_id/id
-    std::map<int64_t, int64_t> groups_fields_server_id; //server_id/id
+    std::map<int64_t, int64_t> group_fields_server_id; //server_id/id
     std::map<int64_t, int64_t> fields_server_id; //server_id/id
     bool valid;
 };

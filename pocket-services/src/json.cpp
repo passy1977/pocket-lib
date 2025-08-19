@@ -67,9 +67,9 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
         throw runtime_error("groups is not a object");
     }
 
-    if(json["groupsFields"].is_null() || !json["groupsFields"].is_array())
+    if(json["groupFields"].is_null() || !json["groupFields"].is_array())
     {
-        throw runtime_error("groupsFields is not a object");
+        throw runtime_error("groupFields is not a object");
     }
 
     if(json["fields"].is_null() || !json["fields"].is_array())
@@ -118,12 +118,12 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
     });
 
 
-    auto&& fut_groups_fields = pool.submit_task([&json]
+    auto&& fut_group_fields = pool.submit_task([&json]
      {
          try
          {
              vector<group_field::ptr> ret;
-             for (auto& it : json["groupsFields"].items())
+             for (auto& it : json["groupFields"].items())
              {
                  ret.push_back(make_unique<group_field>(json_to_group_field(it.value())));
              }
@@ -162,7 +162,7 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
     net_helper.user = std::move(user);
     net_helper.device = std::move(device);
     net_helper.groups = fut_groups.get();
-    net_helper.groups_fields = fut_groups_fields.get();
+    net_helper.group_fields = fut_group_fields.get();
     net_helper.fields = fut_fields.get();
 }
 catch (const runtime_error& e)
@@ -199,12 +199,12 @@ string net_helper_serialize_json(const pods::net_helper& net_helper) try
     }
     j["groups"] = groups;
 
-    auto groups_fields = json::array();
-    for(auto&& it : net_helper.groups_fields)
+    auto group_fields = json::array();
+    for(auto&& it : net_helper.group_fields)
     {
-        groups_fields.push_back(serialize_json(it));
+        group_fields.push_back(serialize_json(it));
     }
-    j["groupsFields"] = groups_fields;
+    j["groupFields"] = group_fields;
 
     auto fields = json::array();
     for(auto&& it : net_helper.fields)
