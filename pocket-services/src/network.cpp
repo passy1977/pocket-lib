@@ -59,10 +59,6 @@ size_t network::callback(char* buf, size_t size, size_t nmemb, string* ret_data)
 
 std::string network::perform(network::method method, const std::string_view& url, const map_parameters& params, const std::string_view& json_data)
 {
-    if (headers)
-    {
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    }
 
     string full_url;
     if (url.rfind("http://", 0) == 0)
@@ -143,11 +139,13 @@ std::string network::perform(network::method method, const std::string_view& url
 
     curl_easy_setopt(curl, CURLOPT_URL, full_url.c_str());
 
+	curl_slist* headers = nullptr;
     if (!json_data.empty())
     {
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_data.size());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, "Content-Type: application/json"));
     }
 
 

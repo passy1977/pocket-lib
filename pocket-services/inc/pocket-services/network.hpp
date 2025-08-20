@@ -40,7 +40,6 @@ class network final
     using map_parameters = std::map<std::string, pods::variant>;
 
     CURL* curl = nullptr;
-    curl_slist* headers = nullptr;
     
     uint64_t http_code = 0;
     long timeout = 0;
