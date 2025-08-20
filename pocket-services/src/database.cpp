@@ -40,9 +40,9 @@ enum pods::variant::type;
 
 char const database::CREATION_SQL[] = R"sql(
 CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `name` text NOT NULL, `email` text NOT NULL, `passwd` text NOT NULL, status integer NOT NULL DEFAULT '0', `timestamp_last_update` INTEGER NOT NULL DEFAULT 0);
-CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `server_group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
-CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
-CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES addresses (id));
+CREATE TABLE fields ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, `group_field_id` integer NOT NULL DEFAULT 0, `server_group_field_id` integer NOT NULL DEFAULT 0, `title` text NOT NULL, `value` text NOT NULL, `is_hidden` integer NOT NULL, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES user (id));
+CREATE TABLE group_fields (id integer primary key autoincrement, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, `group_id` integer NOT NULL DEFAULT 0, `server_group_id` integer NOT NULL DEFAULT 0, title text not null, is_hidden integer not null, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES user (id));
+CREATE TABLE groups ( `id` integer PRIMARY KEY AUTOINCREMENT, user_id integer NOT NULL DEFAULT 0, server_id integer NOT NULL DEFAULT 0, group_id integer, server_group_id integer, `title` text NOT NULL, `icon` text NOT NULL DEFAULT 'UNUSED', `_note` text, synchronized integer NOT NULL DEFAULT 0, deleted integer NOT NULL DEFAULT '0', `timestamp_creation` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (user_id) REFERENCES user (id));
 CREATE TABLE metadata (version INTEGER);
 CREATE INDEX `groups_title` ON `groups` (title);
 CREATE INDEX `group_fields_group_id` ON `group_fields` (`group_id`);
@@ -302,6 +302,7 @@ optional<result_set::ptr> database::execute(const string&& query, const paramete
 
     if(rs->get_statement_stat() != SQLITE_OK)
     {
+		unlock();
         return nullopt;
     }
 
@@ -322,6 +323,7 @@ int64_t database::update(const string&& query, const parameters& parameters) try
 
     if(rs->get_statement_stat() != SQLITE_OK)
     {
+		unlock();
         return -1;
     }
 
