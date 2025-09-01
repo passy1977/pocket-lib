@@ -12,7 +12,7 @@ add_definitions(-DPOCKET_DISABLE_DB_LOCK)
 add_definitions(-DPOCKET_MAX_BUFFER_RESPONSE_SIZE=10485760)
 #add_definitions(-DPOCKET_FORCE_TIMESTAMP_LAST_UPDATE=1739741159)
 add_definitions(-DPOCKET_ENABLE_LOG)
-#add_definitions(-DPOCKET_ENABLE_AES)
+add_definitions(-DPOCKET_ENABLE_AES)
 option(POCKET_FORCE_TIMESTAMP_LAST_UPDATE "Force timestamp last update to the value who you want after login" OFF)
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
