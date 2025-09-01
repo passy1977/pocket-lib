@@ -678,7 +678,7 @@ bool session::import_data_legacy(const pods::user::opt_ptr& user_opt, std::strin
     return true;
 }
 
-bool session::copy_group(const std::optional <pods::user::ptr>& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move)
+bool session::copy_group(const pods::user::opt_ptr& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move)
 {
     if(!user_opt)
     {
@@ -719,7 +719,7 @@ bool session::copy_group(const std::optional <pods::user::ptr>& user_opt, int64_
     return false;
 }
 
-bool session::copy_field(const optional <user::ptr>& user_opt, int64_t field_id_src,  int64_t group_id_dst, bool move)
+bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_src,  int64_t group_id_dst, bool move)
 {
     if(!user_opt)
     {

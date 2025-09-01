@@ -86,9 +86,9 @@ public:
 
     bool import_data_legacy(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes = true);
 
-    bool copy_group(const std::optional <pods::user::ptr>& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move = false);
+    bool copy_group(const pods::user::opt_ptr& user_opt, int64_t group_id_src, int64_t group_id_dst, bool move = false);
     
-    bool copy_field(const std::optional <pods::user::ptr>& user_opt, int64_t field_id_src, int64_t group_id_dst, bool move = false);
+    bool copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_src, int64_t group_id_dst, bool move = false);
     
     inline const std::string& get_aes_cbc_iv() const noexcept
     {
