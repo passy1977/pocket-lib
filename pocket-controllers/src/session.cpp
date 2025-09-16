@@ -473,7 +473,7 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     if(user_opt)
     {
         auto&& user = user_opt.value();
-        if(!offline)
+        if(!offline){}
             synchronizer->invalidate_data(user);
         dao_user{database}.rm(*user);
     }
@@ -500,7 +500,9 @@ bool session::invalidate(const pods::user::opt_ptr& user_opt)
     {
         auto&& user = user_opt.value();
         if(!offline)
-            synchronizer->invalidate_data(user);
+            return synchronizer->invalidate_data(user);
+        else
+            return false;
     }
     else 
     {
