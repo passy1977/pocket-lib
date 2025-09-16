@@ -420,6 +420,10 @@ bool session::logout(const optional<user::ptr>& user_opt)
     {
         synchronizer->invalidate_data(user_opt.value());
     }
+    else 
+    {
+        return false;
+    }
     
     if(database)
     {
@@ -438,7 +442,11 @@ bool session::logout(const optional<user::ptr>& user_opt)
         
         remove(file_db_path.c_str());
     }
-    
+    else 
+    {
+        return false;
+    }
+
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
     
@@ -469,6 +477,10 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
             synchronizer->invalidate_data(user);
         dao_user{database}.rm(*user);
     }
+    else 
+    {
+        return false;
+    }
     
     view_field->rm_all();
     view_group_field->rm_all();
@@ -480,6 +492,20 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     secret.clear();
     
     return true;
+}
+
+bool session::invalidate(const pods::user::opt_ptr& user_opt)
+{
+    if(user_opt)
+    {
+        auto&& user = user_opt.value();
+        if(!offline)
+            synchronizer->invalidate_data(user);
+    }
+    else 
+    {
+        return false;
+    }
 }
 
 bool session::export_data(const optional<user::ptr>& user_opt, string full_path_file, bool enable_aes)
