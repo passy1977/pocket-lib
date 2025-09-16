@@ -79,6 +79,8 @@ public:
     bool logout(const pods::user::opt_ptr& user_opt);
     
     bool soft_logout(const pods::user::opt_ptr& user_opt);
+
+    bool invalidate(const pods::user::opt_ptr& user_opt);
     
     bool export_data(const pods::user::opt_ptr& user_opt, std::string full_path_file, bool enable_aes = true);
 
