@@ -473,8 +473,9 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     if(user_opt)
     {
         auto&& user = user_opt.value();
-        if(!offline){}
+        if(!offline) {
             synchronizer->invalidate_data(user);
+        }
         dao_user{database}.rm(*user);
     }
     else 
@@ -485,10 +486,17 @@ bool session::soft_logout(const optional<user::ptr>& user_opt)
     view_field->rm_all();
     view_group_field->rm_all();
     view_group->rm_all();
-    
+
+    if(database)
+    {
+        database->close();
+    }
+
     fill(secret.begin(), secret.end(), 0x00);
     unlock();
 
+
+    
     secret.clear();
     
     return true;
@@ -500,7 +508,13 @@ bool session::invalidate(const pods::user::opt_ptr& user_opt)
     {
         auto&& user = user_opt.value();
         if(!offline)
+        {
+            if(database)
+            {
+                database->close();
+            }
             return synchronizer->invalidate_data(user);
+        }
         else
             return false;
     }

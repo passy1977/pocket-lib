@@ -26,17 +26,15 @@
 #include <vector>
 #include <sstream>
 #include <filesystem>
-
-
 #include <unistd.h>
+
 namespace pocket::services::inline v5
 {
 
 using namespace std;
 using namespace std::filesystem;
 using pods::variant;
-using
-enum pods::variant::type;
+using enum pods::variant::type;
 
 char const database::CREATION_SQL[] = R"sql(
 CREATE TABLE `user` ( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `name` text NOT NULL, `email` text NOT NULL, `passwd` text NOT NULL, status integer NOT NULL DEFAULT '0', `timestamp_last_update` INTEGER NOT NULL DEFAULT 0);
@@ -70,7 +68,7 @@ database::~database() try
 catch (const exception& e)
 {
     cerr << e.what() << std::endl;
-    debug(typeid(*this).name(), e.what());
+    error(typeid(*this).name(), e.what());
 }
 
 bool database::open(const string& file_db_path) 
@@ -179,7 +177,7 @@ catch (...)
         }
         catch (const runtime_error& e)
         {
-            cerr << e.what() << endl;
+            error(typeid(*this).name(), e.what());
             return false;
         }
     }
@@ -249,6 +247,7 @@ bool database::rm()
 {
     if(exists(file_db_path))
     {
+        debug(typeid(*this).name(), "Remove db:" + file_db_path);
         remove(file_db_path);
         return true;
     }
@@ -262,6 +261,7 @@ bool database::rm()
 void database::lock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
+    debug(typeid(*this).name(), "Lock");
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
@@ -280,6 +280,7 @@ void database::lock()
 void database::unlock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
+    debug(typeid(*this).name(), "Unlock");
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
