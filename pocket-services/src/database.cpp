@@ -128,16 +128,27 @@ inline void database::close()
         return;
     }
 
-    //unlock();
+    unlock();
+    
+    // Force finalize all prepared statements
+    sqlite3_stmt* stmt = nullptr;
+    while((stmt = sqlite3_next_stmt(db, nullptr)) != nullptr)
+    {
+        sqlite3_finalize(stmt);
+    }
 
-    int rc = sqlite3_close_v2(db);
+    int rc = sqlite3_close(db);
     if(rc != SQLITE_OK)
     {
         string msg = "Error closing database:";
         msg += sqlite3_errmsg(db);
-        db = nullptr;
-        unlock();
-        throw runtime_error(msg);
+        // Try force close
+        rc = sqlite3_close_v2(db);
+        if(rc != SQLITE_OK)
+        {
+            db = nullptr;
+            throw runtime_error(msg);
+        }
     }
     db = nullptr;
 
@@ -146,6 +157,7 @@ inline void database::close()
 bool database::is_created(uint8_t& db_version) noexcept try
 {
     lock();
+
     result_set rs(*this, "SELECT * FROM metadata"); //throw exception
     if(rs.get_statement_stat() != SQLITE_OK)
     {
