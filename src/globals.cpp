@@ -26,6 +26,7 @@ namespace pocket::inline v5
 {
 
 using namespace std;
+using namespace chrono;
     
 void str_replace_all(string &s, const string_view &to_replace, const string_view &replacement) noexcept
 {
@@ -56,11 +57,11 @@ string& trim(string &s) noexcept
     
 time_t get_current_time_GMT() noexcept
 {
-    auto now = std::chrono::system_clock::now();
-    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto now = system_clock::now();
+    auto now_ms = time_point_cast<milliseconds>(now);
 
     auto epoch = now_ms.time_since_epoch();
-    auto value = std::chrono::duration_cast<std::chrono::seconds>(epoch);
+    auto value = duration_cast<seconds>(epoch);
 
     return value.count();
 }

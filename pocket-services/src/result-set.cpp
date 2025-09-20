@@ -33,6 +33,15 @@ result_set::result_set(class database& database, const std::string& query, const
 
     debug(typeid(*this).name(), query);
     statement_stat = sqlite3_prepare_v3(database.db, query.c_str(), static_cast<int>(query.length()), 0, &stmt, nullptr);
+    
+    // Ensure statement is always finalized using RAII-like pattern
+    auto stmt_guard = [&stmt]() {
+        if(stmt != nullptr) {
+            sqlite3_finalize(stmt);
+            stmt = nullptr;
+        }
+    };
+    
     if(statement_stat == SQLITE_OK )
     {
         for(int i = 1; auto &&param : parameters) {
@@ -84,6 +93,7 @@ result_set::result_set(class database& database, const std::string& query, const
                             break;
                         case SQLITE_FLOAT:
                             row.try_emplace(column, sqlite3_column_double(stmt, i));
+                            break;
                         case SQLITE_NULL:
                             row.try_emplace(column, nullptr);
                             break;
@@ -93,9 +103,6 @@ result_set::result_set(class database& database, const std::string& query, const
 
                 push_back(row);
             }
-
-            sqlite3_finalize(stmt);
-            stmt = nullptr;
         }
         else if (rc == SQLITE_DONE)
         {
@@ -103,16 +110,19 @@ result_set::result_set(class database& database, const std::string& query, const
         }
         else if (rc == SQLITE_ERROR)
         {
-            sqlite3_finalize(stmt);
+            stmt_guard(); // Finalize statement before throwing
             throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
         }
 
     }
     else if(statement_stat == SQLITE_ERROR)
     {
-        sqlite3_finalize(stmt);
+        stmt_guard(); // Finalize statement before throwing
         throw runtime_error("Impossible execute query err:" + string(sqlite3_errmsg(database.db)));
     }
+    
+    // Always finalize the statement at the end
+    stmt_guard();
 
 }
 
