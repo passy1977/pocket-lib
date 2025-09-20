@@ -358,13 +358,12 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
         {
             dao_user dao(database);
 
-#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
-            u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
-#endif
             optional<user::ptr> user_ret = make_unique<class user>(*user);
             user::ptr& u = user_ret.value();
             u->passwd = new_passwd;
-
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+            u->timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
             try
             {
                 if(!import_data(user_ret, full_path_file.data(), enable_aes))
