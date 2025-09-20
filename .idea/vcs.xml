@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/nlohmann_json-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/tinyxml2-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/thread-pool" vcs="Git" />
   </component>
 </project>

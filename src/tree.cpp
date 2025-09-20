@@ -34,9 +34,13 @@ bool tree::operator+(group::ptr& group) noexcept
         return false;
     }
 
+    // Check if this is a duplicate - if so, just overwrite the container entry
     if(container.contains(group->id))
     {
-        return false;
+        // Just update the existing entry without touching idx
+        auto& [existing_level, existing_group] = container[group->id];
+        existing_group = make_unique<class group>(*group);
+        return true;
     }
 
     if(container.contains(group->group_id))

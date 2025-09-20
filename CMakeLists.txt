@@ -85,8 +85,8 @@ file(GLOB_RECURSE POCKET_IFACE_INCLUDES CONFIGURE_DEPENDS "pocket-iface/inc/pock
 file(GLOB_RECURSE POCKET_PODS_INCLUDES CONFIGURE_DEPENDS "pocket-pods/inc/pocket-pods/*.hpp")
 file(GLOB_RECURSE POCKET_PODS_SOURCES CONFIGURE_DEPENDS "pocket-pods/src/*.cpp")
 
-file(GLOB_RECURSE POCKET_SERVICES_INCLUDES CONFIGURE_DEPENDS "pocket-services/inc/pocket-services/*.hpp")
-file(GLOB_RECURSE POCKET_SERVICES_SOURCES CONFIGURE_DEPENDS "pocket-services/src/*.cpp")
+file(GLOB_RECURSE POCKET_SERVICES_INCLUDES CONFIGURE_DEPENDS "pocket-services/inc/pocket-services/*.hpp" "pocket-services/inc/*.hpp")
+file(GLOB_RECURSE POCKET_SERVICES_SOURCES CONFIGURE_DEPENDS "pocket-services/inc/pocket-services/src/*.cpp")
 
 file(GLOB_RECURSE POCKET_VIEWS_INCLUDES CONFIGURE_DEPENDS "pocket-views/inc/pocket-views/*.hpp")
 file(GLOB_RECURSE POCKET_VIEWS_SOURCES CONFIGURE_DEPENDS "pocket-views/src/*.cpp")
