@@ -1,4 +1,4 @@
-# Pocket Library - Comprehensive Documentation
+# README
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/passy1977/pocket-lib)
 
