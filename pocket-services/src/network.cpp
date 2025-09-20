@@ -70,6 +70,7 @@ std::string network::perform(network::method method, const std::string_view& url
     {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
         full_url = url;
     }
     else
@@ -183,10 +184,6 @@ std::string network::perform(network::method method, const std::string_view& url
     }
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-    if(http_code != 200)
-    {
-        throw runtime_error(to_string(http_code));
-    }
 
     return ret_data;
 }

@@ -1,0 +1,50 @@
+# PocketConfig.cmake.in
+# Configuration file for the Pocket library
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find dependencies that are required by Pocket
+find_dependency(PkgConfig REQUIRED)
+
+# Find CURL
+pkg_search_module(CURL REQUIRED libcurl)
+if(NOT CURL_FOUND)
+    message(FATAL_ERROR "Could not find the CURL library and development files.")
+endif()
+
+# Find OpenSSL
+pkg_search_module(OPENSSL REQUIRED openssl)
+if(NOT OPENSSL_FOUND)
+    message(FATAL_ERROR "Could not find the OpenSSL library and development files.")
+endif()
+
+# Find SQLite3
+find_dependency(SQLite3)
+pkg_search_module(SQLITE3 REQUIRED sqlite3)
+if(NOT SQLITE3_FOUND)
+    message(FATAL_ERROR "Could not find the sqlite3 library and development files.")
+endif()
+
+# Find nlohmann_json - this is used internally by Pocket
+include(FetchContent)
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
+# Find tinyxml2 - this is used internally by Pocket
+FetchContent_Declare(
+    tinyxml2
+    GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+    GIT_TAG 11.0.0
+)
+FetchContent_MakeAvailable(tinyxml2)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/PocketTargets.cmake")
+
+check_required_components(pocket)
