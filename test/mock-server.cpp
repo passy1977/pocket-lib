@@ -26,31 +26,31 @@
 namespace pocket::test
 {
 
-MockServer::MockServer(int port) : port(port)
+mock_server::mock_server(int port) : port(port)
 {
 }
 
-MockServer::~MockServer()
+mock_server::~mock_server()
 {
     stop();
 }
 
-void MockServer::start()
+void mock_server::start()
 {
     if (running.load()) {
         return; // Already running
     }
 
     // Create socket
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_socket < 0) {
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0) {
         throw std::runtime_error("Failed to create socket");
     }
 
     // Set socket options to reuse address
     int opt = 1;
-    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        close(server_socket);
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        close(serverSocket);
         throw std::runtime_error("Failed to set socket options");
     }
 
@@ -58,8 +58,8 @@ void MockServer::start()
     struct timeval timeout;
     timeout.tv_sec = 1;  // 1 second timeout
     timeout.tv_usec = 0;
-    if (setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        close(server_socket);
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        close(serverSocket);
         throw std::runtime_error("Failed to set socket timeout");
     }
 
@@ -69,30 +69,30 @@ void MockServer::start()
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
 
-    if (bind(server_socket, (struct sockaddr*)&address, sizeof(address)) < 0) {
-        close(server_socket);
+    if (bind(serverSocket, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        close(serverSocket);
         throw std::runtime_error("Failed to bind socket");
     }
 
     // Get the actual port if auto-assigned
     if (port == 0) {
         socklen_t len = sizeof(address);
-        if (getsockname(server_socket, (struct sockaddr*)&address, &len) == 0) {
+        if (getsockname(serverSocket, (struct sockaddr*)&address, &len) == 0) {
             port = ntohs(address.sin_port);
         }
     }
 
     // Listen for connections
-    if (listen(server_socket, 10) < 0) {
-        close(server_socket);
+    if (listen(serverSocket, 10) < 0) {
+        close(serverSocket);
         throw std::runtime_error("Failed to listen on socket");
     }
 
     running.store(true);
-    server_thread = std::thread(&MockServer::run_server, this);
+    server_thread = std::thread(&mock_server::run_server, this);
 }
 
-void MockServer::stop()
+void mock_server::stop()
 {
     if (!running.load()) {
         return; // Already stopped
@@ -100,9 +100,9 @@ void MockServer::stop()
 
     running.store(false);
     
-    if (server_socket >= 0) {
-        close(server_socket);
-        server_socket = -1;
+    if (serverSocket >= 0) {
+        close(serverSocket);
+        serverSocket = -1;
     }
 
     if (server_thread.joinable()) {
@@ -110,13 +110,13 @@ void MockServer::stop()
     }
 }
 
-void MockServer::run_server()
+void mock_server::run_server()
 {
     while (running.load()) {
         struct sockaddr_in client_address{};
         socklen_t client_len = sizeof(client_address);
         
-        int client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_len);
+        int client_socket = accept(serverSocket, (struct sockaddr*)&client_address, &client_len);
         if (client_socket < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
                 // Timeout occurred, continue loop to check if we should stop
@@ -169,7 +169,7 @@ void MockServer::run_server()
                 
                 if (!found_match) {
                     // Default 404 response
-                    response.status_code = 404;
+                    response.statusCode = 404;
                     response.body = "Not Found: " + method + " " + path;
                 }
             }
@@ -182,7 +182,7 @@ void MockServer::run_server()
     }
 }
 
-std::string MockServer::parse_request(const std::string& request, std::string& method, std::string& path, std::string& body)
+std::string mock_server::parse_request(const std::string& request, std::string& method, std::string& path, std::string& body)
 {
     std::istringstream iss(request);
     std::string line;
@@ -209,13 +209,13 @@ std::string MockServer::parse_request(const std::string& request, std::string& m
     return headers;
 }
 
-std::string MockServer::build_response(const Response& response)
+std::string mock_server::build_response(const Response& response)
 {
     std::ostringstream oss;
-    oss << "HTTP/1.1 " << response.status_code << " ";
+    oss << "HTTP/1.1 " << response.statusCode << " ";
     
     // Add standard status messages
-    switch (response.status_code) {
+    switch (response.statusCode) {
         case 200: oss << "OK"; break;
         case 404: oss << "Not Found"; break;
         case 500: oss << "Internal Server Error"; break;
@@ -224,7 +224,7 @@ std::string MockServer::build_response(const Response& response)
     oss << "\r\n";
     
     // Add headers
-    oss << "Content-Type: " << response.content_type << "\r\n";
+    oss << "Content-Type: " << response.contentType << "\r\n";
     oss << "Content-Length: " << response.body.length() << "\r\n";
     oss << "Connection: close\r\n";
     
@@ -238,46 +238,46 @@ std::string MockServer::build_response(const Response& response)
     return oss.str();
 }
 
-void MockServer::add_route(const std::string& method_path, RouteHandler handler)
+void mock_server::add_route(const std::string& methodPath, RouteHandler handler)
 {
-    routes[method_path] = std::move(handler);
+        routes[methodPath] = handler;
 }
 
-void MockServer::add_get(const std::string& path, RouteHandler handler)
+void mock_server::add_get(const std::string& path, RouteHandler handler)
 {
     add_route("GET " + path, std::move(handler));
 }
 
-void MockServer::add_post(const std::string& path, RouteHandler handler)
+void mock_server::add_post(const std::string& path, RouteHandler handler)
 {
     add_route("POST " + path, std::move(handler));
 }
 
-void MockServer::add_put(const std::string& path, RouteHandler handler)
+void mock_server::add_put(const std::string& path, RouteHandler handler)
 {
     add_route("PUT " + path, std::move(handler));
 }
 
-void MockServer::add_delete(const std::string& path, RouteHandler handler)
+void mock_server::addDelete(const std::string& path, RouteHandler handler)
 {
     add_route("DELETE " + path, std::move(handler));
 }
 
-void MockServer::add_simple_get(const std::string& path, const std::string& response_body)
+void mock_server::add_simple_get(const std::string& path, const std::string& responseBody)
 {
-    add_get(path, [response_body](const std::string&, const std::string&, const std::string&) {
+    add_get(path, [responseBody](const std::string&, const std::string&, const std::string&) {
         Response resp;
-        resp.body = response_body;
+        resp.body = responseBody;
         return resp;
     });
 }
 
-void MockServer::add_json_get(const std::string& path, const std::string& json_response)
+void mock_server::add_json_get(const std::string& path, const std::string& jsonResponse)
 {
-    add_get(path, [json_response](const std::string&, const std::string&, const std::string&) {
+    add_get(path, [jsonResponse](const std::string&, const std::string&, const std::string&) {
         Response resp;
-        resp.content_type = "application/json";
-        resp.body = json_response;
+        resp.contentType = "application/json";
+        resp.body = jsonResponse;
         return resp;
     });
 }

@@ -44,7 +44,7 @@ public:
     using enum variant::type;
 
 private:
-    variant::type t;
+    variant::type t = NULL_T;
     int64_t integer_value = 0;
     double double_value = 0;
     std::string text_value;

@@ -29,28 +29,28 @@ using namespace pocket::services;
 using namespace pocket::test;
 using namespace std;
 
-struct network_test : public ::testing::Test 
+struct NetworkTest : public ::testing::Test 
 {
-    MockServer* server = nullptr;
+    mock_server* server = nullptr;
     
     void SetUp() override 
     {
-        server = new MockServer(0); // Auto-assign port
+        server = new mock_server(0); // Auto-assign port
         
         // Setup some test routes
         server->add_simple_get("/test", "Hello World");
         server->add_json_get("/api/status", R"({"status": "ok", "version": "1.0"})");
         server->add_get("/echo", [](const std::string& method, const std::string& path, const std::string& body) {
-            MockServer::Response resp;
-            resp.content_type = "application/json";
+            mock_server::Response resp;
+            resp.contentType = "application/json";
             resp.body = R"({"method": ")" + method + R"(", "path": ")" + path + R"("})";
             return resp;
         });
         
         // Add POST endpoint
         server->add_post("/api/data", [](const std::string& method, const std::string& path, const std::string& body) {
-            MockServer::Response resp;
-            resp.content_type = "application/json";
+            mock_server::Response resp;
+            resp.contentType = "application/json";
             resp.body = R"({"received": "ok", "data_length": )" + std::to_string(body.length()) + "}";
             return resp;
         });
@@ -71,11 +71,11 @@ struct network_test : public ::testing::Test
     }
 };
 
-TEST_F(network_test, mock_server_get) try
+TEST_F(NetworkTest, MockServerGet) try
 {
     network n;
     
-    std::string url = server->get_base_url() + "/test";
+    std::string url = server->getBaseUrl() + "/test";
     auto&& ret = n.perform(network::method::GET, url);
     
     EXPECT_FALSE(ret.empty());
@@ -88,11 +88,11 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(network_test, mock_server_json) try
+TEST_F(NetworkTest, MockServerJson) try
 {
     network n;
     
-    std::string url = server->get_base_url() + "/api/status";
+    std::string url = server->getBaseUrl() + "/api/status";
     auto&& ret = n.perform(network::method::GET, url);
     
     EXPECT_FALSE(ret.empty());
@@ -111,11 +111,11 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(network_test, mock_server_post) try
+TEST_F(NetworkTest, MockServerPost) try
 {
     network n;
     
-    std::string url = server->get_base_url() + "/api/data";
+    std::string url = server->getBaseUrl() + "/api/data";
     std::string json_data = R"({"test": "data", "number": 42})";
     
     auto&& ret = n.perform(network::method::POST, url, {}, json_data);
@@ -136,11 +136,11 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(network_test, mock_server_404) try
+TEST_F(NetworkTest, MockServer404) try
 {
     network n;
     
-    std::string url = server->get_base_url() + "/nonexistent";
+    std::string url = server->getBaseUrl() + "/nonexistent";
     auto&& ret = n.perform(network::method::GET, url);
     
     EXPECT_EQ(n.get_http_code(), 404);
@@ -152,7 +152,7 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(network_test, base_connection) try
+TEST_F(NetworkTest, BaseConnection) try
 {
     // Keep original test but make it more robust
     network n;
@@ -170,7 +170,7 @@ catch (const std::exception& e)
     SUCCEED(); // Mark as success since it's an external dependency
 }
 
-TEST_F(network_test, json) try
+TEST_F(NetworkTest, Json) try
 {
     using namespace nlohmann;
 

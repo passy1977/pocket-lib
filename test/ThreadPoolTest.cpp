@@ -25,7 +25,7 @@ using namespace std;
 #include "pocket-controllers/session.hpp"
 #include "BS_thread_pool.hpp"
 
-struct thread_pool_test : public ::testing::Test
+struct ThreadPoolTest : public ::testing::Test
 {
     BS::thread_pool<6> pool;
     BS::synced_stream sync_out;
@@ -33,7 +33,7 @@ struct thread_pool_test : public ::testing::Test
 };
 
 
-TEST_F(thread_pool_test, test) try
+TEST_F(ThreadPoolTest, Test) try
 {
 
     std::future<void> my_future = pool.submit_task(

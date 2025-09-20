@@ -48,19 +48,19 @@ constexpr char data[] = R"json(
 {"id":2,"uuid":"d1c9bcc1-06fc-4989-87fd-f5bb8d7a400e","status":"ACTIVE","timestampCreation":1758379577,"userId":2,"host":"http://localhost:8081","hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqHdvCm4crmKrP0f8N/MDqrX+VakRwG11wqER08zSGqmXkc/jQr78JtSV8mGe9uSi/ufMsEaih+Hi1a5b/TdudcoapWftZXqe5Cb9IRzXuwPf5ke/KIg2GJ9bFEEkGK6YO12TZdRWbwS5cmBxrZdshsmL4Z4NgR4bFV0s6r+VLS6dauHkHv3+8MWsgOmBRdmyERD01g6gNOtm855ePOzABYurmKn4lML6i8+sRozKjeprt1RC4wM5nOTc14FyID5aksOtRsa6RcHvptKRWbERShmbOS0u6zUZ+oMoF8vRviaIKV9PiIeBTzeBuhAe62Bo9vQAq2zEBLmafijX0Xiz7QIDAQAB\n-----END PUBLIC KEY-----\n","aesCbcIv":"__iv_to_change__"}
 )json";
 
-struct session_test : public ::testing::Test {
+struct SessionTest : public ::testing::Test {
 protected:
-    pocket::test::MockServer* mock_server = nullptr;
+    pocket::test::mock_server* mock_server = nullptr;
     std::string dynamic_config;
     
     void SetUp() override {
         // Setup mock server on dynamic port (auto-assign)
-        mock_server = new pocket::test::MockServer(0);
+        mock_server = new pocket::test::mock_server(0);
         setup_mock_endpoints();
         mock_server->start();
         
         // Generate config with the actual mock server URL
-        dynamic_config = generate_config(mock_server->get_base_url());
+        dynamic_config = generate_config(mock_server->getBaseUrl());
         
         // Give the server a moment to start
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -82,9 +82,9 @@ private:
         
         // Add a catch-all handler for /api/v5 that responds to any sub-path
         mock_server->add_route("GET /api/v5", [](const std::string& method, const std::string& path, const std::string& body) {
-            pocket::test::MockServer::Response resp;
-            resp.status_code = 200;
-            resp.content_type = "application/json";
+            pocket::test::mock_server::Response resp;
+            resp.statusCode = 200;
+            resp.contentType = "application/json";
             // Return a valid response with all required fields for the synchronizer
             resp.body = R"json({
                 "timestampLastUpdate": 1758379577,
@@ -114,9 +114,9 @@ private:
         });
         
         mock_server->add_route("POST /api/v5", [](const std::string& method, const std::string& path, const std::string& body) {
-            pocket::test::MockServer::Response resp;
-            resp.status_code = 200;
-            resp.content_type = "application/json";
+            pocket::test::mock_server::Response resp;
+            resp.statusCode = 200;
+            resp.contentType = "application/json";
             // Return a valid response similar to GET but for POST operations
             resp.body = R"json({
                 "timestampLastUpdate": 1758379577,
@@ -143,24 +143,24 @@ private:
         });
         
         mock_server->add_route("PUT /api/v5", [](const std::string& method, const std::string& path, const std::string& body) {
-            pocket::test::MockServer::Response resp;
-            resp.status_code = 200;
-            resp.content_type = "application/json";
+            pocket::test::mock_server::Response resp;
+            resp.statusCode = 200;
+            resp.contentType = "application/json";
             resp.body = R"json({"success": true, "message": "Password changed successfully"})json";
             return resp;
         });
         
         mock_server->add_route("DELETE /api/v5", [](const std::string& method, const std::string& path, const std::string& body) {
-            pocket::test::MockServer::Response resp;
-            resp.status_code = 200;
-            resp.content_type = "application/json";
+            pocket::test::mock_server::Response resp;
+            resp.statusCode = 200;
+            resp.contentType = "application/json";
             resp.body = R"json({"success": true, "message": "Data invalidated successfully"})json";
             return resp;
         });
     }
 };
 
-TEST_F(session_test, config_parse) try
+TEST_F(SessionTest, ConfigParse) try
 {
     config config;
 
@@ -173,7 +173,7 @@ catch (const std::exception& e)
     ASSERT_TRUE(false);
 }
 
-TEST_F(session_test, session_init) try
+TEST_F(SessionTest, SessionInit) try
 {
     using namespace pocket::pods;
     using namespace std::filesystem;
@@ -190,7 +190,7 @@ TEST_F(session_test, session_init) try
     // Use dynamic config with mock server URL
     session session(dynamic_config);
     
-    std::cout << "Using mock server at: " << mock_server->get_base_url() << std::endl;
+    std::cout << "Using mock server at: " << mock_server->getBaseUrl() << std::endl;
     
     // Set shorter timeouts for testing
     session.set_synchronizer_timeout(2000);        // 2 seconds
@@ -310,7 +310,7 @@ catch (const std::exception& e)
 }
 
 
-TEST_F(session_test, tree_test) try
+TEST_F(SessionTest, TreeTest) try
 {
 
     using pocket::tree;

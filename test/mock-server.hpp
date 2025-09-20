@@ -35,13 +35,13 @@ namespace pocket::test
 /**
  * Simple HTTP mock server for testing network connections
  */
-class MockServer
+class mock_server
 {
 public:
     struct Response 
     {
-        int status_code = 200;
-        std::string content_type = "text/plain";
+        int statusCode = 200;
+        std::string contentType = "text/plain";
         std::string body = "OK";
         std::map<std::string, std::string> headers;
     };
@@ -51,7 +51,7 @@ public:
 private:
     std::thread server_thread;
     std::atomic<bool> running{false};
-    int server_socket = -1;
+    int serverSocket = -1;
     int port;
     std::map<std::string, RouteHandler> routes;
 
@@ -60,30 +60,30 @@ private:
     std::string build_response(const Response& response);
 
 public:
-    explicit MockServer(int port = 0); // 0 = auto-assign port
-    ~MockServer();
+    explicit mock_server(int port = 0); // 0 = auto-assign port
+    ~mock_server();
 
     // No copy/move
-    MockServer(const MockServer&) = delete;
-    MockServer& operator=(const MockServer&) = delete;
-    MockServer(MockServer&&) = delete;
-    MockServer& operator=(MockServer&&) = delete;
+    mock_server(const mock_server&) = delete;
+    mock_server& operator=(const mock_server&) = delete;
+    mock_server(mock_server&&) = delete;
+    mock_server& operator=(mock_server&&) = delete;
 
     void start();
     void stop();
-    int get_port() const { return port; }
-    std::string get_base_url() const { return "http://127.0.0.1:" + std::to_string(port); }
+    int getPort() const { return port; }
+    std::string getBaseUrl() const { return "http://127.0.0.1:" + std::to_string(port); }
 
     // Route registration
-    void add_route(const std::string& method_path, RouteHandler handler);
+    void add_route(const std::string& methodPath, RouteHandler handler);
     void add_get(const std::string& path, RouteHandler handler);
     void add_post(const std::string& path, RouteHandler handler);
     void add_put(const std::string& path, RouteHandler handler);
-    void add_delete(const std::string& path, RouteHandler handler);
+    void addDelete(const std::string& path, RouteHandler handler);
 
     // Convenience methods for common responses
-    void add_simple_get(const std::string& path, const std::string& response_body);
-    void add_json_get(const std::string& path, const std::string& json_response);
+    void add_simple_get(const std::string& path, const std::string& responseBody);
+    void add_json_get(const std::string& path, const std::string& jsonResponse);
 };
 
 }
