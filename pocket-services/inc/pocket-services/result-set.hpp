@@ -31,6 +31,7 @@ namespace pocket::services::inline v5
 class result_set final : public std::vector<std::map<std::string, pods::variant>>
 {
     class database& database;
+    sqlite3_stmt* stmt = nullptr;
     int statement_stat = SQLITE_OK;
     int64_t total_changes = 0;
 public:

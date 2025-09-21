@@ -29,13 +29,14 @@ using enum pods::variant::type;
 result_set::result_set(class database& database, const std::string& query, const database::parameters& parameters)
         : database(database)
 {
-    sqlite3_stmt *stmt = nullptr;
+    
 
     debug(typeid(*this).name(), query);
     statement_stat = sqlite3_prepare_v3(database.db, query.c_str(), static_cast<int>(query.length()), 0, &stmt, nullptr);
     
     // Ensure statement is always finalized using RAII-like pattern
-    auto stmt_guard = [&stmt]() {
+    auto stmt_guard = [this] 
+    {
         if(stmt != nullptr) {
             sqlite3_finalize(stmt);
             stmt = nullptr;
@@ -126,7 +127,14 @@ result_set::result_set(class database& database, const std::string& query, const
 
 }
 
-result_set::~result_set() = default;
+result_set::~result_set() 
+{
+    if(stmt != nullptr) 
+    {
+        sqlite3_finalize(stmt);
+        stmt = nullptr;
+    }
+}
 
 
 
