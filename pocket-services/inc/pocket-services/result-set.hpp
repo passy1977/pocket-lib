@@ -37,9 +37,9 @@ public:
 
     using ptr = std::unique_ptr<result_set>;
 
-    explicit result_set(class database& database, const std::string& query, const database::parameters& parameters = {});
+    result_set(class database& database, const std::string& query, const database::parameters& parameters = {});
 
-    inline explicit result_set(class database& database, const std::string&& query, const database::parameters& parameters = {})
+    inline result_set(class database& database, const std::string&& query, const database::parameters& parameters = {})
             : result_set(database, query, parameters)
     {}
     ~result_set();
