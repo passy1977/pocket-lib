@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Pocket Library Configuration Options
 option(POCKET_DISABLE_LOCK "Disable locking mechanisms in Pocket library" ON)
-option(POCKET_DISABLE_DB_LOCK "Disable database locking in Pocket library" ON)
+option(POCKET_DISABLE_DB_LOCK "Disable database locking in Pocket library" OFF)
 option(POCKET_ENABLE_LOG "Enable logging in Pocket library" ON)
 option(POCKET_ENABLE_AES "Enable AES encryption in Pocket library" ON)
 option(POCKET_ENABLE_TEST "Enable test compilation in Pocket library" OFF)
