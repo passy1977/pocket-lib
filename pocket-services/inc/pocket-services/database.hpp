@@ -38,6 +38,7 @@ class database final
     constexpr inline static uint8_t VERSION = 2;
     static char const CREATION_SQL[];
     constexpr inline static uint32_t BUSY_TIMEOUT_MS = 3'000; // Time to wait before retrying when SQLITE_BUSY is encountered
+    constexpr inline static uint8_t BUSY_MAX_RETRIES = 3;
 
     std::string file_db_path;
     sqlite3* db = nullptr;
@@ -69,11 +70,11 @@ private:
 
     void lock();
     void unlock();
-    void set_wal_mode();
+    void set_wal_mode() noexcept;
 
     // Helper function to handle SQLITE_BUSY with retry
     template<typename Func>
-    auto execute_with_retry(Func&& func, int max_retries = 3) -> decltype(func());
+    auto execute_with_retry(Func&& func, uint8_t max_retries = BUSY_MAX_RETRIES) -> decltype(func());
 
 
 };
