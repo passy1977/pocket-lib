@@ -27,6 +27,8 @@
 #include <sstream>
 #include <filesystem>
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 
 namespace pocket::services::inline v5
 {
@@ -89,6 +91,16 @@ bool database::open(const string& file_db_path)
         throw runtime_error(msg);
     }
 
+    // Set busy timeout to X seconds to handle SQLITE_BUSY
+    rc = sqlite3_busy_timeout(db, BUSY_TIMEOUT_MS);
+    if(rc != SQLITE_OK)
+    {
+        string msg = "Error setting busy timeout: ";
+        msg += sqlite3_errmsg(db);
+        sqlite3_close(db);
+        throw runtime_error(msg);
+    }
+
     database::file_db_path = file_db_path;
 
     uint8_t version = 0;
@@ -103,12 +115,21 @@ bool database::open(const string& file_db_path)
                 [[likely]] case 2:
                 break;
         }
+        
+        // Set WAL mode after database is confirmed to exist and be accessible
+        set_wal_mode();
     }
     else
     {
         try
         {
-            return create(CREATION_SQL); //throw exception
+            bool result = create(CREATION_SQL); //throw exception
+            if(result)
+            {
+                // Set WAL mode after successful database creation
+                set_wal_mode();
+            }
+            return result;
         }
         catch (const runtime_error& e) 
         {
@@ -308,19 +329,65 @@ void database::unlock()
 #endif
 }
 
+void database::set_wal_mode()
+{
+    // Attempt to set WAL mode with retry mechanism
+    for(int attempt = 0; attempt < 3; ++attempt)
+    {
+        char* err = nullptr;
+        int rc = sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &err);
+        
+        if(rc == SQLITE_OK)
+        {
+            info(typeid(*this).name(), "Successfully set WAL mode");
+            return;
+        }
+        
+        string error_msg;
+        if(err)
+        {
+            error_msg = err;
+            sqlite3_free(err);
+        }
+        else
+        {
+            error_msg = sqlite3_errmsg(db);
+        }
+        
+        if(rc == SQLITE_BUSY && attempt < 2)
+        {
+            info(typeid(*this).name(), "Database busy when setting WAL mode, retrying... (attempt " + 
+                    to_string(attempt + 1) + "/3)");
+            this_thread::sleep_for(chrono::milliseconds(100 * (attempt + 1)));
+            continue;
+        }
+        
+        // If we get here, either it's not SQLITE_BUSY or we've exhausted retries
+        info(typeid(*this).name(), "Failed to set WAL mode: " + error_msg + 
+                " (continuing with default journal mode)");
+        return;
+    }
+}
+
 optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters) try
 {
-    lock();
-    auto rs = make_unique<result_set>(*this, query, parameters);
+    return execute_with_retry([&]() -> optional<result_set::ptr> {
+        lock();
+        auto rs = make_unique<result_set>(*this, query, parameters);
 
-    if(rs->get_statement_stat() != SQLITE_OK)
-    {
-		unlock();
-        return nullopt;
-    }
+        if(rs->get_statement_stat() != SQLITE_OK)
+        {
+            unlock();
+            if(rs->get_statement_stat() == SQLITE_BUSY)
+            {
+                throw runtime_error("SQLITE_BUSY: Database is locked");
+            }
+            return nullopt;
+        }
 
-    unlock();
-    return rs;
+        unlock();
+        return rs;
+    });
 }
 catch (...)
 {
@@ -331,22 +398,66 @@ catch (...)
 
 int64_t database::update(const string&& query, const parameters& parameters) try
 {
-    lock();
-    auto rs = make_unique<result_set>(*this, query, parameters);
+    return execute_with_retry([&]() -> int64_t {
+        lock();
+        auto rs = make_unique<result_set>(*this, query, parameters);
 
-    if(rs->get_statement_stat() != SQLITE_OK)
-    {
-		unlock();
-        return -1;
-    }
+        if(rs->get_statement_stat() != SQLITE_OK)
+        {
+            unlock();
+            if(rs->get_statement_stat() == SQLITE_BUSY)
+            {
+                throw runtime_error("SQLITE_BUSY: Database is locked");
+            }
+            return -1;
+        }
 
-    unlock();
-    return rs->get_total_changes();
+        unlock();
+        return rs->get_total_changes();
+    });
 }
 catch (...)
 {
     unlock();
     throw;
+}
+
+// Template implementation for retry logic
+template<typename Func>
+auto database::execute_with_retry(Func&& func, int max_retries) -> decltype(func())
+{
+    for(int attempt = 0; attempt < max_retries; ++attempt)
+    {
+        try
+        {
+            return func();
+        }
+        catch(const std::runtime_error& e)
+        {
+            // Check if it's a SQLITE_BUSY error
+            std::string error_msg = e.what();
+            if(error_msg.find("SQLITE_BUSY") != std::string::npos || 
+               error_msg.find("database is locked") != std::string::npos)
+            {
+                if(attempt < max_retries - 1)
+                {
+                    // Wait before retry with exponential backoff
+                    auto wait_time = std::chrono::milliseconds(100 * (1 << attempt));
+                    std::this_thread::sleep_for(wait_time);
+                    
+                    debug(typeid(*this).name(), 
+                          "SQLITE_BUSY detected, retrying attempt " + 
+                          std::to_string(attempt + 2) + "/" + 
+                          std::to_string(max_retries));
+                    continue;
+                }
+            }
+            // Re-throw if not SQLITE_BUSY or max retries reached
+            throw;
+        }
+    }
+    // This should never be reached, but needed for template compilation
+    return func();
 }
 
 }
