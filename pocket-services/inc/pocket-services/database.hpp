@@ -44,6 +44,7 @@ class database final
     sqlite3* db = nullptr;
 
     mutable std::mutex m;
+    bool transaction_active = false;
 public:
     using ptr = std::unique_ptr<database>;
 

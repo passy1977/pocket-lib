@@ -61,7 +61,7 @@ INSERT INTO metadata VALUES (?);
 )sql";
 
 
-database::database() = default;
+database::database() : transaction_active(false) {}
 
 database::~database() try
 {
@@ -149,7 +149,11 @@ inline void database::close()
         return;
     }
 
-    unlock();
+    // Force rollback if there's an active transaction before closing
+    if(transaction_active) {
+        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        transaction_active = false;
+    }
     
     // Force finalize all prepared statements
     sqlite3_stmt* stmt = nullptr;
@@ -178,13 +182,18 @@ inline void database::close()
 bool database::is_created(uint8_t& db_version) noexcept try
 {
     return execute_with_retry([&] -> bool 
-        {
-        lock();
+    {
+        struct lock_guard {
+            database& db;
+            lock_guard(database& d) : db(d) { db.lock(); }
+            ~lock_guard() { db.unlock(); }
+        };
+        
+        lock_guard guard(*this);
 
-        result_set rs(*this, "SELECT * FROM metadata"); //throw exception
+        result_set rs(*this, "SELECT * FROM metadata");
         if(rs.get_statement_stat() != SQLITE_OK)
         {
-            unlock();
             if(rs.get_statement_stat() == SQLITE_BUSY)
             {
                 throw runtime_error("SQLITE_BUSY: Database is locked in is_created");
@@ -197,18 +206,14 @@ bool database::is_created(uint8_t& db_version) noexcept try
             db_version = it->begin()->second.to_integer();
         }
 
-        unlock();
         return true;
-    }, BUSY_MAX_RETRIES + 2); // More retries for database creation check
+    });
 }
 catch (...)
 {
     cerr << "Unhandled exception is_created()" << endl;
-
-    unlock();
-
+    
     auto e_ptr = current_exception();
-
     if (e_ptr)
     {
         try
@@ -301,6 +306,11 @@ bool database::rm()
 void database::lock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
+    if(transaction_active) {
+        debug(typeid(*this).name(), "Transaction already active, skipping lock");
+        return;
+    }
+    
     debug(typeid(*this).name(), "Lock");
     // Use BEGIN IMMEDIATE instead of EXCLUSIVE locking mode for better compatibility
     char* err = nullptr;
@@ -320,12 +330,18 @@ void database::lock()
         }
         throw runtime_error(msg);
     }
+    transaction_active = true;
 #endif
 }
 
 void database::unlock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
+    if(!transaction_active) {
+        debug(typeid(*this).name(), "No active transaction, skipping unlock");
+        return;
+    }
+    
     debug(typeid(*this).name(), "Unlock");
     // Commit or rollback the transaction
     char* err = nullptr;
@@ -333,6 +349,7 @@ void database::unlock()
     {
         // If commit fails, try rollback
         sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
+        transaction_active = false; // Reset flag even on failure
         string msg = "Database unlock error";
         if(err)
         {
@@ -342,6 +359,7 @@ void database::unlock()
         }
         throw runtime_error(msg);
     }
+    transaction_active = false;
 #endif
 }
 
