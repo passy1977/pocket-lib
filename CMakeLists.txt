@@ -7,10 +7,34 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Compiler optimization flags
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
+endif()
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
+
+# Additional optimization flags for Release mode
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto -ffast-math -funroll-loops")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
+endif()
+
 # Pocket Library Configuration Options
 option(POCKET_DISABLE_LOCK "Disable locking mechanisms in Pocket library" ON)
 option(POCKET_DISABLE_DB_LOCK "Disable database locking in Pocket library" OFF)
-option(POCKET_ENABLE_LOG "Enable logging in Pocket library" ON)
+
+# Automatically disable logs in Release mode, but allow manual override
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    option(POCKET_ENABLE_LOG "Enable logging in Pocket library" OFF)
+else()
+    option(POCKET_ENABLE_LOG "Enable logging in Pocket library" ON)
+endif()
+
 option(POCKET_ENABLE_AES "Enable AES encryption in Pocket library" ON)
 option(POCKET_ENABLE_TEST "Enable test compilation in Pocket library" OFF)
 
@@ -20,6 +44,7 @@ set(POCKET_FORCE_TIMESTAMP_LAST_UPDATE 0 CACHE STRING "Force timestamp last upda
 
 # Display configuration summary
 message(STATUS "Pocket Library Configuration:")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  POCKET_DISABLE_LOCK: ${POCKET_DISABLE_LOCK}")
 message(STATUS "  POCKET_DISABLE_DB_LOCK: ${POCKET_DISABLE_DB_LOCK}")
 message(STATUS "  POCKET_ENABLE_LOG: ${POCKET_ENABLE_LOG}")
@@ -27,6 +52,13 @@ message(STATUS "  POCKET_ENABLE_AES: ${POCKET_ENABLE_AES}")
 message(STATUS "  POCKET_ENABLE_TEST: ${POCKET_ENABLE_TEST}")
 message(STATUS "  POCKET_MAX_BUFFER_RESPONSE_SIZE: ${POCKET_MAX_BUFFER_RESPONSE_SIZE}")
 message(STATUS "  POCKET_FORCE_TIMESTAMP_LAST_UPDATE: ${POCKET_FORCE_TIMESTAMP_LAST_UPDATE}")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "  Optimization: Release mode enabled with -O3, LTO, and native optimizations")
+    message(STATUS "  Logging: Disabled in Release mode for performance")
+else()
+    message(STATUS "  Optimization: Debug/Development mode")
+endif()
 
 message(STATUS "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
