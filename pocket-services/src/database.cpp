@@ -150,7 +150,8 @@ inline void database::close()
     }
 
     // Force rollback if there's an active transaction before closing
-    if(transaction_active) {
+    if(transaction_active) 
+    {
         sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
         transaction_active = false;
     }
@@ -306,7 +307,13 @@ bool database::rm()
 void database::lock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(transaction_active) {
+    if(this == nullptr)
+    {
+        return;
+    }
+
+    if(transaction_active) 
+    {
         debug(typeid(*this).name(), "Transaction already active, skipping lock");
         return;
     }
@@ -337,7 +344,12 @@ void database::lock()
 void database::unlock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(!transaction_active) {
+    if(this == nullptr)
+    {
+        return;
+    }
+    if(!transaction_active) 
+    {
         debug(typeid(*this).name(), "No active transaction, skipping unlock");
         return;
     }
