@@ -137,7 +137,12 @@ public:
     {
         this->offline = offline;
     }
-    
+
+    inline bool is_no_network() const noexcept
+    {
+        return synchronizer->is_no_network();
+    }
+
 private:
     void export_data(nlohmann::json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const;
 
