@@ -93,12 +93,21 @@ public:
 
     inline void set_status(stat status) noexcept
     {
+        if(status == stat::NO_NETWORK)
+        {
+            no_network = true;
+        }
         synchronizer::status = status;
     }
 
-    inline const stat* set_status() const noexcept
+    inline const stat* get_status() const noexcept
     {
         return &status;
+    }
+
+    inline bool is_no_network() const noexcept
+    {
+        return no_network;
     }
 
     inline void set_timeout(long timeout) noexcept
@@ -113,6 +122,7 @@ public:
 
 private:
     stat status = stat::READY;
+    bool no_network = false;
 
     pods::user::opt_ptr parse_data_from_net(const std::string_view& response, pods::server_id_helper& data);
 
