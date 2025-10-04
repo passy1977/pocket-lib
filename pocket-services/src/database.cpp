@@ -182,11 +182,11 @@ inline void database::close()
 
 bool database::is_created(uint8_t& db_version) noexcept try
 {
-    return execute_with_retry([&] -> bool 
+    return execute_with_retry([&]() -> bool
     {
         struct lock_guard {
             database& db;
-            lock_guard(database& d) : db(d) { db.lock(); }
+            explicit lock_guard(database& d) : db(d) { db.lock(); }
             ~lock_guard() { db.unlock(); }
         };
         
@@ -416,7 +416,7 @@ void database::set_wal_mode() noexcept
 
 optional<result_set::ptr> database::execute(const string&& query, const parameters& parameters) try
 {
-    return execute_with_retry([&] -> optional<result_set::ptr> {
+    return execute_with_retry([&]() -> optional<result_set::ptr> {
         lock();
         auto rs = make_unique<result_set>(*this, query, parameters);
 
@@ -443,7 +443,7 @@ catch (...)
 
 int64_t database::update(const string&& query, const parameters& parameters) try
 {
-    return execute_with_retry([&] -> int64_t 
+    return execute_with_retry([&]() -> int64_t
     {
         lock();
         auto rs = make_unique<result_set>(*this, query, parameters);
