@@ -813,7 +813,39 @@ bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_s
     
     return true;
 }
+
+bool session::validate(const pods::user::opt_ptr& user_opt) const
+{
+    if(!user_opt)
+    {
+        error(typeid(this).name(), "User empty");
+        return false;
+    }
+
+    if(secret.empty())
+    {
+        error(typeid(this).name(), "Offline or session not valid");
+        return false;
+    }
     
+    auto&& user = user_opt.value();
+
+    if(!user)
+    {
+        error(typeid(this).name(), "User nullptr");
+        return false;
+    }
+    
+    if(device->user_id != user->id)
+    {
+        throw runtime_error("User id not match");
+    }
+
+    //TODO: check if user is valid on server
+
+    return true;
+}
+
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
 {
     if(group->deleted)
