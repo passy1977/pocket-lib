@@ -268,6 +268,11 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
         return false;
     }
 
+    if(user == nullptr)
+    {
+        return false;
+    }
+
     auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd, timestamp_last_update = user->timestamp_last_update, change_passwd_data_on_server]() mutable
    {
 
@@ -322,10 +327,17 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
 
 bool synchronizer::invalidate_data(const user::ptr& user)
 {
+    if(status != stat::READY)
+    {
+        error(typeid(this).name(), "No network impossible send data");
+        return false;
+    }
+
     if(user == nullptr)
     {
         return false;
     }
+
 
     auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
        {
@@ -377,6 +389,80 @@ bool synchronizer::invalidate_data(const user::ptr& user)
         throw;
     }
 }
+
+bool synchronizer::heartbeat(const pods::user::ptr& user)
+{
+    if(status != stat::READY)
+    {
+        error(typeid(this).name(), "No network impossible send data");
+        return false;
+    }
+
+    if(user == nullptr)
+    {
+        return false;
+    }
+
+    set_status(stat::BUSY);
+
+
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update = user->timestamp_last_update] () mutable
+     {
+         network network;
+         if(timeout)
+         {
+             network.set_timeout(timeout);
+         }
+
+         if(connect_timeout)
+         {
+             network.set_connect_timeout(connect_timeout);
+         }
+         try
+         {
+             if(secret.empty())
+             {
+                 secret = crypto_generate_random_string(10);
+             }
+#ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
+             timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+#endif
+             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update));
+
+             auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/heartbeat" + "/" + device.uuid + "/" + crypt);
+             set_status(stat{network.get_http_code()});
+             return content;
+
+         }
+         catch (const runtime_error& e)
+         {
+             set_status(stat{network.get_http_code()});
+             secret = "";
+             return string(ERROR_HTTP_CODE) + e.what();
+         }
+     });
+
+    try
+    {
+        auto ret = fut_response.get();
+
+        debug(typeid(this).name(), "Heartbeat response:" + ret);
+        // server_id_helper data = fut_data.get();
+
+        // auto&& ret = parse_data_from_net(fut_response.get(), data);
+
+        set_status(stat::READY);
+
+        return true;
+    }
+    catch (const runtime_error& e)
+    {
+        set_status(stat::NO_NETWORK);
+        throw;
+    }
+
+}
+
 
 pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& response, server_id_helper& data)
 {

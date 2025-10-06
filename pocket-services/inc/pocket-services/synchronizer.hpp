@@ -91,6 +91,8 @@ public:
 
     bool invalidate_data(const pods::user::ptr& user);
 
+    bool heartbeat(const pods::user::ptr& user);
+
     inline void set_status(stat status) noexcept
     {
         if(status == stat::NO_NETWORK)

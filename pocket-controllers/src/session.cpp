@@ -814,7 +814,7 @@ bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_s
     return true;
 }
 
-bool session::validate(const pods::user::opt_ptr& user_opt) const
+bool session::heartbeat(const pods::user::opt_ptr& user_opt) const
 {
     if(!user_opt)
     {
@@ -841,9 +841,7 @@ bool session::validate(const pods::user::opt_ptr& user_opt) const
         throw runtime_error("User id not match");
     }
 
-    //TODO: check if user is valid on server
-
-    return true;
+    return synchronizer->heartbeat(user);
 }
 
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
