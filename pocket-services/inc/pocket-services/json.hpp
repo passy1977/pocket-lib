@@ -52,4 +52,6 @@ pods::group_field json_to_group_field(const nlohmann::json& json, bool no_id = f
 nlohmann::json serialize_json(const pods::field::ptr& group, bool no_id = false);
 pods::field json_to_field(const nlohmann::json& json, bool no_id = false);
 
+uint64_t json_to_timestamp(std::string_view json_response);
+
 }

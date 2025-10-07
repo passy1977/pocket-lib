@@ -407,53 +407,66 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
 
 
     auto&& fut_response = pool.submit_task([this, timestamp_last_update = user->timestamp_last_update] () mutable
-     {
-         network network;
-         if(timeout)
-         {
-             network.set_timeout(timeout);
-         }
+    {
+        network network;
+        if(timeout)
+        {
+            network.set_timeout(timeout);
+        }
 
-         if(connect_timeout)
-         {
-             network.set_connect_timeout(connect_timeout);
-         }
-         try
-         {
-             if(secret.empty())
-             {
-                 secret = crypto_generate_random_string(10);
-             }
+        if(connect_timeout)
+        {
+            network.set_connect_timeout(connect_timeout);
+        }
+        try
+        {
+            if(secret.empty())
+            {
+                secret = crypto_generate_random_string(10);
+            }
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
-             timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
+            timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
-             auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update));
+            auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update));
 
-             auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/heartbeat" + "/" + device.uuid + "/" + crypt);
-             set_status(stat{network.get_http_code()});
-             return content;
+            auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/heartbeat" + "/" + device.uuid + "/" + crypt);
+            set_status(stat{network.get_http_code()});
+            return content;
 
-         }
-         catch (const runtime_error& e)
-         {
-             set_status(stat{network.get_http_code()});
-             secret = "";
-             return string(ERROR_HTTP_CODE) + e.what();
-         }
-     });
+        }
+        catch (const runtime_error& e)
+        {
+            set_status(stat{network.get_http_code()});
+            secret = "";
+            return string(ERROR_HTTP_CODE) + e.what();
+        }
+    });
 
     try
     {
-        auto ret = fut_response.get();
+        auto response = fut_response.get();
 
-        debug(typeid(this).name(), "Heartbeat response:" + ret);
-        // server_id_helper data = fut_data.get();
+        if(starts_with(response, ERROR_HTTP_CODE)) 
+        {
+            throw runtime_error(response);
+        }
 
-        // auto&& ret = parse_data_from_net(fut_response.get(), data);
+        uint64_t timestamp_last_update = 0;
+        try
+        {
+
+            timestamp_last_update = json_to_timestamp(response);
+        }
+        catch (const runtime_error& e)
+        {
+            set_status(stat::JSON_PARSING_ERROR);
+            error(typeid(this).name(), e.what());
+            return false;
+        }
 
         set_status(stat::READY);
 
-        return true;
+        return timestamp_last_update > 0;
     }
     catch (const runtime_error& e)
     {

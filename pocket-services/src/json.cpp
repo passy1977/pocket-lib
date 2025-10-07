@@ -800,6 +800,31 @@ field json_to_field(const json& json, bool no_id)
     return field;
 }
 
+uint64_t json_to_timestamp(std::string_view json_response)
+{
+    uint64_t timestamp_last_update = 0;
+
+    if(json_response.empty())
+    {
+        throw runtime_error("String response empty");
+    }
+
+    auto&& json = json::parse(json_response);
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    if(json["timestampLastUpdate"].is_null() || !json["timestampLastUpdate"].is_number())
+    {
+        throw runtime_error("timestampLastUpdate is not a number");
+    }
+
+    timestamp_last_update = json["timestampLastUpdate"];
+
+    return timestamp_last_update;
+}
+
 json serialize_json(const field::ptr& field, bool no_id)
 {
     if(field == nullptr)
