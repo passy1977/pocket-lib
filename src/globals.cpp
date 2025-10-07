@@ -54,7 +54,16 @@ string& trim(string &s) noexcept
 {
     return ltrim(rtrim(s));
 }
-    
+
+bool starts_with(const std::string& str, const std::string& prefix) noexcept 
+{
+    if (str.length() < prefix.length()) 
+    {
+        return false;
+    }
+    return str.substr(0, prefix.length()) == prefix;
+}
+
 time_t get_current_time_GMT() noexcept
 {
     auto now = system_clock::now();

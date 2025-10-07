@@ -115,5 +115,7 @@ namespace pocket::inline v5
     // Trim both leading and trailing whitespaces
     std::string& trim(std::string &s) noexcept;
     
+    bool starts_with(const std::string& str, const std::string& prefix) noexcept;
+
     time_t get_current_time_GMT() noexcept;
 }
