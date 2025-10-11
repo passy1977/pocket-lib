@@ -91,7 +91,7 @@ public:
 
     bool invalidate_data(const pods::user::ptr& user);
 
-    bool heartbeat(const pods::user::ptr& user);
+    bool heartbeat(const pods::user::ptr& user, uint64_t& timestamp_last_update);
 
     inline void set_status(stat status) noexcept
     {

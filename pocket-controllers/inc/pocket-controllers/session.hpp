@@ -92,7 +92,7 @@ public:
     
     bool copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_src, int64_t group_id_dst, bool move = false);
     
-    bool heartbeat(const pods::user::opt_ptr& user_opt) const;
+    bool heartbeat(const pods::user::opt_ptr& user_opt, uint64_t& timestamp_last_update) const;
 
     inline const std::string& get_aes_cbc_iv() const noexcept
     {

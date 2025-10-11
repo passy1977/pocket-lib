@@ -814,7 +814,7 @@ bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_s
     return true;
 }
 
-bool session::heartbeat(const pods::user::opt_ptr& user_opt) const
+bool session::heartbeat(const pods::user::opt_ptr& user_opt, uint64_t& timestamp_last_update) const
 {
     if(!user_opt)
     {
@@ -841,7 +841,7 @@ bool session::heartbeat(const pods::user::opt_ptr& user_opt) const
         throw runtime_error("User id not match");
     }
 
-    return synchronizer->heartbeat(user);
+    return synchronizer->heartbeat(user, timestamp_last_update);
 }
 
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
