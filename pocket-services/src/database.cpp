@@ -61,7 +61,7 @@ INSERT INTO metadata VALUES (?);
 )sql";
 
 
-database::database() : transaction_active(false) {}
+database::database() = default;
 
 database::~database() try
 {
@@ -69,7 +69,7 @@ database::~database() try
 }
 catch (const exception& e)
 {
-    cerr << e.what() << endl;
+    cerr << e.what() << std::endl;
     error(typeid(*this).name(), e.what());
 }
 
@@ -149,12 +149,7 @@ inline void database::close()
         return;
     }
 
-    // Force rollback if there's an active transaction before closing
-    if(transaction_active) 
-    {
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
-        transaction_active = false;
-    }
+    unlock();
     
     // Force finalize all prepared statements
     sqlite3_stmt* stmt = nullptr;
@@ -182,39 +177,31 @@ inline void database::close()
 
 bool database::is_created(uint8_t& db_version) noexcept try
 {
-    return execute_with_retry([&]() -> bool
+    lock();
+
+    result_set rs(*this, "SELECT * FROM metadata"); //throw exception
+    if(rs.get_statement_stat() != SQLITE_OK)
     {
-        struct lock_guard {
-            database& db;
-            explicit lock_guard(database& d) : db(d) { db.lock(); }
-            ~lock_guard() { db.unlock(); }
-        };
-        
-        lock_guard guard(*this);
+        unlock();
+        return false;
+    }
 
-        result_set rs(*this, "SELECT * FROM metadata");
-        if(rs.get_statement_stat() != SQLITE_OK)
-        {
-            if(rs.get_statement_stat() == SQLITE_BUSY)
-            {
-                throw runtime_error("SQLITE_BUSY: Database is locked in is_created");
-            }
-            return false;
-        }
+    if(auto it = optional(*rs.begin()); it)
+    {
+        db_version = it->begin()->second.to_integer();
+    }
 
-        if(auto it = optional(*rs.begin()); it)
-        {
-            db_version = it->begin()->second.to_integer();
-        }
-
-        return true;
-    });
+    unlock();
+    return true;
 }
 catch (...)
 {
     cerr << "Unhandled exception is_created()" << endl;
-    
+
+    unlock();
+
     auto e_ptr = current_exception();
+
     if (e_ptr)
     {
         try
@@ -307,27 +294,10 @@ bool database::rm()
 void database::lock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(this == nullptr)
-    {
-        return;
-    }
-
-    if(transaction_active) 
-    {
-        debug(typeid(*this).name(), "Transaction already active, skipping lock");
-        return;
-    }
-    
     debug(typeid(*this).name(), "Lock");
-    // Use BEGIN IMMEDIATE instead of EXCLUSIVE locking mode for better compatibility
     char* err = nullptr;
-    if(int rc = sqlite3_exec(db, "BEGIN IMMEDIATE;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = EXCLUSIVE;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
-        if(rc == SQLITE_BUSY)
-        {
-            if(err) sqlite3_free(err);
-            throw runtime_error("SQLITE_BUSY: Cannot acquire database lock");
-        }
         string msg = "Database lock error";
         if(err)
         {
@@ -337,31 +307,16 @@ void database::lock()
         }
         throw runtime_error(msg);
     }
-    transaction_active = true;
 #endif
 }
 
 void database::unlock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(this == nullptr)
-    {
-        return;
-    }
-    if(!transaction_active) 
-    {
-        debug(typeid(*this).name(), "No active transaction, skipping unlock");
-        return;
-    }
-    
     debug(typeid(*this).name(), "Unlock");
-    // Commit or rollback the transaction
     char* err = nullptr;
-    if(int rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &err); rc != SQLITE_OK)
+    if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
-        // If commit fails, try rollback
-        sqlite3_exec(db, "ROLLBACK;", nullptr, nullptr, nullptr);
-        transaction_active = false; // Reset flag even on failure
         string msg = "Database unlock error";
         if(err)
         {
@@ -371,7 +326,6 @@ void database::unlock()
         }
         throw runtime_error(msg);
     }
-    transaction_active = false;
 #endif
 }
 
@@ -425,14 +379,14 @@ optional<result_set::ptr> database::execute(const string&& query, const paramete
             unlock();
             if(rs->get_statement_stat() == SQLITE_BUSY)
             {
-                throw runtime_error("SQLITE_BUSY: Database is locked in execute");
+                throw runtime_error("SQLITE_BUSY: Database is locked");
             }
             return nullopt;
         }
 
         unlock();
         return rs;
-    }, BUSY_MAX_RETRIES);
+    });
 }
 catch (...)
 {
@@ -443,8 +397,7 @@ catch (...)
 
 int64_t database::update(const string&& query, const parameters& parameters) try
 {
-    return execute_with_retry([&]() -> int64_t
-    {
+    return execute_with_retry([&]() -> int64_t {
         lock();
         auto rs = make_unique<result_set>(*this, query, parameters);
 
@@ -453,14 +406,14 @@ int64_t database::update(const string&& query, const parameters& parameters) try
             unlock();
             if(rs->get_statement_stat() == SQLITE_BUSY)
             {
-                throw runtime_error("SQLITE_BUSY: Database is locked in update");
+                throw runtime_error("SQLITE_BUSY: Database is locked");
             }
             return -1;
         }
 
         unlock();
         return rs->get_total_changes();
-    }, BUSY_MAX_RETRIES);
+    });
 }
 catch (...)
 {
@@ -482,27 +435,20 @@ auto database::execute_with_retry(Func&& func, uint8_t max_retries) -> decltype(
         {
             // Check if it's a SQLITE_BUSY error
             string error_msg = e.what();
-            if(error_msg.find("SQLITE_BUSY") != string::npos || 
-               error_msg.find("database is locked") != string::npos ||
-               error_msg.find("Cannot acquire database lock") != string::npos)
+            if(error_msg.find("SQLITE_BUSY") != std::string::npos || 
+               error_msg.find("database is locked") != std::string::npos)
             {
                 if(attempt < max_retries - 1)
                 {
                     // Wait before retry with exponential backoff
-                    auto wait_time = chrono::milliseconds(50 + (100 * attempt));
+                    auto wait_time = std::chrono::milliseconds(100 * (1 << attempt));
                     this_thread::sleep_for(wait_time);
                     
                     debug(typeid(*this).name(), 
                           "SQLITE_BUSY detected, retrying attempt " + 
                           to_string(attempt + 2) + "/" + 
-                          to_string(max_retries) + " - Error: " + error_msg);
+                          to_string(max_retries));
                     continue;
-                }
-                else
-                {
-                    error(typeid(*this).name(), 
-                          "SQLITE_BUSY: Max retries reached (" + to_string(max_retries) + 
-                          "), giving up. Error: " + error_msg);
                 }
             }
             // Re-throw if not SQLITE_BUSY or max retries reached
