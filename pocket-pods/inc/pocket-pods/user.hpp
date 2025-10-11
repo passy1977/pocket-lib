@@ -45,7 +45,7 @@ struct user final
     std::string email;
     std::string passwd;
     stat status = stat::NOT_ACTIVE;
-    int64_t timestamp_last_update = 0;
+    uint64_t timestamp_last_update = 0;
 
     ~user()
     {

@@ -83,7 +83,7 @@ public:
     {}
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    pods::user::opt_ptr retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
+    pods::user::opt_ptr retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     pods::user::opt_ptr send_data(const pods::user::ptr& user);
 

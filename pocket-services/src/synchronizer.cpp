@@ -39,7 +39,7 @@ namespace
 constexpr char ERROR_HTTP_CODE[] = "http_code: ";
 }
 
-pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
+pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
     if(email.empty() || passwd.empty())
     {

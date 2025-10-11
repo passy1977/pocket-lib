@@ -51,7 +51,7 @@ user::opt dao_user::get()
                     .email = row["email"].to_text(),
                     .passwd = row["passwd"].to_text(),
                     .status = user::stat(row["passwd"].to_integer()),
-                    .timestamp_last_update = row["timestamp_last_update"].to_integer()
+                    .timestamp_last_update = static_cast<uint64_t>(row["timestamp_last_update"].to_integer())
             };
             return ret;
         }
