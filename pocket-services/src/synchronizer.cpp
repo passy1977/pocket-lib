@@ -83,6 +83,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
 
     });
 
+    server_id_helper data = fut_data.get();
 
     auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()] () mutable
      {
@@ -122,7 +123,6 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
 
     try
     {
-        server_id_helper data = fut_data.get();
 
         auto&& ret = parse_data_from_net(fut_response.get(), data);
 
@@ -181,6 +181,8 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
         }
 
     });
+
+    auto&& data = fut_data.get();
 
     auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
     {
@@ -244,7 +246,6 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
     try
     {
-        auto&& data = fut_data.get();
         
         auto&& ret = parse_data_from_net(fut_response.get(), data);
 
@@ -390,7 +391,7 @@ bool synchronizer::invalidate_data(const user::ptr& user)
     }
 }
 
-bool synchronizer::heartbeat(const pods::user::ptr& user)
+bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_last_update)
 {
     if(status != stat::READY)
     {
@@ -448,10 +449,11 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
 
         if(starts_with(response, ERROR_HTTP_CODE)) 
         {
-            throw runtime_error(response);
+            set_status(stat::TIMESTAMP_LAST_UPDATE_NOT_MATCH);
+            error(typeid(this).name(), "Response:" + response);
+            return false;
         }
 
-        uint64_t timestamp_last_update = 0;
         try
         {
 
