@@ -83,10 +83,10 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
     {
         try
         {
-            auto&& u =  make_unique<struct user>( json_to_user(json["user"]) );
+            auto&& u = make_unique<struct user>(json_to_user(json["user"]));
             auto&& d = make_unique<struct device>(json_to_device(json["device"]));
 
-            u->timestamp_last_update = json["timestampLastUpdate"];
+            u->timestamp_last_update = d->timestamp_last_update;
             d->user_id = u->id;
 
             return pair{std::move(u), std::move(d)};
@@ -159,6 +159,15 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
 
 
     auto&& [user, device] = fut_user_device.get();
+    uint64_t timestamp_last_update = json["timestampLastUpdate"];
+    if(timestamp_last_update)
+    {
+        net_helper.timestamp_last_update = timestamp_last_update;
+    }
+    else
+    {
+        net_helper.timestamp_last_update = user->timestamp_last_update;
+    }
     net_helper.user = std::move(user);
     net_helper.device = std::move(device);
     net_helper.groups = fut_groups.get();
@@ -270,6 +279,16 @@ device json_to_device(const json& json)
     else
     {
         throw runtime_error("Invalid type or non defined field uuid");
+    }
+
+    if(json.contains("timestampLastUpdate") && json["timestampLastUpdate"].is_number())
+    {
+        device.timestamp_last_update = json["timestampLastUpdate"];
+    }
+    else
+    {
+        device.timestamp_last_update = 0;
+        error(APP_TAG, "Invalid type or non defined field timestampLastUpdate");
     }
 
 
@@ -674,15 +693,6 @@ json serialize_json(const group_field::ptr& group_field, bool no_id)
     return j;
 }
 
-//field json_to_field(const std::string_view& str_json)
-//{
-//    if(str_json.empty())
-//    {
-//        throw runtime_error("String json empty");
-//    }
-//
-//    return json_to_field(json::parse(str_json));
-//}
 
 field json_to_field(const json& json, bool no_id)
 {

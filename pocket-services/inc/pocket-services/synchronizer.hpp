@@ -41,6 +41,7 @@ class synchronizer final
 
     long timeout = 0;
     long connect_timeout = 0;
+    uint64_t timestamp_last_update = 0;
 
     BS::thread_pool<> pool{6};
 public:
@@ -122,6 +123,10 @@ public:
         synchronizer::connect_timeout = connect_timeout;
     }
 
+    inline long get_timestamp_last_update() const noexcept
+    {
+        return timestamp_last_update;
+    }
 private:
     stat status = stat::READY;
     bool no_network = false;

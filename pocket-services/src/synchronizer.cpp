@@ -407,7 +407,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
     set_status(stat::BUSY);
 
 
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update = user->timestamp_last_update] () mutable
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update = timestamp_last_update] () mutable
     {
         network network;
         if(timeout)
@@ -531,7 +531,7 @@ pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& re
                 return nullopt;
             }
 
-//            dao{database}.update_all_index(net_helper);
+            timestamp_last_update = net_helper.device->timestamp_last_update;
 
             set_status(stat::READY);
             return {std::move(net_helper.user) };

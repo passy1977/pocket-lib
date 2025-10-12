@@ -186,6 +186,7 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, 
     try
     {
         user_from_net = synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd);
+        timestamp_last_update = synchronizer->get_timestamp_last_update();
     }
     catch (const runtime_error& e)
     {
@@ -269,6 +270,7 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     try
     {
         user_from_net = synchronizer->send_data(user);
+        timestamp_last_update = synchronizer->get_timestamp_last_update();
     }
     catch (const runtime_error& e)
     {
