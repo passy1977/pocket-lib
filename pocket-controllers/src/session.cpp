@@ -814,7 +814,7 @@ bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_s
     return true;
 }
 
-bool session::heartbeat(const pods::user::opt_ptr& user_opt, uint64_t& timestamp_last_update) const
+bool session::heartbeat(const pods::user::opt_ptr& user_opt)
 {
     if(!user_opt)
     {

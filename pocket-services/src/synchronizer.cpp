@@ -451,6 +451,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
         {
             set_status(stat::TIMESTAMP_LAST_UPDATE_NOT_MATCH);
             error(typeid(this).name(), "Response:" + response);
+            timestamp_last_update = 0;
             return false;
         }
 
@@ -472,6 +473,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
     }
     catch (const runtime_error& e)
     {
+        timestamp_last_update = 0;
         set_status(stat::NO_NETWORK);
         throw;
     }
