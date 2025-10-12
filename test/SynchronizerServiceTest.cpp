@@ -71,15 +71,15 @@ protected:
 TEST_F(SynchronizerServiceTest, StatusManagement)
 {
     // Get initial status (using the const overload)
-    auto initial_status = sync->set_status();  // This returns a pointer to status
+    auto initial_status = sync->get_status();  // This returns a pointer to status
     EXPECT_EQ(*initial_status, synchronizer::stat::READY);
     
     sync->set_status(synchronizer::stat::BUSY);
-    auto busy_status = sync->set_status();
+    auto busy_status = sync->get_status();
     EXPECT_EQ(*busy_status, synchronizer::stat::BUSY);
     
     sync->set_status(synchronizer::stat::ERROR);
-    auto error_status = sync->set_status();
+    auto error_status = sync->get_status();
     EXPECT_EQ(*error_status, synchronizer::stat::ERROR);
 }
 
@@ -98,7 +98,7 @@ TEST_F(SynchronizerServiceTest, TimeoutConfiguration)
 TEST_F(SynchronizerServiceTest, ConstructionAndBasicState)
 {
     EXPECT_NE(sync.get(), nullptr);
-    EXPECT_EQ(*sync->set_status(), synchronizer::stat::READY);
+    EXPECT_EQ(*sync->get_status(), synchronizer::stat::READY);
 }
 
 // Test empty secret handling (without network calls)
@@ -108,7 +108,7 @@ TEST_F(SynchronizerServiceTest, EmptySecretState)
     auto sync_empty = std::make_unique<synchronizer>(db, empty_secret, test_device);
     
     EXPECT_NE(sync_empty.get(), nullptr);
-    EXPECT_EQ(*sync_empty->set_status(), synchronizer::stat::READY);
+    EXPECT_EQ(*sync_empty->get_status(), synchronizer::stat::READY);
 }
 
 // NOTE: Network-related tests (retrieve_data, send_data, change_passwd, invalidate_data) 

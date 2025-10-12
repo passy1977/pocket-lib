@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/pocket-controllers/inc",
+                "${workspaceFolder}/pocket-daos/inc",
+                "${workspaceFolder}/pocket-iface/inc",
+                "${workspaceFolder}/pocket-pods/inc",
+                "${workspaceFolder}/pocket-services/inc",
+                "${workspaceFolder}/pocket-views/inc",
+                "${workspaceFolder}/thread-pool/include",
+                "${workspaceFolder}/build/_deps/nlohmann_json-src/include",
+                "${workspaceFolder}/build/_deps/tinyxml2-src",
+                "${workspaceFolder}/build/_deps/googletest-src/googletest/include"
+            ],
+            "defines": [
+                "POCKET_ENABLE_LOG",
+                "POCKET_DISABLE_LOCK",
+                "POCKET_ENABLE_AES"
+            ],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
