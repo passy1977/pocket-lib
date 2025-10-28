@@ -457,7 +457,6 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
 
         try
         {
-
             timestamp_last_update = json_to_timestamp(response);
         }
         catch (const runtime_error& e)
@@ -531,7 +530,7 @@ pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& re
                 return nullopt;
             }
 
-            timestamp_last_update = net_helper.device->timestamp_last_update;
+            timestamp_last_update = net_helper.timestamp_last_update;
 
             set_status(stat::READY);
             return {std::move(net_helper.user) };
