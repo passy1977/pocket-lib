@@ -44,7 +44,7 @@ class network final
     uint64_t http_code = 0;
     long timeout = 0;
     long connect_timeout = 0;
-    std::string auth_header;
+    static inline std::string auth_header = "";
 public:    
     enum class method
     {
@@ -69,9 +69,14 @@ public:
         network::connect_timeout = connect_timeout;
     }
 
-    inline void set_auth_header(const std::string& header_value) noexcept
+    static inline void set_auth_header(const std::string_view auth_header) noexcept
     {
-        auth_header = header_value;
+        network::auth_header = auth_header;
+    }
+
+    static inline const std::string& get_auth_header() noexcept
+    {
+        return network::auth_header;
     }
 
     inline uint64_t get_http_code() const noexcept
