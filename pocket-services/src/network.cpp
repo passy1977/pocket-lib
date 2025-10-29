@@ -141,12 +141,23 @@ std::string network::perform(network::method method, const std::string_view& url
     curl_easy_setopt(curl, CURLOPT_URL, full_url.c_str());
 
 	curl_slist* headers = nullptr;
+    
+    // Add authentication header if set
+    if (!auth_header.empty())
+    {
+        headers = curl_slist_append(headers, auth_header.c_str());
+    }
+    
     if (!json_data.empty())
     {
 		headers = curl_slist_append(headers, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_data.size());
+    }
+    else if (headers)
+    {
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     }
 
 
