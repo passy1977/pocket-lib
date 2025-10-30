@@ -143,9 +143,9 @@ std::string network::perform(network::method method, const std::string_view& url
 	curl_slist* headers = nullptr;
     
     // Add authentication header if set
-    if (!auth_header.empty())
+    if (!cors_header_token.empty())
     {
-        headers = curl_slist_append(headers, auth_header.c_str());
+        headers = curl_slist_append(headers, cors_header_token.c_str());
     }
     
     if (!json_data.empty())

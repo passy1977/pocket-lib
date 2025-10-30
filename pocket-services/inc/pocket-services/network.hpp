@@ -44,7 +44,7 @@ class network final
     uint64_t http_code = 0;
     long timeout = 0;
     long connect_timeout = 0;
-    static inline std::string auth_header = "";
+    std::string cors_header_token;
 public:    
     enum class method
     {
@@ -69,14 +69,9 @@ public:
         network::connect_timeout = connect_timeout;
     }
 
-    static inline void set_auth_header(const std::string_view auth_header) noexcept
+    inline void set_cors_header_token(const std::string_view cors_header_token) noexcept
     {
-        network::auth_header = auth_header;
-    }
-
-    static inline const std::string& get_auth_header() noexcept
-    {
-        return network::auth_header;
+        network::cors_header_token = cors_header_token;
     }
 
     inline uint64_t get_http_code() const noexcept

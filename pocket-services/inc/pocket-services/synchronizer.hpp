@@ -38,6 +38,7 @@ class synchronizer final
     services::database::ptr& database;
     std::string& secret;
     pods::device& device;
+    std::string cors_header_token;
 
     long timeout = 0;
     long connect_timeout = 0;
@@ -77,11 +78,8 @@ public:
     static inline constexpr uint8_t EMAIL_MAX_SIZE = 32;
     static inline constexpr uint8_t PASSWD_MAX_SIZE = 32;
 
-    explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
-    : database(database)
-    , secret(secret)
-    , device(device)
-    {}
+    explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device, std::string_view cors_header_token) noexcept;
+
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
     pods::user::opt_ptr retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);

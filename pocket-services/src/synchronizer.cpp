@@ -39,6 +39,22 @@ namespace
 constexpr char ERROR_HTTP_CODE[] = "http_code: ";
 }
 
+synchronizer::synchronizer(services::database::ptr& database, std::string& secret, pods::device& device, std::string_view cors_header_token) noexcept
+: database(database)
+, secret(secret)
+, device(device)
+, cors_header_token("X-API-Key: ")
+{
+    if(!cors_header_token.empty())
+    {
+        this->cors_header_token += cors_header_token;
+    }
+    else
+    {
+        cors_header_token = "";
+    }
+}
+
 pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
     if(email.empty() || passwd.empty())
@@ -97,6 +113,12 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
          {
              network.set_connect_timeout(connect_timeout);
          }
+
+         if(!cors_header_token.empty())
+         {
+             network.set_cors_header_token(cors_header_token);
+         }
+
          try
          {
              if(secret.empty())
@@ -197,6 +219,12 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
         {
             network.set_connect_timeout(connect_timeout);
         }
+
+        if(!cors_header_token.empty())
+        {
+            network.set_cors_header_token(cors_header_token);
+        }
+
         try
         {
             auto&& ret = pool.submit_task([this]
@@ -288,6 +316,11 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
            network.set_connect_timeout(connect_timeout);
        }
 
+       if(!cors_header_token.empty())
+       {
+           network.set_cors_header_token(cors_header_token);
+       }
+
        try
        {
 
@@ -353,6 +386,12 @@ bool synchronizer::invalidate_data(const user::ptr& user)
            {
                network.set_connect_timeout(connect_timeout);
            }
+
+           if(!cors_header_token.empty())
+           {
+               network.set_cors_header_token(cors_header_token);
+           }
+
            try
            {
 
@@ -419,6 +458,12 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
         {
             network.set_connect_timeout(connect_timeout);
         }
+
+        if(!cors_header_token.empty())
+        {
+            network.set_cors_header_token(cors_header_token);
+        }
+
         try
         {
             if(secret.empty())

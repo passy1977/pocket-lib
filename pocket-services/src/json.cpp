@@ -423,6 +423,57 @@ catch (...)
     return "";
 }
 
+std::string json_to_cors_header_token(const std::string_view& str_json) try
+{
+    if(str_json.empty())
+    {
+        throw runtime_error("str_json json empty");
+    }
+
+    const auto& json = json::parse(str_json);
+
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    string ret;
+    if(json.contains("corsHeaderToken") && json["corsHeaderToken"].is_string())
+    {
+        ret = json["corsHeaderToken"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field corsHeaderToken");
+    }
+
+    return ret;
+}
+catch (const exception& e)
+{
+    error(APP_TAG, str_json.data());
+    throw;
+}
+catch (...)
+{
+    cerr << "Unhandled exception" << endl;
+
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    return "";
+}
+
 user json_to_user(const json& json)
 {
     if (!json.is_object())

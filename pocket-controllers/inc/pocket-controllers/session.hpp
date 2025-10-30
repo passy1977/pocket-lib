@@ -57,6 +57,7 @@ class session final
 
     std::string secret;
     std::string aes_cbc_iv;
+    std::string cors_header_token;
     pods::device::opt device;
 
     const services::synchronizer::stat* status = nullptr;

@@ -60,9 +60,10 @@ session::session(const optional<string>& config_json, const optional<string>& co
     
     this->config = make_unique<class config>(config_path);
 
-    auto&& [device, aes_cbc_iv] = config->parse(*config_json);
+    auto&& [device, aes_cbc_iv, auth_header] = config->parse(*config_json);
     this->device = std::move(device);
     this->aes_cbc_iv = std::move(aes_cbc_iv);
+    this->cors_header_token = std::move(auth_header);
 
     if(check_lock())
     {
@@ -119,7 +120,7 @@ const device::opt& session::init()
         throw runtime_error("Database busy");
     }
 
-    synchronizer = make_unique<class synchronizer>(database, secret, *device);
+    synchronizer = make_unique<class synchronizer>(database, secret, *device, cors_header_token);
     status = synchronizer->get_status();
     return device;
 }
