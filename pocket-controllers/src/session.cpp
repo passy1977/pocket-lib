@@ -81,7 +81,7 @@ session::~session() try
 }
 catch (const runtime_error& e)
 {
-    error(typeid(*this).name(), e.what());
+    error(typeid(this).name(), e.what());
 }
 
 const device::opt& session::init()
