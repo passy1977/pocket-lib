@@ -69,8 +69,13 @@ std::string network::perform(network::method method, const std::string_view& url
     else if (url.rfind("https://", 0) == 0)
     {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
+#ifdef POCKET_ENABLE_SSL_VERIFY
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+#else
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+#endif
         full_url = url;
     }
     else
