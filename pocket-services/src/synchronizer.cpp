@@ -37,13 +37,14 @@ using namespace daos;
 namespace
 {
 constexpr char ERROR_HTTP_CODE[] = "http_code: ";
+constexpr char HEADERS_CORS_TOKEN []= "X-API-Key: ";
 }
 
 synchronizer::synchronizer(services::database::ptr& database, std::string& secret, pods::device& device, std::string_view cors_header_token) noexcept
 : database(database)
 , secret(secret)
 , device(device)
-, cors_header_token("X-API-Key: ")
+, cors_header_token(HEADERS_CORS_TOKEN)
 {
     if(!cors_header_token.empty())
     {
