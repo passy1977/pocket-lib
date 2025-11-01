@@ -261,6 +261,8 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
             auto&& data = net_helper_serialize_json(ret.get());
 
+            debug(typeid(this).name(), data);
+            
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
             set_status(stat{network.get_http_code()});
             return content;
