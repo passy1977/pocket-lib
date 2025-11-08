@@ -138,7 +138,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
          }
          catch (const runtime_error& e)
          {
-             error(typeid(this).name(), e.what());
+             error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
              set_status(stat{network.get_http_code()});
              secret = "";
              return string(ERROR_HTTP_CODE) + e.what();
@@ -269,7 +269,7 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
         }
         catch (const runtime_error& e)
         {
-            error(typeid(this).name(), e.what());
+            error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
             set_status(stat{network.get_http_code()});
             secret = "";
             return string(ERROR_HTTP_CODE) + e.what();
@@ -340,7 +340,7 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
        }
        catch (const runtime_error& e)
        {
-           error(typeid(this).name(), e.what());
+           error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
            set_status(stat{network.get_http_code()});
            secret = "";
            return string(ERROR_HTTP_CODE) + e.what();
@@ -412,7 +412,7 @@ bool synchronizer::invalidate_data(const user::ptr& user)
            }
            catch (const runtime_error& e)
            {
-               error(typeid(this).name(), e.what());
+               error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
                set_status(stat{network.get_http_code()});
                return status;
            }
@@ -489,7 +489,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_la
         }
         catch (const runtime_error& e)
         {
-            error(typeid(this).name(), e.what());
+            error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
             set_status(stat{network.get_http_code()});
             secret = "";
             return string(ERROR_HTTP_CODE) + e.what();
