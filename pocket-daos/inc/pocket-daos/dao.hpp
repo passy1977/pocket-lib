@@ -169,7 +169,7 @@ public:
     template<iface::require_pod T>
     inline int64_t rm(int64_t id) const
     {
-        return database->update("DELETE FROM " + T::get_name() + " WHERE deleted = 1 AND id = ?", { {id} });
+        return database->update("DELETE FROM " + T::get_name() + " WHERE id = ?", { {id} });
     }
 
     template<iface::require_pod T>

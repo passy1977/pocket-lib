@@ -154,6 +154,8 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
 
         return ret;
     }
+    
+    
     catch (const runtime_error& e)
     {
         set_status(stat::NO_NETWORK);
