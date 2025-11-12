@@ -129,9 +129,14 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
              timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
+             debug("retrieve_data timestamp_last_update", to_string(timestamp_last_update));
+             
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
              auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+             
+             debug("retrieve_data content", content);
+             
              set_status(stat{network.get_http_code()});
              return content;
 
@@ -263,9 +268,12 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
             auto&& data = net_helper_serialize_json(ret.get());
 
-            debug(typeid(this).name(), data);
+            debug("send_data", "timestamp_last_update: " + to_string(timestamp_last_update) + " " + data);
             
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
+            
+            debug("send_data content", content);
+            
             set_status(stat{network.get_http_code()});
             return content;
         }
