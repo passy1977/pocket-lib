@@ -313,6 +313,7 @@ void database::lock()
         }
         throw runtime_error(msg);
     }
+    transaction_active = true;
 #endif
 }
 
@@ -329,6 +330,7 @@ void database::unlock()
     char* err = nullptr;
     if(int rc = sqlite3_exec(db, "PRAGMA locking_mode = NORMAL;", nullptr, nullptr, &err); rc != SQLITE_OK)
     {
+        transaction_active = false;
         string msg = "Database unlock error";
         if(err)
         {
@@ -338,6 +340,7 @@ void database::unlock()
         }
         throw runtime_error(msg);
     }
+    transaction_active = false;
 #endif
 }
 
