@@ -47,6 +47,7 @@ void vector_copy_ref(const std::vector<typename T::ptr>& src, std::vector<T*>& d
 
 struct net_helper
 {
+    uint64_t timestamp_last_update = 0;
     pods::user::ptr user;
     pods::device::ptr device;
     std::vector<group::ptr> groups;

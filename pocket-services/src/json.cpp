@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include "pocket-services/json.hpp"
+#include "pocket/globals.hpp"
 
 namespace pocket::services::inline v5
 {
@@ -83,10 +84,10 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
     {
         try
         {
-            auto&& u =  make_unique<struct user>( json_to_user(json["user"]) );
+            auto&& u = make_unique<struct user>(json_to_user(json["user"]));
             auto&& d = make_unique<struct device>(json_to_device(json["device"]));
 
-            u->timestamp_last_update = json["timestampLastUpdate"];
+            u->timestamp_last_update = d->timestamp_last_update;
             d->user_id = u->id;
 
             return pair{std::move(u), std::move(d)};
@@ -159,14 +160,24 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
 
 
     auto&& [user, device] = fut_user_device.get();
+    uint64_t timestamp_last_update = json["timestampLastUpdate"];
+    if(timestamp_last_update)
+    {
+        net_helper.timestamp_last_update = timestamp_last_update;
+    }
+    else
+    {
+        net_helper.timestamp_last_update = user->timestamp_last_update;
+    }
     net_helper.user = std::move(user);
     net_helper.device = std::move(device);
     net_helper.groups = fut_groups.get();
     net_helper.group_fields = fut_group_fields.get();
     net_helper.fields = fut_fields.get();
 }
-catch (const runtime_error& e)
+catch (const exception& e)
 {
+    error(APP_TAG, json_response.data());
     throw;
 }
 catch (...)
@@ -272,6 +283,16 @@ device json_to_device(const json& json)
         throw runtime_error("Invalid type or non defined field uuid");
     }
 
+    if(json.contains("timestampLastUpdate") && json["timestampLastUpdate"].is_number())
+    {
+        device.timestamp_last_update = json["timestampLastUpdate"];
+    }
+    else
+    {
+        device.timestamp_last_update = 0;
+        error(APP_TAG, "Invalid type or non defined field timestampLastUpdate");
+    }
+
 
     if(json.contains("host") && json["host"].is_string())
     {
@@ -317,7 +338,7 @@ device json_to_device(const json& json)
     return device;
 }
 
-device json_to_device(const string_view& str_json)
+device json_to_device(const string_view& str_json) try
 {
     if(str_json.empty())
     {
@@ -326,8 +347,32 @@ device json_to_device(const string_view& str_json)
 
     return json_to_device(json::parse(str_json));
 }
+catch (const exception& e)
+{
+    error(APP_TAG, str_json.data());
+    throw;
+}
+catch (...)
+{
+    cerr << "Unhandled exception" << endl;
 
-std::string json_to_aes_cbc_iv(const std::string_view& str_json)
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    return {};
+}
+
+std::string json_to_aes_cbc_iv(const std::string_view& str_json) try
 {
     if(str_json.empty())
     {
@@ -352,6 +397,81 @@ std::string json_to_aes_cbc_iv(const std::string_view& str_json)
     }
 
     return ret;
+}
+catch (const exception& e)
+{
+    error(APP_TAG, str_json.data());
+    throw;
+}
+catch (...)
+{
+    cerr << "Unhandled exception" << endl;
+
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    return "";
+}
+
+std::string json_to_cors_header_token(const std::string_view& str_json) try
+{
+    if(str_json.empty())
+    {
+        throw runtime_error("str_json json empty");
+    }
+
+    const auto& json = json::parse(str_json);
+
+    if (!json.is_object())
+    {
+        throw runtime_error("json is not a object");
+    }
+
+    string ret;
+    if(json.contains("corsHeaderToken") && json["corsHeaderToken"].is_string())
+    {
+        ret = json["corsHeaderToken"];
+    }
+    else
+    {
+        throw runtime_error("Invalid type or non defined field corsHeaderToken");
+    }
+
+    return ret;
+}
+catch (const exception& e)
+{
+    error(APP_TAG, str_json.data());
+    throw;
+}
+catch (...)
+{
+    cerr << "Unhandled exception" << endl;
+
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    return "";
 }
 
 user json_to_user(const json& json)
@@ -674,15 +794,6 @@ json serialize_json(const group_field::ptr& group_field, bool no_id)
     return j;
 }
 
-//field json_to_field(const std::string_view& str_json)
-//{
-//    if(str_json.empty())
-//    {
-//        throw runtime_error("String json empty");
-//    }
-//
-//    return json_to_field(json::parse(str_json));
-//}
 
 field json_to_field(const json& json, bool no_id)
 {
@@ -800,7 +911,7 @@ field json_to_field(const json& json, bool no_id)
     return field;
 }
 
-uint64_t json_to_timestamp(std::string_view json_response)
+uint64_t json_to_timestamp(std::string_view json_response) try
 {
     uint64_t timestamp_last_update = 0;
 
@@ -823,6 +934,30 @@ uint64_t json_to_timestamp(std::string_view json_response)
     timestamp_last_update = json["timestampLastUpdate"];
 
     return timestamp_last_update;
+}
+catch (const exception& e)
+{
+    error(APP_TAG, json_response.data());
+    throw;
+}
+catch (...)
+{
+    cerr << "Unhandled exception" << endl;
+
+    auto exception = current_exception();
+
+    if (exception)
+    {
+        try
+        {
+            rethrow_exception(exception);
+        }
+        catch (const runtime_error& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    return 0;
 }
 
 json serialize_json(const field::ptr& field, bool no_id)

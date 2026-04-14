@@ -37,9 +37,26 @@ using namespace daos;
 namespace
 {
 constexpr char ERROR_HTTP_CODE[] = "http_code: ";
+constexpr char HEADERS_CORS_TOKEN []= "X-API-Key: ";
 }
 
-pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
+synchronizer::synchronizer(services::database::ptr& database, std::string& secret, pods::device& device, std::string_view cors_header_token) noexcept
+: database(database)
+, secret(secret)
+, device(device)
+, cors_header_token(HEADERS_CORS_TOKEN)
+{
+    if(!cors_header_token.empty())
+    {
+        this->cors_header_token += cors_header_token;
+    }
+    else
+    {
+        cors_header_token = "";
+    }
+}
+
+pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd)
 {
     if(email.empty() || passwd.empty())
     {
@@ -83,6 +100,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
 
     });
 
+    server_id_helper data = fut_data.get();
 
     auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()] () mutable
      {
@@ -96,6 +114,12 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
          {
              network.set_connect_timeout(connect_timeout);
          }
+
+         if(!cors_header_token.empty())
+         {
+             network.set_cors_header_token(cors_header_token);
+         }
+
          try
          {
              if(secret.empty())
@@ -105,15 +129,21 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
              timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
+             debug("retrieve_data timestamp_last_update", to_string(timestamp_last_update));
+             
              auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd);
 
              auto&& content = network.perform(network::method::GET, device.host + API_VERSION + "/" + device.uuid + "/" + crypt);
+             
+             debug("retrieve_data content", content);
+             
              set_status(stat{network.get_http_code()});
              return content;
 
          }
          catch (const runtime_error& e)
          {
+             error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
              set_status(stat{network.get_http_code()});
              secret = "";
              return string(ERROR_HTTP_CODE) + e.what();
@@ -122,7 +152,6 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
 
     try
     {
-        server_id_helper data = fut_data.get();
 
         auto&& ret = parse_data_from_net(fut_response.get(), data);
 
@@ -130,6 +159,8 @@ pods::user::opt_ptr synchronizer::retrieve_data(int64_t timestamp_last_update, c
 
         return ret;
     }
+    
+    
     catch (const runtime_error& e)
     {
         set_status(stat::NO_NETWORK);
@@ -182,6 +213,8 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
     });
 
+    auto&& data = fut_data.get();
+
     auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, timestamp_last_update = user->timestamp_last_update]() mutable
     {
 
@@ -195,6 +228,12 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
         {
             network.set_connect_timeout(connect_timeout);
         }
+
+        if(!cors_header_token.empty())
+        {
+            network.set_cors_header_token(cors_header_token);
+        }
+
         try
         {
             auto&& ret = pool.submit_task([this]
@@ -229,12 +268,18 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
             auto&& data = net_helper_serialize_json(ret.get());
 
+            debug("send_data", "timestamp_last_update: " + to_string(timestamp_last_update) + " " + data);
+            
             auto&& content = network.perform(network::method::POST, device.host + API_VERSION + "/" + device.uuid + "/" + crypt, {}, data);
+            
+            debug("send_data content", content);
+            
             set_status(stat{network.get_http_code()});
             return content;
         }
         catch (const runtime_error& e)
         {
+            error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
             set_status(stat{network.get_http_code()});
             secret = "";
             return string(ERROR_HTTP_CODE) + e.what();
@@ -244,7 +289,6 @@ pods::user::opt_ptr synchronizer::send_data(const pods::user::ptr& user)
 
     try
     {
-        auto&& data = fut_data.get();
         
         auto&& ret = parse_data_from_net(fut_response.get(), data);
 
@@ -287,6 +331,11 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
            network.set_connect_timeout(connect_timeout);
        }
 
+       if(!cors_header_token.empty())
+       {
+           network.set_cors_header_token(cors_header_token);
+       }
+
        try
        {
 
@@ -301,6 +350,7 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
        }
        catch (const runtime_error& e)
        {
+           error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
            set_status(stat{network.get_http_code()});
            secret = "";
            return string(ERROR_HTTP_CODE) + e.what();
@@ -352,6 +402,12 @@ bool synchronizer::invalidate_data(const user::ptr& user)
            {
                network.set_connect_timeout(connect_timeout);
            }
+
+           if(!cors_header_token.empty())
+           {
+               network.set_cors_header_token(cors_header_token);
+           }
+
            try
            {
 
@@ -366,6 +422,7 @@ bool synchronizer::invalidate_data(const user::ptr& user)
            }
            catch (const runtime_error& e)
            {
+               error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
                set_status(stat{network.get_http_code()});
                return status;
            }
@@ -390,7 +447,7 @@ bool synchronizer::invalidate_data(const user::ptr& user)
     }
 }
 
-bool synchronizer::heartbeat(const pods::user::ptr& user)
+bool synchronizer::heartbeat(const pods::user::ptr& user, uint64_t& timestamp_last_update)
 {
     if(status != stat::READY)
     {
@@ -406,7 +463,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
     set_status(stat::BUSY);
 
 
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update = user->timestamp_last_update] () mutable
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update = timestamp_last_update] () mutable
     {
         network network;
         if(timeout)
@@ -418,6 +475,12 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
         {
             network.set_connect_timeout(connect_timeout);
         }
+
+        if(!cors_header_token.empty())
+        {
+            network.set_cors_header_token(cors_header_token);
+        }
+
         try
         {
             if(secret.empty())
@@ -436,6 +499,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
         }
         catch (const runtime_error& e)
         {
+            error(typeid(this).name(), "code: " + to_string(network.get_http_code()) + " error:" + e.what());
             set_status(stat{network.get_http_code()});
             secret = "";
             return string(ERROR_HTTP_CODE) + e.what();
@@ -448,13 +512,14 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
 
         if(starts_with(response, ERROR_HTTP_CODE)) 
         {
-            throw runtime_error(response);
+            set_status(stat::TIMESTAMP_LAST_UPDATE_NOT_MATCH);
+            error(typeid(this).name(), "Response:" + response);
+            timestamp_last_update = 0;
+            return false;
         }
 
-        uint64_t timestamp_last_update = 0;
         try
         {
-
             timestamp_last_update = json_to_timestamp(response);
         }
         catch (const runtime_error& e)
@@ -470,6 +535,7 @@ bool synchronizer::heartbeat(const pods::user::ptr& user)
     }
     catch (const runtime_error& e)
     {
+        timestamp_last_update = 0;
         set_status(stat::NO_NETWORK);
         throw;
     }
@@ -527,7 +593,7 @@ pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& re
                 return nullopt;
             }
 
-//            dao{database}.update_all_index(net_helper);
+            timestamp_last_update = net_helper.timestamp_last_update;
 
             set_status(stat::READY);
             return {std::move(net_helper.user) };

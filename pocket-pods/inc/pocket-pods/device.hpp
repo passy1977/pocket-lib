@@ -49,6 +49,7 @@ struct device final
     std::string host;
     std::string host_pub_key;
     int64_t timestamp_creation = 0;
+    uint64_t timestamp_last_update = 0;
     stat status = stat::NOT_ACTIVE;
 
 };

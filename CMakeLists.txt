@@ -36,6 +36,7 @@ else()
 endif()
 
 option(POCKET_ENABLE_AES "Enable AES encryption in Pocket library" ON)
+option(POCKET_ENABLE_SSL_VERIFY "Enable SSL verification" ON)
 option(POCKET_ENABLE_TEST "Enable test compilation in Pocket library" OFF)
 
 # Advanced configuration options
@@ -169,6 +170,10 @@ endif()
 
 if(POCKET_ENABLE_AES)
     target_compile_definitions(${PROJECT_NAME} PUBLIC POCKET_ENABLE_AES)
+endif()
+
+if(POCKET_ENABLE_SSL_VERIFY)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC POCKET_ENABLE_SSL_VERIFY)
 endif()
 
 if(POCKET_FORCE_TIMESTAMP_LAST_UPDATE AND NOT POCKET_FORCE_TIMESTAMP_LAST_UPDATE EQUAL 0)

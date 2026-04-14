@@ -38,9 +38,11 @@ class synchronizer final
     services::database::ptr& database;
     std::string& secret;
     pods::device& device;
+    std::string cors_header_token;
 
     long timeout = 0;
     long connect_timeout = 0;
+    uint64_t timestamp_last_update = 0;
 
     BS::thread_pool<> pool{6};
 public:
@@ -76,14 +78,11 @@ public:
     static inline constexpr uint8_t EMAIL_MAX_SIZE = 32;
     static inline constexpr uint8_t PASSWD_MAX_SIZE = 32;
 
-    explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device) noexcept
-    : database(database)
-    , secret(secret)
-    , device(device)
-    {}
+    explicit synchronizer(services::database::ptr& database, std::string& secret, pods::device& device, std::string_view cors_header_token) noexcept;
+
     POCKET_NO_COPY_NO_MOVE(synchronizer)
 
-    pods::user::opt_ptr retrieve_data(int64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
+    pods::user::opt_ptr retrieve_data(uint64_t timestamp_last_update, const std::string_view& email, const std::string_view& passwd);
 
     pods::user::opt_ptr send_data(const pods::user::ptr& user);
 
@@ -91,7 +90,7 @@ public:
 
     bool invalidate_data(const pods::user::ptr& user);
 
-    bool heartbeat(const pods::user::ptr& user);
+    bool heartbeat(const pods::user::ptr& user, uint64_t& timestamp_last_update);
 
     inline void set_status(stat status) noexcept
     {
@@ -122,6 +121,10 @@ public:
         synchronizer::connect_timeout = connect_timeout;
     }
 
+    inline long get_timestamp_last_update() const noexcept
+    {
+        return timestamp_last_update;
+    }
 private:
     stat status = stat::READY;
     bool no_network = false;

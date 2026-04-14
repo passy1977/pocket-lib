@@ -57,10 +57,12 @@ class session final
 
     std::string secret;
     std::string aes_cbc_iv;
+    std::string cors_header_token;
     pods::device::opt device;
 
     const services::synchronizer::stat* status = nullptr;
     bool offline = false;
+    uint64_t timestamp_last_update = 0;
 public:
     explicit session(const std::optional<std::string>& config_json, const std::optional<std::string>& config_path = {});
     ~session();
@@ -92,7 +94,7 @@ public:
     
     bool copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_src, int64_t group_id_dst, bool move = false);
     
-    bool heartbeat(const pods::user::opt_ptr& user_opt) const;
+    bool heartbeat(const pods::user::opt_ptr& user_opt);
 
     inline const std::string& get_aes_cbc_iv() const noexcept
     {
@@ -145,6 +147,10 @@ public:
         return synchronizer->is_no_network();
     }
 
+    inline uint64_t get_timestamp_last_update() const noexcept
+    {
+        return timestamp_last_update;
+    }
 private:
     void export_data(nlohmann::json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const;
 

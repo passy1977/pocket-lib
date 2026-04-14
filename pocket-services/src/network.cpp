@@ -69,8 +69,13 @@ std::string network::perform(network::method method, const std::string_view& url
     else if (url.rfind("https://", 0) == 0)
     {
         curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
+#ifdef POCKET_ENABLE_SSL_VERIFY
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+#else
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+#endif
         full_url = url;
     }
     else
@@ -141,12 +146,23 @@ std::string network::perform(network::method method, const std::string_view& url
     curl_easy_setopt(curl, CURLOPT_URL, full_url.c_str());
 
 	curl_slist* headers = nullptr;
+    
+    // Add authentication header if set
+    if (!cors_header_token.empty())
+    {
+        headers = curl_slist_append(headers, cors_header_token.c_str());
+    }
+    
     if (!json_data.empty())
     {
 		headers = curl_slist_append(headers, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.data());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, json_data.size());
+    }
+    else if (headers)
+    {
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     }
 
 

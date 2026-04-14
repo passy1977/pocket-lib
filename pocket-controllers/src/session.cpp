@@ -60,9 +60,10 @@ session::session(const optional<string>& config_json, const optional<string>& co
     
     this->config = make_unique<class config>(config_path);
 
-    auto&& [device, aes_cbc_iv] = config->parse(*config_json);
+    auto&& [device, aes_cbc_iv, auth_header] = config->parse(*config_json);
     this->device = std::move(device);
     this->aes_cbc_iv = std::move(aes_cbc_iv);
+    this->cors_header_token = std::move(auth_header);
 
     if(check_lock())
     {
@@ -80,7 +81,7 @@ session::~session() try
 }
 catch (const runtime_error& e)
 {
-    error(typeid(*this).name(), e.what());
+    error(typeid(this).name(), e.what());
 }
 
 const device::opt& session::init()
@@ -119,7 +120,7 @@ const device::opt& session::init()
         throw runtime_error("Database busy");
     }
 
-    synchronizer = make_unique<class synchronizer>(database, secret, *device);
+    synchronizer = make_unique<class synchronizer>(database, secret, *device, cors_header_token);
     status = synchronizer->get_status();
     return device;
 }
@@ -186,6 +187,7 @@ optional<user::ptr> session::retrieve_data(const optional<user::ptr>& user_opt, 
     try
     {
         user_from_net = synchronizer->retrieve_data(user->timestamp_last_update, user->email, user->passwd);
+        timestamp_last_update = synchronizer->get_timestamp_last_update();
     }
     catch (const runtime_error& e)
     {
@@ -269,6 +271,7 @@ optional<user::ptr> session::send_data(const optional<user::ptr>& user_opt)
     try
     {
         user_from_net = synchronizer->send_data(user);
+        timestamp_last_update = synchronizer->get_timestamp_last_update();
     }
     catch (const runtime_error& e)
     {
@@ -814,7 +817,7 @@ bool session::copy_field(const pods::user::opt_ptr& user_opt, int64_t field_id_s
     return true;
 }
 
-bool session::heartbeat(const pods::user::opt_ptr& user_opt) const
+bool session::heartbeat(const pods::user::opt_ptr& user_opt)
 {
     if(!user_opt)
     {
@@ -841,7 +844,7 @@ bool session::heartbeat(const pods::user::opt_ptr& user_opt) const
         throw runtime_error("User id not match");
     }
 
-    return synchronizer->heartbeat(user);
+    return synchronizer->heartbeat(user, timestamp_last_update);
 }
 
 void session::export_data(json& json, const daos::dao& dao, const services::aes& aes, const pods::group::ptr& group, bool enable_aes) const
