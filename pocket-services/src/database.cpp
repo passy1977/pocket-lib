@@ -307,11 +307,6 @@ bool database::rm()
 void database::lock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(this == nullptr)
-    {
-        return;
-    }
-
     if(transaction_active) 
     {
         debug(typeid(*this).name(), "Transaction already active, skipping lock");
@@ -344,10 +339,6 @@ void database::lock()
 void database::unlock()
 {
 #ifndef POCKET_DISABLE_DB_LOCK
-    if(this == nullptr)
-    {
-        return;
-    }
     if(!transaction_active) 
     {
         debug(typeid(*this).name(), "No active transaction, skipping unlock");

@@ -82,60 +82,73 @@ string crypto_encrypt_rsa(const string_view& pub_key, const string_view& plain_t
     
     ENGINE *eng = nullptr;
     EVP_PKEY *pkey = nullptr;
+    EVP_PKEY_CTX *ctx = nullptr;
     uint8_t *out = nullptr;
     size_t out_len = 0;
 
+    // RAII cleanup guard to prevent resource leaks on any error path
+    auto cleanup = [&]() {
+        if (out) { OPENSSL_free(out); out = nullptr; }
+        if (ctx) { EVP_PKEY_CTX_free(ctx); ctx = nullptr; }
+        if (pkey) { EVP_PKEY_free(pkey); pkey = nullptr; }
+    };
 
     auto bio = BIO_new_mem_buf(pub_key.data(), static_cast<int>(pub_key.length()));
     if (bio == nullptr)
     {
+        cleanup();
         throw_rsa_error("Error on alloc BIO");
     }
 
     pkey = PEM_read_bio_PUBKEY(bio, &pkey, nullptr, nullptr);
+    BIO_free_all(bio);
+    bio = nullptr;
     if (pkey == nullptr)
     {
+        cleanup();
         throw_rsa_error("Error on read public key");
     }
 
-    auto ctx = EVP_PKEY_CTX_new(pkey, eng);
+    ctx = EVP_PKEY_CTX_new(pkey, eng);
     if (!ctx)
     {
+        cleanup();
         throw_rsa_error("Error on allocates public key algorithm context");
     }
 
     if (EVP_PKEY_encrypt_init(ctx) <= 0)
     {
+        cleanup();
         throw_rsa_error("Error on initializes a public key algorithm context");
     }
 
-    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
     {
+        cleanup();
         throw_rsa_error("Error on set rsa padding");
     }
 
     if (EVP_PKEY_encrypt(ctx, nullptr, &out_len, reinterpret_cast<const uint8_t *>(plain_text.data()), plain_text.length()) <= 0)
     {
+        cleanup();
         throw_rsa_error("Error determine buffer length");
     }
 
     if (out = reinterpret_cast<uint8_t *>(OPENSSL_malloc(out_len)); out == nullptr)
     {
+        cleanup();
         throw_rsa_error("Error on OPENSSL_malloc()");
     }
 
     if (EVP_PKEY_encrypt(ctx, out, &out_len, reinterpret_cast<const uint8_t *>(plain_text.data()), plain_text.length()) <= 0)
     {
+        cleanup();
         throw_rsa_error("Error on encrypt");
     }
 
     auto&& ret = crypto_base64_encode(out, out_len, url_compliant);
 
-    BIO_free_all(bio);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(ctx);
-    OPENSSL_free(out);
-
+    cleanup();
 
     return ret;
 }
@@ -269,14 +282,8 @@ aes::aes(const string_view& iv, const string_view& key)
 
 aes::~aes()
 {
-    for(auto&& b : key)
-    {
-        b = 0;
-    }
-    for(auto&& b : iv)
-    {
-        b = 0;
-    }
+    OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(iv, sizeof(iv));
 
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
