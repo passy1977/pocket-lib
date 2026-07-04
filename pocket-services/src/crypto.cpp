@@ -24,13 +24,13 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
+#include <openssl/rand.h>
 
 #include <iomanip>
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
 #include <string>
-#include <random>
 #include <chrono>
 
 namespace pocket::services::inline v5
@@ -245,15 +245,27 @@ string crypto_generate_random_string(size_t length)
 {
     string const CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-    random_device random_device;
-    mt19937 generator(random_device());
-    uniform_int_distribution<> distribution(0, static_cast<int>(CHARACTERS.size() - 1));
+    // largest multiple of CHARACTERS.size() that fits in a byte, to keep the distribution uniform
+    const uint8_t limit = static_cast<uint8_t>(256 / CHARACTERS.size() * CHARACTERS.size());
 
     string random_string;
+    random_string.reserve(length);
 
-    for (size_t i = 0; i < length; ++i)
+    uint8_t buffer[64];
+    while (random_string.size() < length)
     {
-        random_string += CHARACTERS[distribution(generator)];
+        if (RAND_bytes(buffer, sizeof(buffer)) != 1)
+        {
+            throw_rsa_error("RAND_bytes failed");
+        }
+
+        for (auto&& byte : buffer)
+        {
+            if (byte < limit && random_string.size() < length)
+            {
+                random_string += CHARACTERS[byte % CHARACTERS.size()];
+            }
+        }
     }
 
     return random_string;

@@ -93,7 +93,10 @@ git submodule update --init --recursive
 - `POCKET_DISABLE_DB_LOCK` (default: ON) - Disable database locking
 - `POCKET_ENABLE_LOG` (default: ON) - Enable logging functionality
 - `POCKET_ENABLE_AES` (default: ON) - Enable AES encryption
+- `POCKET_ENABLE_SSL_VERIFY` (default: ON) - Verify the server's TLS certificate (peer + hostname). **Keep this ON in production**; turning it OFF disables certificate validation and exposes the connection to man-in-the-middle attacks.
 - `POCKET_ENABLE_TEST` (default: OFF) - Enable test compilation
+
+> ⚠️ **Security note:** `POCKET_ENABLE_LOG` prints request URLs and, in debug builds, synchronization responses (i.e. user data). Keep it OFF in production builds.
 
 #### Advanced Options
 - `POCKET_MAX_BUFFER_RESPONSE_SIZE` (default: 10485760) - Maximum response buffer size
@@ -310,7 +313,10 @@ git submodule update --init --recursive
 - `POCKET_DISABLE_DB_LOCK` (default: ON) - Disabilita il locking del database
 - `POCKET_ENABLE_LOG` (default: ON) - Abilita la funzionalità di logging
 - `POCKET_ENABLE_AES` (default: ON) - Abilita la crittografia AES
+- `POCKET_ENABLE_SSL_VERIFY` (default: ON) - Verifica il certificato TLS del server (peer + hostname). **Tienila ON in produzione**; disabilitandola si disattiva la validazione del certificato, esponendo la connessione ad attacchi man-in-the-middle.
 - `POCKET_ENABLE_TEST` (default: OFF) - Abilita la compilazione dei test
+
+> ⚠️ **Nota di sicurezza:** `POCKET_ENABLE_LOG` stampa gli URL delle richieste e, nelle build di debug, le risposte di sincronizzazione (cioè i dati dell'utente). Tienila OFF nelle build di produzione.
 
 #### Opzioni Avanzate
 - `POCKET_MAX_BUFFER_RESPONSE_SIZE` (default: 10485760) - Dimensione massima del buffer di risposta

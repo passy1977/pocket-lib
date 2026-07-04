@@ -333,7 +333,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
 
     try
     {
-        if(!export_data(user_opt, full_path_file.data(), enable_aes))
+        if(!export_data(user_opt, string{full_path_file}, enable_aes))
         {
             return nullopt;
         }
@@ -369,7 +369,7 @@ optional<user::ptr> session::change_passwd(const optional<user::ptr>& user_opt, 
 #endif
             try
             {
-                if(!import_data(user_ret, full_path_file.data(), enable_aes))
+                if(!import_data(user_ret, string{full_path_file}, enable_aes))
                 {
                     error(typeid(this).name(), "Impossible import data");
                     return nullopt;

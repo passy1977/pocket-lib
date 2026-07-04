@@ -102,7 +102,7 @@ pods::user::opt_ptr synchronizer::retrieve_data(uint64_t timestamp_last_update, 
 
     server_id_helper data = fut_data.get();
 
-    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = email.data(), passwd = passwd.data()] () mutable
+    auto&& fut_response = pool.submit_task([this, timestamp_last_update, email = string{email}, passwd = string{passwd}] () mutable
      {
          network network;
          if(timeout)
@@ -317,7 +317,7 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
         return false;
     }
 
-    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd, timestamp_last_update = user->timestamp_last_update, change_passwd_data_on_server]() mutable
+    auto&& fut_response = pool.submit_task([this, email = user->email, passwd = user->passwd, new_passwd = string{new_passwd}, timestamp_last_update = user->timestamp_last_update, change_passwd_data_on_server]() mutable
    {
 
        network network;
@@ -342,7 +342,7 @@ bool synchronizer::change_passwd(const pods::user::ptr& user, const std::string_
 #ifdef POCKET_FORCE_TIMESTAMP_LAST_UPDATE
            timestamp_last_update = POCKET_FORCE_TIMESTAMP_LAST_UPDATE;
 #endif
-           auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd + DIVISOR + new_passwd.data());
+           auto crypt = crypto_encrypt_rsa(device.host_pub_key, to_string(device.id) + DIVISOR + secret  + DIVISOR + to_string(timestamp_last_update) + DIVISOR + email + DIVISOR + passwd + DIVISOR + new_passwd);
 
            auto&& content = network.perform(network::method::PUT, device.host + API_VERSION + "/" + device.uuid + "/" + crypt + "/" + to_string(change_passwd_data_on_server));
            set_status(stat{network.get_http_code()});
@@ -616,7 +616,7 @@ pods::user::opt_ptr synchronizer::parse_data_from_net(const std::string_view& re
             }
             else
             {
-                throw runtime_error(response.data());
+                throw runtime_error(string{response});
             }
         }
         catch (const invalid_argument& e)

@@ -177,7 +177,7 @@ void json_parse_net_helper(BS::thread_pool<>& pool, string_view json_response, p
 }
 catch (const exception& e)
 {
-    error(APP_TAG, json_response.data());
+    error(APP_TAG, string{json_response});
     throw;
 }
 catch (...)
@@ -937,7 +937,7 @@ uint64_t json_to_timestamp(std::string_view json_response) try
 }
 catch (const exception& e)
 {
-    error(APP_TAG, json_response.data());
+    error(APP_TAG, string{json_response});
     throw;
 }
 catch (...)
