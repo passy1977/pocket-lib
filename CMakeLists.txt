@@ -101,7 +101,7 @@ message(STATUS "start nlohmann_json download")
 FetchContent_Declare(
         nlohmann_json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
+        GIT_TAG v3.12.0
 )
 # Prevent nlohmann_json from being included in our install export
 set(nlohmann_json_INSTALL OFF CACHE BOOL "" FORCE)
