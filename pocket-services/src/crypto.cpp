@@ -169,11 +169,6 @@ string crypto_base64_encode(const uint8_t* data, size_t data_len, bool url_compl
     }
     int num_encoded = EVP_EncodeBlock(out, data, static_cast<int>(data_len));
 
-    if (num_encoded < out_len && ((data[0] & 0x80) == 0 || (data[1] & 0x80) == 0))
-    {
-        memset(&out[num_encoded], '=', out_len - num_encoded);
-    }
-
     string ret(reinterpret_cast<char*>(out), num_encoded);
 
     if(url_compliant)
@@ -207,7 +202,19 @@ std::vector<uint8_t> crypto_base64_decode(std::string data, bool url_compliant)
     memset(buffer, 0x00, data.size());
 
     auto b64 = BIO_new(BIO_f_base64());
+    if(b64 == nullptr)
+    {
+        delete [] buffer;
+        throw_rsa_error("b64 impossible alloc");
+    }
+
     auto bmem = BIO_new_mem_buf(data.data(), static_cast<int>(data.size()));
+    if(bmem == nullptr)
+    {
+        BIO_free_all(b64);
+        delete [] buffer;
+        throw_rsa_error("bmem impossible alloc");
+    }
     bmem = BIO_push(b64, bmem);
 
     BIO_set_flags(bmem, BIO_FLAGS_BASE64_NO_NL);
@@ -215,16 +222,18 @@ std::vector<uint8_t> crypto_base64_decode(std::string data, bool url_compliant)
     int buffer_length = BIO_read(bmem, buffer, static_cast<int>(data.size()));
     if(buffer_length > 0)
     {
-        for (uint32_t i = 0; i < buffer_length; i++)
+        for (uint32_t i = 0; i < static_cast<uint32_t>(buffer_length); i++)
         {
             ret.push_back(buffer[i]);
         }
     }
     else
     {
+        BIO_free_all(bmem);
+        delete [] buffer;
         throw runtime_error("BIO_read less then 0 bytes read err:" + to_string(ERR_get_error()));
     }
-    
+
     BIO_free_all(bmem);
 
     delete [] buffer;
@@ -358,7 +367,7 @@ std::string aes::decrypt(const string_view& encrypted, bool url_compliant) const
         return  "";
     }
 
-    auto&& cipher = crypto_base64_decode(encrypted.data(), url_compliant);
+    auto&& cipher = crypto_base64_decode(string{encrypted}, url_compliant);
 
     auto plain_text = new(nothrow) uint8_t[encrypted.size()];
     if(plain_text == nullptr)
