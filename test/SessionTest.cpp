@@ -38,14 +38,17 @@ std::string generate_config(const std::string& host_url = "http://localhost:8081
 "timestampCreation":1758379577,
 "userId":2,
 "host":")json" + host_url + R"json(",
+"timestampLastUpdate":1758379577,
 "hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqHdvCm4crmKrP0f8N/MDqrX+VakRwG11wqER08zSGqmXkc/jQr78JtSV8mGe9uSi/ufMsEaih+Hi1a5b/TdudcoapWftZXqe5Cb9IRzXuwPf5ke/KIg2GJ9bFEEkGK6YO12TZdRWbwS5cmBxrZdshsmL4Z4NgR4bFV0s6r+VLS6dauHkHv3+8MWsgOmBRdmyERD01g6gNOtm855ePOzABYurmKn4lML6i8+sRozKjeprt1RC4wM5nOTc14FyID5aksOtRsa6RcHvptKRWbERShmbOS0u6zUZ+oMoF8vRviaIKV9PiIeBTzeBuhAe62Bo9vQAq2zEBLmafijX0Xiz7QIDAQAB\n-----END PUBLIC KEY-----\n",
-"aesCbcIv":"__iv_to_change__"
+"aesCbcIv":"__iv_to_change__",
+"corsEnableStrict":false,
+"corsHeaderToken":"gjJNQuyBvylSUkmA"
 })json";
 }
 
 
 constexpr char data[] = R"json(
-{"id":2,"uuid":"d1c9bcc1-06fc-4989-87fd-f5bb8d7a400e","status":"ACTIVE","timestampCreation":1758379577,"userId":2,"host":"http://localhost:8081","hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqHdvCm4crmKrP0f8N/MDqrX+VakRwG11wqER08zSGqmXkc/jQr78JtSV8mGe9uSi/ufMsEaih+Hi1a5b/TdudcoapWftZXqe5Cb9IRzXuwPf5ke/KIg2GJ9bFEEkGK6YO12TZdRWbwS5cmBxrZdshsmL4Z4NgR4bFV0s6r+VLS6dauHkHv3+8MWsgOmBRdmyERD01g6gNOtm855ePOzABYurmKn4lML6i8+sRozKjeprt1RC4wM5nOTc14FyID5aksOtRsa6RcHvptKRWbERShmbOS0u6zUZ+oMoF8vRviaIKV9PiIeBTzeBuhAe62Bo9vQAq2zEBLmafijX0Xiz7QIDAQAB\n-----END PUBLIC KEY-----\n","aesCbcIv":"__iv_to_change__"}
+{"id":2,"uuid":"d1c9bcc1-06fc-4989-87fd-f5bb8d7a400e","status":"ACTIVE","timestampCreation":1758379577,"userId":2,"host":"http://localhost:8081","timestampLastUpdate":1758379577,"hostPublicKey":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqHdvCm4crmKrP0f8N/MDqrX+VakRwG11wqER08zSGqmXkc/jQr78JtSV8mGe9uSi/ufMsEaih+Hi1a5b/TdudcoapWftZXqe5Cb9IRzXuwPf5ke/KIg2GJ9bFEEkGK6YO12TZdRWbwS5cmBxrZdshsmL4Z4NgR4bFV0s6r+VLS6dauHkHv3+8MWsgOmBRdmyERD01g6gNOtm855ePOzABYurmKn4lML6i8+sRozKjeprt1RC4wM5nOTc14FyID5aksOtRsa6RcHvptKRWbERShmbOS0u6zUZ+oMoF8vRviaIKV9PiIeBTzeBuhAe62Bo9vQAq2zEBLmafijX0Xiz7QIDAQAB\n-----END PUBLIC KEY-----\n","aesCbcIv":"__iv_to_change__","corsEnableStrict":false,"corsHeaderToken":"gjJNQuyBvylSUkmA"}
 )json";
 
 struct SessionTest : public ::testing::Test {

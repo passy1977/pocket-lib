@@ -51,7 +51,7 @@ protected:
         
         secret = "test_secret_token";
         
-        sync = std::make_unique<synchronizer>(db, secret, test_device);
+        sync = std::make_unique<synchronizer>(db, secret, test_device, "");
         sync->set_timeout(1000);  // 1 second timeout for tests
         sync->set_connect_timeout(500);  // 500ms connect timeout
     }
@@ -105,7 +105,7 @@ TEST_F(SynchronizerServiceTest, ConstructionAndBasicState)
 TEST_F(SynchronizerServiceTest, EmptySecretState)
 {
     std::string empty_secret = "";
-    auto sync_empty = std::make_unique<synchronizer>(db, empty_secret, test_device);
+    auto sync_empty = std::make_unique<synchronizer>(db, empty_secret, test_device, "");
     
     EXPECT_NE(sync_empty.get(), nullptr);
     EXPECT_EQ(*sync_empty->get_status(), synchronizer::stat::READY);

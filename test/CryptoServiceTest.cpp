@@ -21,6 +21,8 @@
 #include "pocket-services/crypto.hpp"
 #include <iostream>
 #include <vector>
+#include <string_view>
+#include <stdexcept>
 
 using namespace pocket::services;
 
@@ -116,6 +118,47 @@ TEST_F(CryptoServiceTest, Base64BinaryData)
     std::vector<uint8_t> decoded = crypto_base64_decode(encoded, false);
     
     EXPECT_EQ(binary_data, decoded);
+}
+
+TEST_F(CryptoServiceTest, Base64KnownVectors)
+{
+    // RFC 4648 test vectors: encoding output must stay standard
+    struct { std::string input; std::string expected; } vectors[] = {
+        {"M", "TQ=="},
+        {"Ma", "TWE="},
+        {"Man", "TWFu"},
+        {"Hello World!", "SGVsbG8gV29ybGQh"},
+    };
+
+    for (const auto& v : vectors) {
+        std::string encoded = crypto_base64_encode(reinterpret_cast<const uint8_t*>(v.input.data()), v.input.length(), false);
+        EXPECT_EQ(encoded, v.expected) << "Input: " << v.input;
+    }
+}
+
+TEST_F(CryptoServiceTest, Base64EncodeSingleByte)
+{
+    // Regression: single byte input must encode/decode correctly for every value
+    for (int i = 0; i <= 0xFF; ++i) {
+        uint8_t byte = static_cast<uint8_t>(i);
+        std::string encoded = crypto_base64_encode(&byte, 1, false);
+        EXPECT_EQ(encoded.length(), 4) << "Byte: " << i;
+
+        std::vector<uint8_t> decoded = crypto_base64_decode(encoded, false);
+        ASSERT_EQ(decoded.size(), 1) << "Byte: " << i;
+        EXPECT_EQ(decoded[0], byte);
+    }
+}
+
+TEST_F(CryptoServiceTest, Base64EncodeNullData)
+{
+    EXPECT_THROW(crypto_base64_encode(nullptr, 10, false), std::runtime_error);
+}
+
+TEST_F(CryptoServiceTest, Base64DecodeMalformed)
+{
+    EXPECT_THROW(crypto_base64_decode("!!!not-base64!!!", false), std::runtime_error);
+    EXPECT_THROW(crypto_base64_decode("", false), std::runtime_error);
 }
 
 // Test random string generation
@@ -270,10 +313,92 @@ TEST_F(CryptoServiceTest, AESLargeData)
     }
     
     aes cipher(iv, key);
-    
+
     std::string encrypted = cipher.encrypt(plaintext);
     std::string decrypted = cipher.decrypt(encrypted);
-    
+
     EXPECT_EQ(plaintext, decrypted);
     EXPECT_GT(encrypted.length(), 0);
+}
+
+TEST_F(CryptoServiceTest, AESDecryptNonNullTerminatedView)
+{
+    // Regression: decrypt must honor the string_view length,
+    // not read until the first NUL terminator
+    std::string iv = "1234567890123456";
+    std::string key = "password123";
+    std::string plaintext = "non null terminated view";
+
+    aes cipher(iv, key);
+
+    std::string encrypted = cipher.encrypt(plaintext);
+    std::string buffer = encrypted + "trailing-garbage";
+    std::string_view view(buffer.data(), encrypted.size());
+
+    EXPECT_EQ(cipher.decrypt(view), plaintext);
+}
+
+TEST_F(CryptoServiceTest, AESConstructorInvalidIv)
+{
+    EXPECT_THROW(aes("short", "password123"), std::runtime_error);
+    EXPECT_THROW(aes("12345678901234567", "password123"), std::runtime_error);
+}
+
+TEST_F(CryptoServiceTest, AESDecryptCorrupted)
+{
+    std::string iv = "1234567890123456";
+    std::string key = "password123";
+
+    aes cipher(iv, key);
+
+    // "AAAA" decodes to 3 bytes, not a whole AES block
+    EXPECT_THROW(cipher.decrypt("AAAA"), std::runtime_error);
+}
+
+// Test RSA encryption
+namespace
+{
+constexpr const char* TEST_RSA_PUB_KEY = R"(-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtzRb1LZv5zf2nif4SJ/3
+7wM9/BKag/eroh9aL6GqhFk+/COQMNaTY4bsofak5OL9oSRIs78RCw+lgl8OkYi7
+P84S1gy3+/WSzC1LQNewm6juDMKV/92LeLLtTrh2iFYVY1N7j6kOhCZyJAv1EkHV
+iFKZheb7bVaVqsscLhUBprYcAks9dFhJ9MLinoGZgr4r0SYuok992E1Jkh+qUYr8
+h1o+slBvrc1dmyEs/vDgSglbAeSSOHAklzo8H3ZCveCzbN2aTB0J9LZKMJYFXgiR
+JLQNY4o9FH914hYr1i5GV+KXHccfQ4Bs50VO7LBh0HYi7VgLQUCYVTwGJhVy5XH6
+fQIDAQAB
+-----END PUBLIC KEY-----)";
+}
+
+TEST_F(CryptoServiceTest, RSAEncryptBasic)
+{
+    // 2048 bit key -> 256 byte ciphertext -> 344 base64 characters
+    std::string encrypted = crypto_encrypt_rsa(TEST_RSA_PUB_KEY, "test message", false);
+    EXPECT_EQ(encrypted.length(), 344);
+}
+
+TEST_F(CryptoServiceTest, RSAEncryptRandomized)
+{
+    // OAEP padding is randomized: same input must produce different ciphertexts
+    std::string encrypted1 = crypto_encrypt_rsa(TEST_RSA_PUB_KEY, "test message", false);
+    std::string encrypted2 = crypto_encrypt_rsa(TEST_RSA_PUB_KEY, "test message", false);
+    EXPECT_NE(encrypted1, encrypted2);
+}
+
+TEST_F(CryptoServiceTest, RSAEncryptUrlCompliant)
+{
+    std::string encrypted = crypto_encrypt_rsa(TEST_RSA_PUB_KEY, "test message", true);
+    EXPECT_EQ(encrypted.find('+'), std::string::npos);
+    EXPECT_EQ(encrypted.find('/'), std::string::npos);
+}
+
+TEST_F(CryptoServiceTest, RSAEncryptInvalidKey)
+{
+    EXPECT_THROW(crypto_encrypt_rsa("not a pem key", "data"), std::runtime_error);
+}
+
+TEST_F(CryptoServiceTest, RSAEncryptTooLongPlaintext)
+{
+    // OAEP with a 2048 bit key cannot encrypt more than ~214 bytes
+    std::string too_long(300, 'x');
+    EXPECT_THROW(crypto_encrypt_rsa(TEST_RSA_PUB_KEY, too_long), std::runtime_error);
 }
